@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Martin Sundal Aspås</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #16161d;
+            justify-content: center;
+            align-items: center;
+            display: flex;
+            flex-direction: column;
+        }
+        div {
+            color: white;
+            text-align: center;
+            font-size: 20px;
+            margin: 20px;
+        }
+        canvas {
+            display: block;
+            background: #00000000;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -100;
+        }
+        h1, h2, h3, h4, h5, h6, p, span, img {
+            visibility: hidden;
+            color: white;
+            z-index: 101;
+        }
+        @media (max-width: 600px) {
+            header {
+                position: static;
+                padding: 10px;
+                text-align: center;
+            }
+            nav {
+                position: static;
+                text-align: center;
+                margin-top: 10px;
+            }
+            nav a {
+                display: block;
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" style="width: 100%; height: auto"></canvas>
+    <canvas id="slidingGameCanvas"></canvas>
+    <header style="position: absolute; top: 0; width: 100%; text-align: center; padding: 10px 0;">
+        <h1>Welcome to Martin Sundal Aspås' Website</h1>
+    </header>
+    
+    <div style="margin-top: 100px; width: 70%;">
+        
+        <p>Got a summer job at the Technology departement at Aker Solutions Verdal as a developer at age 17 in 2022. From there I got promoted several times, with the latest making me a Senior Engineer at age 19.
+        </p>
+        
+        <p>My work has been mainly focused towards the development of the world's first fully automated welding planner for use in the new Verdal Production Line, but has also touched on several other topics such as industrial robots, robotic welding and 3D-printing. I have also held intro-courses to Robotics for apprentices at Aker Solutions.
+        </p><br>
+        <img src="assets/profile.jpeg" alt="">
+    </div>
+    </body>
+<script src="player.js"></script>
+<script src="sliding_block.js"></script>
+</html>
