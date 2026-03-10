@@ -826,6 +826,103 @@
       document.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'visible' && unlocked) resumeAll();
       });
+
+      /* ── 8. Deep SDL2 audio pipeline monitor ──
+       * Polls Module.SDL2 internals to check if the
+       * ScriptProcessorNode is set up, connected, and
+       * if onaudioprocess is actually firing.
+       */
+      var audioProbePollCount = 0;
+      var lastProbeState = '';
+      var oapFired = 0;
+      var silenceTimerActive = false;
+      var audioProbeTimer = setInterval(function() {
+        audioProbePollCount++;
+        try {
+          if (!Module || !Module.SDL2) {
+            if (audioProbePollCount % 20 === 0) window._dbg && window._dbg('AudioProbe: Module.SDL2 not yet created', 'dbg-warn');
+            return;
+          }
+          var SDL2 = Module.SDL2;
+          var info = [];
+
+          // AudioContext state
+          if (SDL2.audioContext) {
+            info.push('ctx=' + SDL2.audioContext.state);
+            info.push('sRate=' + SDL2.audioContext.sampleRate);
+            info.push('dest=' + (SDL2.audioContext.destination ? 'ok' : 'NONE'));
+            info.push('destCh=' + (SDL2.audioContext.destination ? SDL2.audioContext.destination.maxChannelCount : '?'));
+          } else {
+            info.push('ctx=NONE');
+          }
+
+          // SDL2.audio object
+          if (SDL2.audio) {
+            info.push('audio=ok');
+            if (SDL2.audio.scriptProcessorNode) {
+              var spn = SDL2.audio.scriptProcessorNode;
+              info.push('spn=ok');
+              info.push('spnBuf=' + spn.bufferSize);
+              info.push('spnIn=' + spn.numberOfInputs);
+              info.push('spnOut=' + spn.numberOfOutputs);
+
+              // Wrap onaudioprocess to count calls (one-time)
+              if (!spn._dbgWrapped) {
+                spn._dbgWrapped = true;
+                var origOAP = spn.onaudioprocess;
+                if (origOAP) {
+                  spn.onaudioprocess = function(e) {
+                    oapFired++;
+                    // Check if there's actual audio data (non-zero)
+                    if (oapFired <= 3 || oapFired % 100 === 0) {
+                      try {
+                        var outBuf = e.outputBuffer.getChannelData(0);
+                        var maxVal = 0;
+                        for (var s = 0; s < Math.min(outBuf.length, 256); s++) {
+                          var v = Math.abs(outBuf[s]);
+                          if (v > maxVal) maxVal = v;
+                        }
+                        window._dbg && window._dbg('OAP#' + oapFired + ' outLen=' + outBuf.length + ' maxSample=' + maxVal.toFixed(6), maxVal > 0.001 ? 'dbg-info' : 'dbg-warn');
+                      } catch(ex) {}
+                    }
+                    return origOAP.call(this, e);
+                  };
+                  window._dbg && window._dbg('Wrapped onaudioprocess', 'dbg-info');
+                } else {
+                  window._dbg && window._dbg('spn.onaudioprocess is NULL!', 'dbg-err');
+                }
+              }
+              info.push('oapN=' + oapFired);
+            } else {
+              info.push('spn=NONE');
+            }
+
+            if (SDL2.audio.silenceTimer !== undefined) {
+              info.push('silTimer=ACTIVE');
+              silenceTimerActive = true;
+            } else {
+              if (silenceTimerActive) info.push('silTimer=cleared');
+            }
+            if (SDL2.audio.currentOutputBuffer) {
+              info.push('outBuf=ok');
+            }
+          } else {
+            info.push('audio=NONE');
+          }
+
+          // SDL2.capture
+          if (SDL2.capture) info.push('capture=ok');
+
+          var probeStr = info.join(' ');
+          if (probeStr !== lastProbeState || audioProbePollCount <= 10 || audioProbePollCount % 40 === 0) {
+            window._dbg && window._dbg('AudioProbe: ' + probeStr, 'dbg-info');
+            lastProbeState = probeStr;
+          }
+        } catch(e) {
+          window._dbg && window._dbg('AudioProbe ERR: ' + e, 'dbg-err');
+        }
+        if (audioProbePollCount > 600) clearInterval(audioProbeTimer);
+      }, 250);
     })();
 
     /* ═══════════════════════════════════════════════════════════
