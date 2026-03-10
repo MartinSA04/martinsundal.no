@@ -592,11 +592,17 @@
        * switches iOS from "ambient" audio session (muted by
        * silent switch) to "playback" session (ignores switch).
        * This is the same technique YouTube uses.
+       *
+       * CRITICAL: The <audio> element must keep playing
+       * (looping) for the entire session. If it stops/pauses,
+       * iOS reverts to "ambient" and the mute switch takes
+       * effect again.
        */
       var silentWavUrl = null;
       function getSilentWavUrl() {
         if (silentWavUrl) return silentWavUrl;
-        var sr = 44100, ns = 4410; // 0.1s of silence
+        // 1 second of silence — long enough for smooth looping
+        var sr = 44100, ns = 44100;
         var ds = ns * 2;
         var buf = new ArrayBuffer(44 + ds);
         var v = new DataView(buf);
@@ -612,21 +618,25 @@
       }
 
       /* ── 3. Unlock iOS audio session ──
-       * Plays silent WAV via <audio> to switch audio session.
-       * Only needs to succeed once. Called from every user
-       * activation event until it succeeds.
+       * Plays a looping silent WAV via <audio> to permanently
+       * switch the audio session to "playback" mode. The element
+       * keeps playing silently for the entire page lifetime so
+       * iOS never reverts to "ambient" (mute-respecting) mode.
        */
+      var keepAliveAudio = null;
       function unlockAudioSession() {
         if (audioSessionUnlocked) return;
         try {
-          var audio = new Audio(getSilentWavUrl());
-          audio.setAttribute('playsinline', '');
-          var p = audio.play();
+          keepAliveAudio = new Audio(getSilentWavUrl());
+          keepAliveAudio.setAttribute('playsinline', '');
+          keepAliveAudio.loop = true;
+          var p = keepAliveAudio.play();
           if (p) p.then(function() {
             audioSessionUnlocked = true;
-            setTimeout(function() { audio.pause(); }, 200);
-          }).catch(function() {});
-        } catch(e) {}
+          }).catch(function() {
+            keepAliveAudio = null;
+          });
+        } catch(e) { keepAliveAudio = null; }
       }
 
       /* ── 4. Resume ALL known AudioContexts ──
