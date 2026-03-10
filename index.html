@@ -527,76 +527,74 @@
     /* ═══════════════════════════════════════════════════════════
      *  AUDIO UNLOCK — iOS / Android / Desktop
      *
-     *  Root cause (Emscripten SDL2 bug):
-     *  On modern browsers where navigator.userActivation exists
-     *  (iOS ≥16, Chrome ≥72, Firefox ≥120), Emscripten's SDL2
-     *  audio driver SKIPS registering event-based resume listeners
-     *  (autoResumeAudioContext). Instead it uses a setInterval
-     *  that polls navigator.userActivation.hasBeenActive and
-     *  calls audioContext.resume(). But setInterval callbacks
-     *  are NOT "user gestures" — iOS Safari silently ignores
-     *  .resume() from non-gesture contexts.
+     *  Root cause (Emscripten SDL2 bug in SDL_emscriptenaudio.c):
+     *  When navigator.userActivation exists (iOS ≥16, Chrome ≥72,
+     *  Firefox ≥120), Emscripten's SDL2 audio SKIPS registering
+     *  autoResumeAudioContext. Instead it falls back to a
+     *  setInterval that polls hasBeenActive and calls .resume().
+     *  But setInterval callbacks are NOT user gestures — iOS
+     *  Safari silently ignores .resume() from non-gesture contexts.
      *
-     *  Additionally, Emscripten_ResumeAudio (PR #104 in the SDL2
-     *  port) is not compiled into the output, so SDL's native
-     *  touch/key handlers don't resume audio either.
+     *  Additionally, autoResumeAudioContext itself only listens on
+     *  'touchstart', which per WebKit's official docs is NOT a
+     *  user activation event on Safari. Only touchend, mousedown,
+     *  pointerup (non-mouse), pointerdown (mouse), and keydown
+     *  are activation-triggering events.
      *
-     *  Fix (three layers):
-     *  1. Monkey-patch AudioContext constructor to track every
-     *     context created (including SDL's EM_ASM creations).
-     *  2. Install PERMANENT capture-phase event listeners on
-     *     document that call .resume() on ALL tracked contexts
-     *     from within a real user gesture — on EVERY interaction,
-     *     not just once.
-     *  3. On first gesture, pre-create an AudioContext and store
-     *     on Module.SDL2.audioContext so SDL reuses it (starts
-     *     in 'running' state, avoiding the suspended→silence
-     *     timer path entirely).
+     *  Fix (Google Chrome team's official recommendation):
+     *  1. Use ES6 Proxy to intercept AudioContext construction
+     *     (transparent — preserves instanceof, property access).
+     *  2. Register event listeners on ONLY activation-triggering
+     *     events (NOT touchstart) to call .resume() on all
+     *     tracked contexts from within a real user gesture.
+     *  3. Pre-create AudioContext during overlay button gesture
+     *     and store on Module.SDL2.audioContext so SDL reuses it.
+     *
+     *  Sources:
+     *    Chrome: developer.chrome.com/blog/web-audio-autoplay
+     *    WebKit: webkit.org/blog/13862/ (user activation events)
      *
      *  Compatibility:
-     *    iOS Safari ≥9:     ✓ (capture-phase resume on real gesture)
-     *    Chrome Android:    ✓ (click/touch gesture)
+     *    iOS Safari ≥10:    ✓ (Proxy + touchend activation)
+     *    Chrome Android:    ✓ (click/pointerup gesture)
      *    Firefox Android:   ✓ (click gesture)
-     *    Samsung Internet:  ✓ (click/touch gesture)
+     *    Samsung Internet:  ✓ (click/touchend gesture)
      *    Desktop browsers:  ✓ (click/keydown gesture)
      * ═══════════════════════════════════════════════════════════ */
     (function() {
-      var allCtx = [];    // Every AudioContext we know about
+      var allCtx = [];      // Every AudioContext we know about
       var unlocked = false;
 
-      /* ── 1. Monkey-patch AudioContext constructor ──
+      /* ── 1. Proxy-based AudioContext interception ──
+       * Uses ES6 Proxy with a construct trap (recommended by
+       * the Chrome team). More transparent than monkey-patching
+       * with a replacement function — preserves instanceof,
+       * static properties, and prototype chain automatically.
+       *
        * When Emscripten's SDL2 EM_ASM does "new AudioContext()",
-       * it goes through our patched constructor so we can track
-       * the context. This is necessary because the compiled JS
-       * skips autoResumeAudioContext on modern browsers.
+       * it goes through our Proxy so we can track the context.
        */
-      var RealAC = window.AudioContext || window.webkitAudioContext;
-      if (RealAC) {
-        var PatchedAC = function(opt) {
-          var ctx = opt ? new RealAC(opt) : new RealAC();
-          allCtx.push(ctx);
-          return ctx; // returning object from constructor replaces 'this'
-        };
-        PatchedAC.prototype = RealAC.prototype;
-        try {
-          Object.getOwnPropertyNames(RealAC).forEach(function(k) {
-            if (k !== 'prototype' && k !== 'length' && k !== 'name') {
-              try { Object.defineProperty(PatchedAC, k, Object.getOwnPropertyDescriptor(RealAC, k)); } catch(e) {}
-            }
-          });
-        } catch(e) {}
-        if (window.AudioContext)       window.AudioContext       = PatchedAC;
-        if (window.webkitAudioContext) window.webkitAudioContext = PatchedAC;
+      function proxyAC(CtorName) {
+        var Original = window[CtorName];
+        if (!Original || typeof Proxy === 'undefined') return;
+        window[CtorName] = new Proxy(Original, {
+          construct: function(target, args) {
+            var ctx = new (Function.prototype.bind.apply(target, [null].concat(args)))();
+            allCtx.push(ctx);
+            return ctx;
+          }
+        });
       }
+      proxyAC('AudioContext');
+      proxyAC('webkitAudioContext');
 
       /* ── 2. Resume ALL known contexts ──
-       * Called from every real user gesture. Resumes any
-       * suspended context and plays a silent buffer to prime
-       * iOS audio hardware. Only plays silent buffer when
-       * context IS suspended (avoids per-touch allocations).
+       * Called from every real user activation event. Resumes
+       * any suspended context and plays a silent buffer to
+       * prime iOS audio hardware.
        */
       function resumeAll() {
-        // Pick up SDL2's context even if created before our patch
+        // Pick up SDL2's context even if created before our Proxy
         try {
           var sdlCtx = Module && Module.SDL2 && Module.SDL2.audioContext;
           if (sdlCtx && allCtx.indexOf(sdlCtx) === -1) allCtx.push(sdlCtx);
@@ -607,7 +605,7 @@
             var ctx = allCtx[i];
             if (ctx.state === 'suspended') {
               ctx.resume();
-              // Silent buffer forces iOS to activate audio hardware
+              // Silent buffer kickstarts iOS audio hardware
               var buf = ctx.createBuffer(1, 1, ctx.sampleRate || 44100);
               var src = ctx.createBufferSource();
               src.buffer = buf;
@@ -623,25 +621,73 @@
         }
       }
 
-      /* ── 3. Capture-phase listeners on document ──
-       * capture: true  → fires BEFORE any bubble-phase handler
-       *                   (before touch controls call preventDefault)
-       * passive: true  → won't call preventDefault (fast-path)
-       * NOT { once: true } → fires on EVERY interaction
+      /* ── 3. Activation-event listeners ──
        *
-       * These are the primary iOS fix: .resume() is called from
-       * a real event handler on every touch/click/key.
+       * CRITICAL: Only listen on REAL user activation events.
+       * Per WebKit (webkit.org/blog/13862/), Safari's activation
+       * triggering events are ONLY:
+       *   touchend, mousedown, pointerdown (mouse), pointerup
+       *   (non-mouse), keydown (except Escape)
+       *
+       * touchstart is explicitly NOT an activation event on Safari.
+       * Calling .resume() from a touchstart handler is silently
+       * ignored and may interfere with the subsequent touchend.
+       *
+       * Per Chrome (developer.chrome.com/blog/web-audio-autoplay),
+       * also include: click, contextmenu, auxclick, dblclick,
+       * mouseup, keyup.
+       *
+       * Combined list covers all browsers. Capture phase fires
+       * BEFORE bubble-phase handlers (before touch controls call
+       * preventDefault). Passive for performance. NOT { once }.
        */
-      ['touchstart', 'touchend', 'mousedown', 'click', 'keydown'].forEach(function(evt) {
+      var ACTIVATION_EVENTS = [
+        'touchend',     // iOS Safari primary activation event
+        'mousedown',    // Safari, Chrome, Firefox activation event
+        'mouseup',      // Chrome activation event
+        'pointerup',    // Safari (non-mouse), Chrome activation event
+        'click',        // All browsers (fires after mouseup/touchend)
+        'dblclick',     // Chrome activation event
+        'contextmenu',  // Chrome activation event
+        'auxclick',     // Chrome activation event
+        'keydown',      // All browsers (except Escape on Safari)
+        'keyup'         // Chrome activation event
+      ];
+      ACTIVATION_EVENTS.forEach(function(evt) {
         document.addEventListener(evt, resumeAll, { capture: true, passive: true });
       });
 
-      /* ── 4. Overlay button ── */
+      /* ── 4. Overlay button ──
+       * The touchend handler pre-creates an AudioContext and
+       * stores it on Module.SDL2 so that when SDL2 later calls
+       * "new AudioContext()" it finds an existing context that
+       * is already running (bypassing the suspended→silence path).
+       */
       audioUnlockButton.addEventListener('touchend', function(e) {
         e.preventDefault();
+        // Pre-create context during this real user gesture
+        try {
+          if (typeof Module !== 'undefined') {
+            if (!Module.SDL2) Module.SDL2 = {};
+            if (!Module.SDL2.audioContext) {
+              Module.SDL2.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+          }
+        } catch(ex) {}
         resumeAll();
       }, { passive: false });
-      audioUnlockButton.addEventListener('click', resumeAll);
+      audioUnlockButton.addEventListener('click', function() {
+        // Same pre-creation for desktop (click = activation event)
+        try {
+          if (typeof Module !== 'undefined') {
+            if (!Module.SDL2) Module.SDL2 = {};
+            if (!Module.SDL2.audioContext) {
+              Module.SDL2.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+          }
+        } catch(ex) {}
+        resumeAll();
+      });
 
       /* ── 5. Expose for touch controls ── */
       window.tryUnlockGameAudio = resumeAll;
@@ -659,7 +705,11 @@
         if (++pollCount > 240) clearInterval(pollTimer);
       }, 250);
 
-      /* ── 7. Re-resume on visibility change ── */
+      /* ── 7. Re-resume on visibility change ──
+       * iOS suspends AudioContext when app is backgrounded.
+       * When returning to foreground after user has interacted,
+       * re-resume all contexts.
+       */
       document.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'visible' && unlocked) resumeAll();
       });
@@ -733,9 +783,6 @@
       }
 
       function onStart(e) {
-        // Resume audio BEFORE preventDefault — belt & suspenders with
-        // the capture-phase listener, in case iOS order matters.
-        if (window.tryUnlockGameAudio) window.tryUnlockGameAudio();
         e.preventDefault();
         for (var i = 0; i < e.changedTouches.length; i++) {
           var t = e.changedTouches[i];
@@ -755,6 +802,9 @@
       }
 
       function onEnd(e) {
+        // Resume audio on touchend — touchend IS a user activation
+        // event on Safari (unlike touchstart which is NOT).
+        if (window.tryUnlockGameAudio) window.tryUnlockGameAudio();
         e.preventDefault();
         for (var i = 0; i < e.changedTouches.length; i++) {
           var id = e.changedTouches[i].identifier;
