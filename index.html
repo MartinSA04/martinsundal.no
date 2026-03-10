@@ -313,8 +313,10 @@
 
     /* ── Touch controls → keyboard events ── */
     (function() {
-      var touchBtns = document.querySelectorAll('#touch-controls [data-key]');
-      var activeMap = {};  // pointerId → element
+      var touchRoot = document.getElementById('touch-controls');
+      var touchBtns = touchRoot.querySelectorAll('[data-key]');
+      var activeMap = {};  // pointerId -> pressed button
+      var audioUnlocked = false;
 
       function sendKey(type, key, code) {
         var ev = new KeyboardEvent(type, {
@@ -336,39 +338,108 @@
         return map[key] || 0;
       }
 
+      function setPressed(btn, pressed) {
+        if (!btn) return;
+        if (pressed) btn.classList.add('pressed');
+        else btn.classList.remove('pressed');
+      }
+
+      function pressButton(pointerId, btn) {
+        var current = activeMap[pointerId] || null;
+        if (current === btn) return;
+
+        if (current) {
+          setPressed(current, false);
+          sendKey('keyup', current.dataset.key, current.dataset.code);
+        }
+
+        if (btn) {
+          activeMap[pointerId] = btn;
+          setPressed(btn, true);
+          sendKey('keydown', btn.dataset.key, btn.dataset.code);
+        } else {
+          delete activeMap[pointerId];
+        }
+      }
+
+      function releasePointer(pointerId) {
+        pressButton(pointerId, null);
+      }
+
+      function buttonAtPoint(x, y) {
+        var el = document.elementFromPoint(x, y);
+        if (!el) return null;
+        return el.closest('#touch-controls [data-key]');
+      }
+
+      function unlockAudioOnce() {
+        if (audioUnlocked) return;
+
+        var candidates = [];
+        if (typeof Module !== 'undefined' && Module && Module.SDL2 && Module.SDL2.audioContext) {
+          candidates.push(Module.SDL2.audioContext);
+        }
+        if (typeof window !== 'undefined' && window.SDL2 && window.SDL2.audioContext) {
+          candidates.push(window.SDL2.audioContext);
+        }
+
+        var resumed = false;
+        candidates.forEach(function(ctx) {
+          if (ctx && ctx.state === 'suspended' && typeof ctx.resume === 'function') {
+            ctx.resume();
+            resumed = true;
+          }
+        });
+
+        if (resumed || candidates.length > 0) {
+          audioUnlocked = true;
+        }
+      }
+
       touchBtns.forEach(function(btn) {
         btn.addEventListener('pointerdown', function(e) {
           e.preventDefault();
-          btn.setPointerCapture(e.pointerId);
-          btn.classList.add('pressed');
-          activeMap[e.pointerId] = btn;
-          sendKey('keydown', btn.dataset.key, btn.dataset.code);
+          unlockAudioOnce();
+          if (btn.setPointerCapture) btn.setPointerCapture(e.pointerId);
+          pressButton(e.pointerId, btn);
+        });
+
+        btn.addEventListener('pointermove', function(e) {
+          if (!activeMap[e.pointerId]) return;
+          e.preventDefault();
+          pressButton(e.pointerId, buttonAtPoint(e.clientX, e.clientY));
         });
 
         btn.addEventListener('pointerup', function(e) {
           e.preventDefault();
-          btn.classList.remove('pressed');
-          delete activeMap[e.pointerId];
-          sendKey('keyup', btn.dataset.key, btn.dataset.code);
+          releasePointer(e.pointerId);
         });
 
         btn.addEventListener('pointercancel', function(e) {
-          btn.classList.remove('pressed');
-          delete activeMap[e.pointerId];
-          sendKey('keyup', btn.dataset.key, btn.dataset.code);
+          releasePointer(e.pointerId);
+        });
+
+        btn.addEventListener('lostpointercapture', function(e) {
+          releasePointer(e.pointerId);
         });
 
         btn.addEventListener('pointerleave', function(e) {
-          if (btn.classList.contains('pressed')) {
-            btn.classList.remove('pressed');
-            delete activeMap[e.pointerId];
-            sendKey('keyup', btn.dataset.key, btn.dataset.code);
-          }
+          if (!activeMap[e.pointerId]) return;
+          pressButton(e.pointerId, buttonAtPoint(e.clientX, e.clientY));
         });
 
         // Prevent context menu on long-press
         btn.addEventListener('contextmenu', function(e) { e.preventDefault(); });
       });
+
+      touchRoot.addEventListener('pointermove', function(e) {
+        if (!activeMap[e.pointerId]) return;
+        e.preventDefault();
+        pressButton(e.pointerId, buttonAtPoint(e.clientX, e.clientY));
+      });
+
+      document.addEventListener('pointerdown', unlockAudioOnce, { passive: true });
+      document.addEventListener('keydown', unlockAudioOnce, { passive: true });
     })();
 
     /* ── Responsive canvas sizing ── */
