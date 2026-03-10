@@ -7,16 +7,21 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    html, body {
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
     body {
       background: #1a1a2e;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      height: 100vh;
       font-family: system-ui, -apple-system, sans-serif;
       color: #e0e0e0;
-      overflow-x: hidden;
+      touch-action: none;
     }
 
     #canvas-wrapper {
@@ -118,13 +123,13 @@
     progress::-moz-progress-bar { background: #5b7fff; border-radius: 6px; }
 
     /* ── Mobile touch controls ── */
-    #touch-controls {
+    #game-layout {
+      display: contents;
+    }
+    .touch-side {
       display: none;
-      width: 100%;
-      max-width: 100vw;
-      padding: 10px 12px 16px;
-      justify-content: space-between;
       align-items: center;
+      justify-content: center;
       user-select: none;
       -webkit-user-select: none;
       touch-action: none;
@@ -204,32 +209,121 @@
     }
     .small-btn:active, .small-btn.pressed { background: #5b7fff; }
 
-    /* ── Responsive: phone layout ── */
-    @media (max-width: 768px) {
+    /* ── Portrait mobile ── */
+    @media (max-width: 768px) and (orientation: portrait) {
       body {
         justify-content: center;
+        padding-top: 0;
+      }
+      #game-layout {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
       }
       #canvas-wrapper {
         border-width: 2px;
         border-radius: 4px;
       }
-      #controls {
-        display: none;
+      #touch-portrait-row {
+        display: flex;
+        width: 100%;
+        justify-content: space-between;
+        padding: 10px 12px 16px;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: none;
       }
-      #touch-controls {
+      #touch-portrait-row .touch-side {
         display: flex;
       }
+      /* Hide standalone touch-sides outside portrait row */
+      #controls { display: none; }
+    }
+
+    /* ── Landscape mobile ── */
+    @media (orientation: landscape) and (max-height: 500px) {
+      body {
+        justify-content: center;
+        overflow: hidden;
+      }
+      #game-layout {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100vh;
+        gap: 4px;
+      }
+      /* In landscape, break portrait-row into side-by-side panels */
+      #touch-portrait-row {
+        display: contents;
+      }
+      #canvas-wrapper {
+        order: 2;
+        border-width: 2px;
+        border-radius: 4px;
+        flex-shrink: 0;
+      }
+      #touch-left {
+        order: 1;
+      }
+      #touch-right {
+        order: 3;
+      }
+      .touch-side {
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        padding: 4px;
+      }
+      #controls { display: none; }
+      .dpad { grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 44px); gap: 3px; }
+      .dpad-btn { width: 44px; height: 44px; font-size: 18px; }
+      .action-btn { width: 48px; height: 48px; font-size: 14px; }
+      .small-btn { height: 28px; padding: 0 10px; font-size: 10px; }
     }
   </style>
 </head>
 <body>
-  <div id="canvas-wrapper">
-    <div id="canvas-container">
-      <div id="loading">
-        <div id="status">Loading...</div>
-        <progress id="progress" value="0" max="100"></progress>
+  <div id="game-layout">
+    <div id="canvas-wrapper">
+      <div id="canvas-container">
+        <div id="loading">
+          <div id="status">Loading...</div>
+          <progress id="progress" value="0" max="100"></progress>
+        </div>
+        <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
       </div>
-      <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+    </div>
+    <!-- Wrapper for portrait: D-pad left, actions right, below canvas -->
+    <div id="touch-portrait-row">
+      <div id="touch-left" class="touch-side">
+        <div class="dpad">
+          <div class="dpad-blank"></div>
+          <button class="dpad-btn" data-key="ArrowUp" data-code="ArrowUp">▲</button>
+          <div class="dpad-blank"></div>
+          <button class="dpad-btn" data-key="ArrowLeft" data-code="ArrowLeft">◀</button>
+          <div class="dpad-blank"></div>
+          <button class="dpad-btn" data-key="ArrowRight" data-code="ArrowRight">▶</button>
+          <div class="dpad-blank"></div>
+          <button class="dpad-btn" data-key="ArrowDown" data-code="ArrowDown">▼</button>
+          <div class="dpad-blank"></div>
+        </div>
+      </div>
+      <div id="touch-right" class="touch-side">
+        <div class="action-buttons">
+          <div class="action-row">
+            <button class="action-btn btn-b" data-key="x" data-code="KeyX">B</button>
+            <button class="action-btn btn-a" data-key="z" data-code="KeyZ">A</button>
+          </div>
+          <div class="small-buttons">
+            <button class="small-btn" data-key="Shift" data-code="ShiftLeft">Run</button>
+            <button class="small-btn" data-key="c" data-code="KeyC">Menu</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -239,31 +333,6 @@
 
   <div id="controls">
     <button id="fullscreen-btn">Fullscreen</button>
-  </div>
-
-  <!-- Mobile touch controls -->
-  <div id="touch-controls">
-    <div class="dpad">
-      <div class="dpad-blank"></div>
-      <button class="dpad-btn" data-key="ArrowUp" data-code="ArrowUp">▲</button>
-      <div class="dpad-blank"></div>
-      <button class="dpad-btn" data-key="ArrowLeft" data-code="ArrowLeft">◀</button>
-      <div class="dpad-blank"></div>
-      <button class="dpad-btn" data-key="ArrowRight" data-code="ArrowRight">▶</button>
-      <div class="dpad-blank"></div>
-      <button class="dpad-btn" data-key="ArrowDown" data-code="ArrowDown">▼</button>
-      <div class="dpad-blank"></div>
-    </div>
-    <div class="action-buttons">
-      <div class="action-row">
-        <button class="action-btn btn-b" data-key="x" data-code="KeyX">B</button>
-        <button class="action-btn btn-a" data-key="z" data-code="KeyZ">A</button>
-      </div>
-      <div class="small-buttons">
-        <button class="small-btn" data-key="Shift" data-code="ShiftLeft">Run</button>
-        <button class="small-btn" data-key="c" data-code="KeyC">Menu</button>
-      </div>
-    </div>
   </div>
 
   <script>
@@ -323,8 +392,42 @@
         setStatus(left
           ? 'Preparing... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')'
           : 'All downloads complete.');
-      }
+      },
+      preRun: [function() {
+        // Mount IDBFS on /saves so save files persist across reloads
+        FS.mkdir('/saves');
+        FS.mount(IDBFS, {}, '/saves');
+        // Block game startup until IndexedDB data is loaded
+        Module.addRunDependency('idbfs-load');
+        FS.syncfs(true, function(err) {
+          if (err) console.warn('IDBFS load error:', err);
+          else console.log('Save data loaded from IndexedDB');
+          Module.removeRunDependency('idbfs-load');
+        });
+      }]
     };
+
+    // Periodically sync /saves to IndexedDB (catches writes from C++)
+    // Also sync on page unload as a safety net
+    (function() {
+      var syncPending = false;
+      function syncSaves() {
+        if (syncPending) return;
+        if (typeof FS === 'undefined' || !FS.syncfs) return;
+        syncPending = true;
+        FS.syncfs(false, function(err) {
+          syncPending = false;
+          if (err) console.warn('IDBFS sync error:', err);
+        });
+      }
+      // Sync every 2 seconds while the game runs
+      setInterval(syncSaves, 2000);
+      // Also sync on visibility change (user switches tabs / closes)
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') syncSaves();
+      });
+      window.addEventListener('beforeunload', syncSaves);
+    })();
 
     setStatus('Downloading...');
     window.onerror = function(event) {
@@ -399,9 +502,9 @@
 
     /* ── Touch controls → keyboard events ── */
     (function() {
-      var touchRoot = document.getElementById('touch-controls');
-      var allBtns = Array.prototype.slice.call(touchRoot.querySelectorAll('[data-key]'));
-      var activeMap = {};   // touchId -> pressed button element (or null)
+      var touchPanels = [document.getElementById('touch-portrait-row')];
+      var allBtns = Array.prototype.slice.call(document.querySelectorAll('.touch-side [data-key]'));
+      var activeMap = {};   // touchId -> pressed button element
       var trackedTouches = {};  // touchId -> true, for all touches that started on us
 
       function sendKey(type, key, code) {
@@ -423,23 +526,22 @@
         return map[key] || 0;
       }
 
-      function pressButton(pointerId, btn) {
-        var cur = activeMap[pointerId] || null;
+      function pressButton(touchId, btn) {
+        var cur = activeMap[touchId] || null;
         if (cur === btn) return;
         if (cur) {
           cur.classList.remove('pressed');
           sendKey('keyup', cur.dataset.key, cur.dataset.code);
         }
         if (btn) {
-          activeMap[pointerId] = btn;
+          activeMap[touchId] = btn;
           btn.classList.add('pressed');
           sendKey('keydown', btn.dataset.key, btn.dataset.code);
         } else {
-          delete activeMap[pointerId];
+          delete activeMap[touchId];
         }
       }
 
-      // Manual bounding-rect hit test — works regardless of pointer capture
       function buttonAtPoint(x, y) {
         for (var i = 0; i < allBtns.length; i++) {
           var r = allBtns[i].getBoundingClientRect();
@@ -450,9 +552,7 @@
         return null;
       }
 
-      // Use touch events — they reliably report finger position
-      // even when sliding across elements, no capture needed.
-      touchRoot.addEventListener('touchstart', function(e) {
+      function onTouchStart(e) {
         e.preventDefault();
         if (window.tryUnlockGameAudio) window.tryUnlockGameAudio();
         for (var i = 0; i < e.changedTouches.length; i++) {
@@ -460,9 +560,8 @@
           trackedTouches[t.identifier] = true;
           pressButton(t.identifier, buttonAtPoint(t.clientX, t.clientY));
         }
-      }, { passive: false });
-
-      touchRoot.addEventListener('touchmove', function(e) {
+      }
+      function onTouchMove(e) {
         e.preventDefault();
         for (var i = 0; i < e.changedTouches.length; i++) {
           var t = e.changedTouches[i];
@@ -470,78 +569,94 @@
             pressButton(t.identifier, buttonAtPoint(t.clientX, t.clientY));
           }
         }
-      }, { passive: false });
-
-      touchRoot.addEventListener('touchend', function(e) {
+      }
+      function onTouchEnd(e) {
         e.preventDefault();
         for (var i = 0; i < e.changedTouches.length; i++) {
           var id = e.changedTouches[i].identifier;
           pressButton(id, null);
           delete trackedTouches[id];
         }
-      }, { passive: false });
-
-      touchRoot.addEventListener('touchcancel', function(e) {
+      }
+      function onTouchCancel(e) {
         for (var i = 0; i < e.changedTouches.length; i++) {
           var id = e.changedTouches[i].identifier;
           pressButton(id, null);
           delete trackedTouches[id];
         }
-      });
+      }
 
-      touchRoot.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+      touchPanels.forEach(function(panel) {
+        panel.addEventListener('touchstart', onTouchStart, { passive: false });
+        panel.addEventListener('touchmove', onTouchMove, { passive: false });
+        panel.addEventListener('touchend', onTouchEnd, { passive: false });
+        panel.addEventListener('touchcancel', onTouchCancel);
+        panel.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+      });
     })();
 
     /* ── Responsive canvas sizing ── */
     (function() {
-      // We only change the CSS display size — the buffer stays untouched.
-      // image-rendering: pixelated keeps it crisp.
-      var MOBILE_BREAKPOINT = 768;
+      var NW = 1024, NH = 768, PIXEL_SCALE = 4;
 
       function applyScale() {
-        // Read the actual canvas buffer size (set by SDL_CreateWindow)
         if (canvasElement.width < 2 || canvasElement.height < 2) return;
 
-        var nw = 1024;
-        var nh = 768;
-        var PIXEL_SCALE = 4;
-        var isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
-        var maxW;
-
-        if (isMobile) {
-          maxW = window.innerWidth - 16;
-        } else {
-          maxW = Math.min(nw * 2, window.innerWidth * 0.9);
-        }
-
-        var stepPx = nw / PIXEL_SCALE;
-        var steps = Math.floor(maxW / stepPx);
-        if (steps < 1) steps = 1;
-        var cssScale = steps / PIXEL_SCALE;
         var wrapperStyles = window.getComputedStyle(wrapperElement);
         var borderX = (parseFloat(wrapperStyles.borderLeftWidth) || 0) + (parseFloat(wrapperStyles.borderRightWidth) || 0);
         var borderY = (parseFloat(wrapperStyles.borderTopWidth) || 0) + (parseFloat(wrapperStyles.borderBottomWidth) || 0);
 
-        // Only transform the container — never set its width/height.
-        // Emscripten watches clientWidth/clientHeight to auto-resize the canvas buffer.
-        // transform doesn't affect layout dimensions, so Emscripten sees no change.
+        var isLandscapeMobile = (window.innerWidth > window.innerHeight) && window.innerHeight <= 500;
+        var isPortraitMobile = window.innerWidth <= 768 && !isLandscapeMobile;
+        var cssScale;
+
+        if (isLandscapeMobile) {
+          // Landscape: canvas between side panels, fit to height
+          // D-pad: 3×44 + 2×3 gap + 2×4 pad = 148px; Actions: 2×48+12 gap + 2×4 pad = 124px
+          var sideW = 148 + 124 + 8; // two panels + gaps
+          var scaleW = (window.innerWidth - sideW - borderX) / NW;
+          var scaleH = (window.innerHeight - 8 - borderY) / NH;
+          cssScale = Math.min(scaleW, scaleH);
+          if (cssScale < 0.1) cssScale = 0.1;
+        } else if (isPortraitMobile) {
+          // Portrait: fill width, but leave room for controls below (~180px)
+          var controlsH = 180;
+          var scaleByW = (window.innerWidth - 16 - borderX) / NW;
+          var scaleByH = (window.innerHeight - controlsH - borderY - 16) / NH;
+          cssScale = Math.min(scaleByW, scaleByH);
+          if (cssScale < 0.1) cssScale = 0.1;
+        } else {
+          // Desktop: perfect-pixel steps, capped by height
+          var maxW = Math.min(NW * 2, window.innerWidth * 0.9);
+          var maxH = window.innerHeight * 0.85 - 50;
+          var stepPx = NW / PIXEL_SCALE;
+          var steps = Math.floor(maxW / stepPx);
+          if (steps < 1) steps = 1;
+          cssScale = steps / PIXEL_SCALE;
+          while (NH * cssScale > maxH && cssScale > 1 / PIXEL_SCALE) {
+            steps--;
+            cssScale = Math.max(steps, 1) / PIXEL_SCALE;
+          }
+        }
+
         containerElement.style.transform = 'scale(' + cssScale + ')';
-        // The wrapper clips and reserves the correct visual space.
-        wrapperElement.style.width = Math.floor(nw * cssScale + borderX) + 'px';
-        wrapperElement.style.height = Math.floor(nh * cssScale + borderY) + 'px';
+        wrapperElement.style.width = Math.floor(NW * cssScale + borderX) + 'px';
+        wrapperElement.style.height = Math.floor(NH * cssScale + borderY) + 'px';
       }
 
       window.addEventListener('resize', applyScale);
-      window.addEventListener('orientationchange', function() {
-        setTimeout(applyScale, 100);
-      });
+      window.addEventListener('orientationchange', function() { setTimeout(applyScale, 200); });
 
-      // Keep trying until SDL has initialized the canvas
-      (function waitForSDL() {
+      // Poll until canvas is ready, then keep re-applying for a bit
+      // to catch Emscripten's late canvas init
+      var settled = 0;
+      (function poll() {
         if (canvasElement.width >= 2 && canvasElement.height >= 2) {
           applyScale();
+          settled++;
+          if (settled < 10) setTimeout(poll, 100);
         } else {
-          requestAnimationFrame(waitForSDL);
+          requestAnimationFrame(poll);
         }
       })();
     })();
