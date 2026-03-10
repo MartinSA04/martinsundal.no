@@ -25,12 +25,40 @@
     }
 
     #canvas-wrapper {
+      position: relative;
       border: 3px solid #444;
       border-radius: 6px;
       overflow: hidden;
       background: #000;
       /* wrapper dimensions are set by JS to match the scaled size */
     }
+
+    #fs-toggle {
+      position: fixed;
+      top: 8px;
+      right: 8px;
+      z-index: 50;
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.55);
+      color: #ddd;
+      font-size: 18px;
+      padding: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    #fs-toggle:hover { opacity: 1; }
+    #fs-toggle:active { opacity: 1; background: rgba(91,127,255,0.6); }
+    #fs-toggle svg { width: 18px; height: 18px; fill: currentColor; }
 
     #canvas-container {
       position: relative;
@@ -327,12 +355,13 @@
     </div>
   </div>
 
+  <button id="fs-toggle" type="button" aria-label="Toggle fullscreen">
+    <svg id="fs-icon-expand" viewBox="0 0 24 24"><path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 4h-4v2h6v-6h-2v4z"/></svg>
+    <svg id="fs-icon-shrink" style="display:none" viewBox="0 0 24 24"><path d="M9 3v4H5v2h6V3H9zm6 0v6h6V7h-4V3h-2zM5 15h4v6h2v-8H5v2zm10 0v6h2v-4h4v-2h-6z"/></svg>
+  </button>
+
   <div id="audio-unlock">
     <button id="audio-unlock-btn" type="button">Tap to enable audio</button>
-  </div>
-
-  <div id="controls">
-    <button id="fullscreen-btn">Fullscreen</button>
   </div>
 
   <script>
@@ -350,10 +379,31 @@
       e.preventDefault();
     }, false);
 
-    document.getElementById('fullscreen-btn').addEventListener('click', function() {
-      if (wrapperElement.requestFullscreen) wrapperElement.requestFullscreen();
-      else if (wrapperElement.webkitRequestFullscreen) wrapperElement.webkitRequestFullscreen();
-    });
+    /* Fullscreen toggle icon */
+    (function() {
+      var fsBtn = document.getElementById('fs-toggle');
+      var iconExpand = document.getElementById('fs-icon-expand');
+      var iconShrink = document.getElementById('fs-icon-shrink');
+      function isFS() {
+        return !!(document.fullscreenElement || document.webkitFullscreenElement);
+      }
+      function updateIcon() {
+        var fs = isFS();
+        iconExpand.style.display = fs ? 'none' : '';
+        iconShrink.style.display = fs ? '' : 'none';
+      }
+      fsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (isFS()) {
+          (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        } else {
+          var el = document.documentElement;
+          (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+        }
+      });
+      document.addEventListener('fullscreenchange', updateIcon);
+      document.addEventListener('webkitfullscreenchange', updateIcon);
+    })();
 
     var setStatus = function(text) {
       if (!setStatus.last) setStatus.last = { time: Date.now(), text: '' };
@@ -441,6 +491,22 @@
     (function() {
       var audioUnlocked = false;
 
+      // Monkey-patch AudioContext so any context created after unlock (e.g. by SDL)
+      // is immediately resumed.
+      var OrigAudioContext = window.AudioContext || window.webkitAudioContext;
+      if (OrigAudioContext) {
+        var PatchedAudioContext = function() {
+          var ctx = new OrigAudioContext();
+          if (audioUnlocked && ctx.state === 'suspended') {
+            ctx.resume().catch(function() {});
+          }
+          return ctx;
+        };
+        PatchedAudioContext.prototype = OrigAudioContext.prototype;
+        window.AudioContext = PatchedAudioContext;
+        window.webkitAudioContext = PatchedAudioContext;
+      }
+
       function getAudioContexts() {
         var contexts = [];
         if (typeof Module !== 'undefined' && Module && Module.SDL2 && Module.SDL2.audioContext) {
@@ -452,11 +518,29 @@
         return contexts;
       }
 
+      function playSilence(ctx) {
+        try {
+          var buf = ctx.createBuffer(1, 1, 22050);
+          var src = ctx.createBufferSource();
+          src.buffer = buf;
+          src.connect(ctx.destination);
+          src.start(0);
+        } catch(e) {}
+      }
+
+      function resumeAll() {
+        getAudioContexts().forEach(function(ctx) {
+          if (ctx && ctx.state !== 'running') {
+            ctx.resume().catch(function() {});
+            playSilence(ctx);
+          }
+        });
+      }
+
       function updateOverlay() {
         var contexts = getAudioContexts();
         var running = contexts.length > 0 && contexts.every(function(ctx) { return ctx && ctx.state === 'running'; });
-
-        if (running) {
+        if (running || audioUnlocked) {
           audioUnlocked = true;
           audioUnlockElement.classList.add('hidden');
         } else {
@@ -464,39 +548,42 @@
         }
       }
 
-      function tryUnlockAudio() {
-        if (audioUnlocked) return;
+      function unlockAudio() {
+        if (audioUnlocked) { resumeAll(); return; }
 
-        var contexts = getAudioContexts();
-        if (contexts.length === 0) {
-          updateOverlay();
-          return;
+        // Play a silent buffer through a fresh context — this globally unlocks
+        // audio on iOS regardless of whether SDL's context exists yet.
+        var AC = OrigAudioContext;
+        if (AC) {
+          try {
+            var tempCtx = new AC();
+            playSilence(tempCtx);
+            tempCtx.resume().then(function() {
+              tempCtx.close();
+            }).catch(function() { tempCtx.close(); });
+          } catch(e) {}
         }
 
-        contexts.forEach(function(ctx) {
-          if (ctx && typeof ctx.resume === 'function' && ctx.state !== 'running') {
-            ctx.resume().catch(function() {});
-          }
-        });
-
-        // Allow state transitions to settle
-        setTimeout(updateOverlay, 50);
+        audioUnlocked = true;
+        resumeAll();
+        audioUnlockElement.classList.add('hidden');
       }
 
-      window.tryUnlockGameAudio = tryUnlockAudio;
+      window.tryUnlockGameAudio = unlockAudio;
 
       audioUnlockButton.addEventListener('pointerdown', function(e) {
         e.preventDefault();
-        tryUnlockAudio();
+        unlockAudio();
       });
-      document.addEventListener('pointerdown', tryUnlockAudio, { passive: true });
-      document.addEventListener('keydown', tryUnlockAudio, { passive: true });
+      document.addEventListener('pointerdown', unlockAudio, { passive: true });
+      document.addEventListener('keydown', unlockAudio, { passive: true });
 
-      // Poll briefly in case SDL creates audio context after startup
+      // Poll to resume SDL's context once it gets created (after game starts)
       var checks = 0;
       var interval = setInterval(function() {
+        if (audioUnlocked) resumeAll();
         updateOverlay();
-        if (audioUnlocked || ++checks > 120) clearInterval(interval);
+        if (++checks > 240) clearInterval(interval);
       }, 250);
     })();
 
