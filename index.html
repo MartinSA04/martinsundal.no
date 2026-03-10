@@ -85,6 +85,23 @@
 
     #loading.hidden { display: none; }
 
+    #audio-unlock {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 10, 20, 0.72);
+      z-index: 30;
+    }
+    #audio-unlock.hidden { display: none; }
+    #audio-unlock-btn {
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 8px;
+    }
+
     #status {
       margin-bottom: 12px;
       font-size: 16px;
@@ -216,6 +233,10 @@
     </div>
   </div>
 
+  <div id="audio-unlock">
+    <button id="audio-unlock-btn" type="button">Tap to enable audio</button>
+  </div>
+
   <div id="controls">
     <button id="fullscreen-btn">Fullscreen</button>
   </div>
@@ -252,6 +273,8 @@
     var canvasElement = document.getElementById('canvas');
     var containerElement = document.getElementById('canvas-container');
     var wrapperElement = document.getElementById('canvas-wrapper');
+    var audioUnlockElement = document.getElementById('audio-unlock');
+    var audioUnlockButton = document.getElementById('audio-unlock-btn');
 
     canvasElement.addEventListener('webglcontextlost', function(e) {
       alert('WebGL context lost. You will need to reload the page.');
@@ -311,23 +334,85 @@
       };
     };
 
+    /* ── Audio unlock (mobile autoplay policy) ── */
+    (function() {
+      var audioUnlocked = false;
+
+      function getAudioContexts() {
+        var contexts = [];
+        if (typeof Module !== 'undefined' && Module && Module.SDL2 && Module.SDL2.audioContext) {
+          contexts.push(Module.SDL2.audioContext);
+        }
+        if (typeof window !== 'undefined' && window.SDL2 && window.SDL2.audioContext) {
+          contexts.push(window.SDL2.audioContext);
+        }
+        return contexts;
+      }
+
+      function updateOverlay() {
+        var contexts = getAudioContexts();
+        var running = contexts.length > 0 && contexts.every(function(ctx) { return ctx && ctx.state === 'running'; });
+
+        if (running) {
+          audioUnlocked = true;
+          audioUnlockElement.classList.add('hidden');
+        } else {
+          audioUnlockElement.classList.remove('hidden');
+        }
+      }
+
+      function tryUnlockAudio() {
+        if (audioUnlocked) return;
+
+        var contexts = getAudioContexts();
+        if (contexts.length === 0) {
+          updateOverlay();
+          return;
+        }
+
+        contexts.forEach(function(ctx) {
+          if (ctx && typeof ctx.resume === 'function' && ctx.state !== 'running') {
+            ctx.resume().catch(function() {});
+          }
+        });
+
+        // Allow state transitions to settle
+        setTimeout(updateOverlay, 50);
+      }
+
+      window.tryUnlockGameAudio = tryUnlockAudio;
+
+      audioUnlockButton.addEventListener('pointerdown', function(e) {
+        e.preventDefault();
+        tryUnlockAudio();
+      });
+      document.addEventListener('pointerdown', tryUnlockAudio, { passive: true });
+      document.addEventListener('keydown', tryUnlockAudio, { passive: true });
+
+      // Poll briefly in case SDL creates audio context after startup
+      var checks = 0;
+      var interval = setInterval(function() {
+        updateOverlay();
+        if (audioUnlocked || ++checks > 120) clearInterval(interval);
+      }, 250);
+    })();
+
     /* ── Touch controls → keyboard events ── */
     (function() {
       var touchRoot = document.getElementById('touch-controls');
-      var touchBtns = touchRoot.querySelectorAll('[data-key]');
-      var activeMap = {};  // pointerId -> pressed button
-      var audioUnlocked = false;
+      var allBtns = Array.prototype.slice.call(touchRoot.querySelectorAll('[data-key]'));
+      var activeMap = {};   // touchId -> pressed button element (or null)
+      var trackedTouches = {};  // touchId -> true, for all touches that started on us
 
       function sendKey(type, key, code) {
-        var ev = new KeyboardEvent(type, {
+        canvasElement.dispatchEvent(new KeyboardEvent(type, {
           key: key,
           code: code,
           keyCode: keyCodeFor(key),
           which: keyCodeFor(key),
           bubbles: true,
           cancelable: true
-        });
-        canvasElement.dispatchEvent(ev);
+        }));
       }
 
       function keyCodeFor(key) {
@@ -338,108 +423,73 @@
         return map[key] || 0;
       }
 
-      function setPressed(btn, pressed) {
-        if (!btn) return;
-        if (pressed) btn.classList.add('pressed');
-        else btn.classList.remove('pressed');
-      }
-
       function pressButton(pointerId, btn) {
-        var current = activeMap[pointerId] || null;
-        if (current === btn) return;
-
-        if (current) {
-          setPressed(current, false);
-          sendKey('keyup', current.dataset.key, current.dataset.code);
+        var cur = activeMap[pointerId] || null;
+        if (cur === btn) return;
+        if (cur) {
+          cur.classList.remove('pressed');
+          sendKey('keyup', cur.dataset.key, cur.dataset.code);
         }
-
         if (btn) {
           activeMap[pointerId] = btn;
-          setPressed(btn, true);
+          btn.classList.add('pressed');
           sendKey('keydown', btn.dataset.key, btn.dataset.code);
         } else {
           delete activeMap[pointerId];
         }
       }
 
-      function releasePointer(pointerId) {
-        pressButton(pointerId, null);
-      }
-
+      // Manual bounding-rect hit test — works regardless of pointer capture
       function buttonAtPoint(x, y) {
-        var el = document.elementFromPoint(x, y);
-        if (!el) return null;
-        return el.closest('#touch-controls [data-key]');
-      }
-
-      function unlockAudioOnce() {
-        if (audioUnlocked) return;
-
-        var candidates = [];
-        if (typeof Module !== 'undefined' && Module && Module.SDL2 && Module.SDL2.audioContext) {
-          candidates.push(Module.SDL2.audioContext);
-        }
-        if (typeof window !== 'undefined' && window.SDL2 && window.SDL2.audioContext) {
-          candidates.push(window.SDL2.audioContext);
-        }
-
-        var resumed = false;
-        candidates.forEach(function(ctx) {
-          if (ctx && ctx.state === 'suspended' && typeof ctx.resume === 'function') {
-            ctx.resume();
-            resumed = true;
+        for (var i = 0; i < allBtns.length; i++) {
+          var r = allBtns[i].getBoundingClientRect();
+          if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+            return allBtns[i];
           }
-        });
-
-        if (resumed || candidates.length > 0) {
-          audioUnlocked = true;
         }
+        return null;
       }
 
-      touchBtns.forEach(function(btn) {
-        btn.addEventListener('pointerdown', function(e) {
-          e.preventDefault();
-          unlockAudioOnce();
-          if (btn.setPointerCapture) btn.setPointerCapture(e.pointerId);
-          pressButton(e.pointerId, btn);
-        });
-
-        btn.addEventListener('pointermove', function(e) {
-          if (!activeMap[e.pointerId]) return;
-          e.preventDefault();
-          pressButton(e.pointerId, buttonAtPoint(e.clientX, e.clientY));
-        });
-
-        btn.addEventListener('pointerup', function(e) {
-          e.preventDefault();
-          releasePointer(e.pointerId);
-        });
-
-        btn.addEventListener('pointercancel', function(e) {
-          releasePointer(e.pointerId);
-        });
-
-        btn.addEventListener('lostpointercapture', function(e) {
-          releasePointer(e.pointerId);
-        });
-
-        btn.addEventListener('pointerleave', function(e) {
-          if (!activeMap[e.pointerId]) return;
-          pressButton(e.pointerId, buttonAtPoint(e.clientX, e.clientY));
-        });
-
-        // Prevent context menu on long-press
-        btn.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-      });
-
-      touchRoot.addEventListener('pointermove', function(e) {
-        if (!activeMap[e.pointerId]) return;
+      // Use touch events — they reliably report finger position
+      // even when sliding across elements, no capture needed.
+      touchRoot.addEventListener('touchstart', function(e) {
         e.preventDefault();
-        pressButton(e.pointerId, buttonAtPoint(e.clientX, e.clientY));
+        if (window.tryUnlockGameAudio) window.tryUnlockGameAudio();
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          var t = e.changedTouches[i];
+          trackedTouches[t.identifier] = true;
+          pressButton(t.identifier, buttonAtPoint(t.clientX, t.clientY));
+        }
+      }, { passive: false });
+
+      touchRoot.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          var t = e.changedTouches[i];
+          if (t.identifier in trackedTouches) {
+            pressButton(t.identifier, buttonAtPoint(t.clientX, t.clientY));
+          }
+        }
+      }, { passive: false });
+
+      touchRoot.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          var id = e.changedTouches[i].identifier;
+          pressButton(id, null);
+          delete trackedTouches[id];
+        }
+      }, { passive: false });
+
+      touchRoot.addEventListener('touchcancel', function(e) {
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          var id = e.changedTouches[i].identifier;
+          pressButton(id, null);
+          delete trackedTouches[id];
+        }
       });
 
-      document.addEventListener('pointerdown', unlockAudioOnce, { passive: true });
-      document.addEventListener('keydown', unlockAudioOnce, { passive: true });
+      touchRoot.addEventListener('contextmenu', function(e) { e.preventDefault(); });
     })();
 
     /* ── Responsive canvas sizing ── */
