@@ -130,42 +130,6 @@
     progress::-webkit-progress-value { background: #5b7fff; border-radius: 6px; }
     progress::-moz-progress-bar { background: #5b7fff; border-radius: 6px; }
 
-    /* ── Debug overlay ── */
-    #debug-overlay {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      max-height: 35vh;
-      overflow-y: auto;
-      background: rgba(0,0,0,0.85);
-      color: #0f0;
-      font-family: 'Courier New', monospace;
-      font-size: 11px;
-      line-height: 1.3;
-      padding: 4px 6px;
-      z-index: 9999;
-      pointer-events: auto;
-      -webkit-overflow-scrolling: touch;
-      word-wrap: break-word;
-    }
-    #debug-overlay .dbg-warn { color: #ff0; }
-    #debug-overlay .dbg-err  { color: #f44; }
-    #debug-overlay .dbg-info { color: #4cf; }
-    #debug-toolbar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      display: flex; gap: 6px; padding: 4px 6px;
-      background: rgba(0,0,0,0.95);
-      border-bottom: 1px solid #333;
-      flex-wrap: wrap;
-      z-index: 10000;
-    }
-    #debug-toolbar button {
-      font-size: 10px; padding: 4px 8px;
-      background: #333; color: #0f0; border: 1px solid #0f0;
-      border-radius: 3px; min-height: 28px;
-      touch-action: manipulation;
-    }
-
     /* ── Audio unlock overlay ── */
     #audio-unlock {
       position: fixed;
@@ -392,211 +356,7 @@
     <button id="audio-unlock-btn" type="button">Tap to enable audio</button>
   </div>
 
-  <div id="debug-toolbar">
-    <button id="dbg-test-tone">Test Tone</button>
-    <button id="dbg-html-audio">HTML Audio</button>
-    <button id="dbg-dump">Dump State</button>
-  </div>
-  <div id="debug-overlay"></div>
-
   <script>
-    /* ═══════════════════════════════════════════════════════════
-     *  DEBUG OVERLAY — mirrors console to on-screen div
-     *  TEMPORARY: remove when audio issue is resolved
-     * ═══════════════════════════════════════════════════════════ */
-    (function() {
-      var dbg = document.getElementById('debug-overlay');
-      var maxLines = 80;
-      var lineCount = 0;
-      function addLine(msg, cls) {
-        var d = document.createElement('div');
-        if (cls) d.className = cls;
-        d.textContent = msg;
-        dbg.appendChild(d);
-        lineCount++;
-        if (lineCount > maxLines) dbg.removeChild(dbg.firstChild);
-        dbg.scrollTop = dbg.scrollHeight;
-      }
-      window._dbg = function(msg, cls) { addLine(msg, cls); };
-
-      // Intercept console methods
-      var origLog  = console.log;
-      var origWarn = console.warn;
-      var origErr  = console.error;
-      console.log = function() {
-        origLog.apply(console, arguments);
-        addLine(Array.prototype.slice.call(arguments).join(' '));
-      };
-      console.warn = function() {
-        origWarn.apply(console, arguments);
-        addLine('WARN: ' + Array.prototype.slice.call(arguments).join(' '), 'dbg-warn');
-      };
-      console.error = function() {
-        origErr.apply(console, arguments);
-        addLine('ERR: ' + Array.prototype.slice.call(arguments).join(' '), 'dbg-err');
-      };
-
-      // Catch unhandled errors
-      window.addEventListener('error', function(e) {
-        addLine('UNCAUGHT: ' + e.message + ' @ ' + e.filename + ':' + e.lineno, 'dbg-err');
-      });
-      window.addEventListener('unhandledrejection', function(e) {
-        addLine('PROMISE: ' + (e.reason || e), 'dbg-err');
-      });
-
-      addLine('=== Debug overlay active ===', 'dbg-info');
-      addLine('UA: ' + navigator.userAgent.substring(0, 80), 'dbg-info');
-      addLine('AudioContext: ' + (typeof AudioContext) + ', webkit: ' + (typeof webkitAudioContext), 'dbg-info');
-      addLine('Proxy: ' + (typeof Proxy), 'dbg-info');
-      addLine('userActivation: ' + (typeof navigator.userActivation), 'dbg-info');
-
-      /* ── Test Tone button ──
-       * Plays a 440Hz sine wave for 0.3s through the SDL2
-       * AudioContext. If this is silent too, the problem is
-       * iOS audio session / mute switch, NOT SDL2.
-       */
-      document.getElementById('dbg-test-tone').addEventListener('touchend', function(e) {
-        e.preventDefault(); e.stopPropagation();
-        try {
-          // Try SDL2's context first, then any tracked context, then create new one
-          var ctx = (typeof Module !== 'undefined' && Module.SDL2 && Module.SDL2.audioContext)
-                 || (window._allAudioCtx && window._allAudioCtx[0])
-                 || new (window.AudioContext || window.webkitAudioContext)();
-          addLine('TestTone: ctx.state=' + ctx.state + ' sRate=' + ctx.sampleRate, 'dbg-info');
-          if (ctx.state === 'suspended') {
-            ctx.resume().then(function() { addLine('TestTone: resumed -> ' + ctx.state, 'dbg-info'); });
-          }
-          var osc = ctx.createOscillator();
-          var gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.value = 440;
-          gain.gain.value = 0.3;
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.3);
-          addLine('TestTone: playing 440Hz for 0.3s', 'dbg-warn');
-          // Log destination info
-          var dest = ctx.destination;
-          addLine('TestTone: dest.channels=' + dest.channelCount + ' maxCh=' + dest.maxChannelCount + ' mode=' + dest.channelCountMode, 'dbg-info');
-          if (ctx.outputLatency !== undefined) addLine('TestTone: outputLatency=' + ctx.outputLatency, 'dbg-info');
-          if (ctx.baseLatency !== undefined) addLine('TestTone: baseLatency=' + ctx.baseLatency, 'dbg-info');
-        } catch(ex) { addLine('TestTone ERR: ' + ex, 'dbg-err'); }
-      });
-      document.getElementById('dbg-test-tone').addEventListener('click', function() {
-        // Desktop fallback - same logic
-        try {
-          var ctx = (typeof Module !== 'undefined' && Module.SDL2 && Module.SDL2.audioContext)
-                 || new (window.AudioContext || window.webkitAudioContext)();
-          if (ctx.state === 'suspended') ctx.resume();
-          var osc = ctx.createOscillator();
-          var gain = ctx.createGain();
-          osc.type = 'sine'; osc.frequency.value = 440; gain.gain.value = 0.3;
-          osc.connect(gain); gain.connect(ctx.destination);
-          osc.start(); osc.stop(ctx.currentTime + 0.3);
-          addLine('TestTone(click): playing 440Hz', 'dbg-warn');
-        } catch(ex) { addLine('TestTone ERR: ' + ex, 'dbg-err'); }
-      });
-
-      /* ── HTML Audio button ──
-       * On iOS, playing an <audio> element from a user gesture
-       * switches the audio session from "ambient" (respects mute
-       * switch) to "playback" (ignores mute switch). This is a
-       * known iOS quirk — AudioContext.resume() alone does NOT
-       * change the audio session category.
-       *
-       * We play a tiny silent MP3 via <audio>, then resume the
-       * AudioContext. After this, Web Audio should be audible
-       * even with the mute switch on.
-       */
-      document.getElementById('dbg-html-audio').addEventListener('touchend', function(e) {
-        e.preventDefault(); e.stopPropagation();
-        addLine('HTMLAudio: creating silent WAV <audio>...', 'dbg-info');
-        try {
-          // Generate a valid WAV file programmatically (44-byte header + 4410 samples of silence = 0.1s at 44100Hz)
-          var sampleRate = 44100, numSamples = 4410, numChannels = 1, bitsPerSample = 16;
-          var dataSize = numSamples * numChannels * (bitsPerSample / 8);
-          var buffer = new ArrayBuffer(44 + dataSize);
-          var view = new DataView(buffer);
-          function writeStr(off, str) { for (var i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); }
-          writeStr(0, 'RIFF');
-          view.setUint32(4, 36 + dataSize, true);
-          writeStr(8, 'WAVE');
-          writeStr(12, 'fmt ');
-          view.setUint32(16, 16, true);
-          view.setUint16(20, 1, true);
-          view.setUint16(22, numChannels, true);
-          view.setUint32(24, sampleRate, true);
-          view.setUint32(28, sampleRate * numChannels * (bitsPerSample / 8), true);
-          view.setUint16(32, numChannels * (bitsPerSample / 8), true);
-          view.setUint16(34, bitsPerSample, true);
-          writeStr(36, 'data');
-          view.setUint32(40, dataSize, true);
-          // samples are already zero (silence)
-          var blob = new Blob([buffer], { type: 'audio/wav' });
-          var url = URL.createObjectURL(blob);
-          var audio = new Audio(url);
-          audio.setAttribute('playsinline', '');
-          var playPromise = audio.play();
-          if (playPromise) {
-            playPromise.then(function() {
-              addLine('HTMLAudio: <audio>.play() SUCCESS', 'dbg-info');
-              URL.revokeObjectURL(url);
-              // Now try test tone through SDL2's context
-              var ctx = (typeof Module !== 'undefined' && Module.SDL2 && Module.SDL2.audioContext);
-              if (ctx) {
-                addLine('HTMLAudio: resuming SDL2 ctx (state=' + ctx.state + ')', 'dbg-info');
-                ctx.resume().then(function() {
-                  addLine('HTMLAudio: SDL2 ctx now ' + ctx.state, 'dbg-info');
-                  var osc = ctx.createOscillator();
-                  var g = ctx.createGain();
-                  osc.frequency.value = 880; g.gain.value = 0.2;
-                  osc.connect(g); g.connect(ctx.destination);
-                  osc.start(); osc.stop(ctx.currentTime + 0.3);
-                  addLine('HTMLAudio: test beep 880Hz sent', 'dbg-warn');
-                });
-              }
-            }).catch(function(err) {
-              addLine('HTMLAudio: play() FAILED: ' + err, 'dbg-err');
-              URL.revokeObjectURL(url);
-            });
-          }
-        } catch(ex) { addLine('HTMLAudio ERR: ' + ex, 'dbg-err'); }
-      });
-
-      /* ── Dump State button ── */
-      document.getElementById('dbg-dump').addEventListener('touchend', function(e) {
-        e.preventDefault(); e.stopPropagation();
-        addLine('--- STATE DUMP ---', 'dbg-warn');
-        try {
-          addLine('Module exists: ' + (typeof Module !== 'undefined'), 'dbg-info');
-          addLine('Module.SDL2 exists: ' + !!(typeof Module !== 'undefined' && Module.SDL2), 'dbg-info');
-          if (typeof Module !== 'undefined' && Module.SDL2) {
-            var s = Module.SDL2;
-            addLine('SDL2.audioContext: ' + (s.audioContext ? s.audioContext.state : 'NONE'), 'dbg-info');
-            addLine('SDL2.audio: ' + !!s.audio, 'dbg-info');
-            if (s.audio) {
-              addLine('  .scriptProcessorNode: ' + !!s.audio.scriptProcessorNode, 'dbg-info');
-              addLine('  .silenceTimer: ' + (s.audio.silenceTimer !== undefined ? 'ACTIVE(' + s.audio.silenceTimer + ')' : 'none'), 'dbg-info');
-              addLine('  .silenceBuffer: ' + !!s.audio.silenceBuffer, 'dbg-info');
-              addLine('  .currentOutputBuffer: ' + !!s.audio.currentOutputBuffer, 'dbg-info');
-              if (s.audio.scriptProcessorNode) {
-                var spn = s.audio.scriptProcessorNode;
-                addLine('  .spn.onaudioprocess: ' + (typeof spn.onaudioprocess), 'dbg-info');
-                addLine('  .spn.bufferSize: ' + spn.bufferSize, 'dbg-info');
-                addLine('  .spn.channelCount: ' + spn.channelCount, 'dbg-info');
-                addLine('  .spn.context===audioContext: ' + (spn.context === s.audioContext), 'dbg-info');
-              }
-            }
-          }
-        } catch(ex) { addLine('Dump ERR: ' + ex, 'dbg-err'); }
-        addLine('--- END DUMP ---', 'dbg-warn');
-      });
-      document.getElementById('dbg-dump').addEventListener('click', function() {
-        document.getElementById('dbg-dump').dispatchEvent(new Event('touchend'));
-      });
-    })();
-
     /* ═══════════════════════════════════════════════════════════
      *  DOM REFERENCES
      * ═══════════════════════════════════════════════════════════ */
@@ -767,113 +527,134 @@
     /* ═══════════════════════════════════════════════════════════
      *  AUDIO UNLOCK — iOS / Android / Desktop
      *
-     *  Root cause (Emscripten SDL2 bug in SDL_emscriptenaudio.c):
-     *  When navigator.userActivation exists (iOS ≥16, Chrome ≥72,
-     *  Firefox ≥120), Emscripten's SDL2 audio SKIPS registering
-     *  autoResumeAudioContext. Instead it falls back to a
-     *  setInterval that polls hasBeenActive and calls .resume().
-     *  But setInterval callbacks are NOT user gestures — iOS
-     *  Safari silently ignores .resume() from non-gesture contexts.
+     *  Three problems on iOS Safari:
      *
-     *  Additionally, autoResumeAudioContext itself only listens on
-     *  'touchstart', which per WebKit's official docs is NOT a
-     *  user activation event on Safari. Only touchend, mousedown,
-     *  pointerup (non-mouse), pointerdown (mouse), and keydown
-     *  are activation-triggering events.
+     *  1. Emscripten SDL2 bug: When navigator.userActivation
+     *     exists (all modern browsers), autoResumeAudioContext
+     *     is SKIPPED, and the fallback setInterval calls
+     *     .resume() outside a user gesture — iOS ignores this.
      *
-     *  Fix (Google Chrome team's official recommendation):
-     *  1. Use ES6 Proxy to intercept AudioContext construction
-     *     (transparent — preserves instanceof, property access).
-     *  2. Register event listeners on ONLY activation-triggering
-     *     events (NOT touchstart) to call .resume() on all
-     *     tracked contexts from within a real user gesture.
-     *  3. Pre-create AudioContext during overlay button gesture
-     *     and store on Module.SDL2.audioContext so SDL reuses it.
+     *  2. autoResumeAudioContext listens on 'touchstart', but
+     *     per WebKit docs touchstart is NOT a user activation
+     *     event on Safari.
+     *
+     *  3. iOS mute switch: Web Audio respects the mute/ringer
+     *     switch by default. AudioContext reports 'running' and
+     *     data flows normally, but output is silenced. Playing
+     *     an HTML <audio> element from a user gesture switches
+     *     the iOS audio session from "ambient" (respects mute)
+     *     to "playback" (ignores mute) — like YouTube does.
+     *
+     *  Fix:
+     *  1. ES6 Proxy intercepts AudioContext construction to
+     *     track all contexts (Chrome team's recommendation).
+     *  2. Event listeners on ONLY real activation events (NOT
+     *     touchstart) call .resume() on every interaction.
+     *  3. Playing a silent WAV via <audio> from the first user
+     *     gesture switches iOS audio session to "playback" mode.
      *
      *  Sources:
      *    Chrome: developer.chrome.com/blog/web-audio-autoplay
-     *    WebKit: webkit.org/blog/13862/ (user activation events)
+     *    WebKit: webkit.org/blog/13862/ (activation events)
      *
      *  Compatibility:
-     *    iOS Safari ≥10:    ✓ (Proxy + touchend activation)
+     *    iOS Safari ≥10:    ✓ (Proxy + touchend + <audio> trick)
      *    Chrome Android:    ✓ (click/pointerup gesture)
      *    Firefox Android:   ✓ (click gesture)
      *    Samsung Internet:  ✓ (click/touchend gesture)
      *    Desktop browsers:  ✓ (click/keydown gesture)
      * ═══════════════════════════════════════════════════════════ */
     (function() {
-      var allCtx = [];      // Every AudioContext we know about
+      var allCtx = [];
       var unlocked = false;
+      var audioSessionUnlocked = false;
 
       /* ── 1. Proxy-based AudioContext interception ──
-       * Uses ES6 Proxy with a construct trap (recommended by
-       * the Chrome team). More transparent than monkey-patching
-       * with a replacement function — preserves instanceof,
-       * static properties, and prototype chain automatically.
-       *
-       * When Emscripten's SDL2 EM_ASM does "new AudioContext()",
-       * it goes through our Proxy so we can track the context.
+       * ES6 Proxy with construct trap — transparent interception
+       * that preserves instanceof, static properties, prototype.
        */
-      function proxyAC(CtorName) {
-        var Original = window[CtorName];
-        if (!Original || typeof Proxy === 'undefined') {
-          window._dbg && window._dbg('Proxy skip: ' + CtorName + ' orig=' + !!Original + ' Proxy=' + (typeof Proxy), 'dbg-warn');
-          return;
-        }
-        window[CtorName] = new Proxy(Original, {
+      function proxyAC(name) {
+        var Orig = window[name];
+        if (!Orig || typeof Proxy === 'undefined') return;
+        window[name] = new Proxy(Orig, {
           construct: function(target, args) {
             var ctx = new (Function.prototype.bind.apply(target, [null].concat(args)))();
             allCtx.push(ctx);
-            window._dbg && window._dbg('AudioCtx CREATED via Proxy (' + CtorName + ') state=' + ctx.state + ' total=' + allCtx.length, 'dbg-info');
             return ctx;
           }
         });
-        window._dbg && window._dbg('Proxied ' + CtorName + ' OK', 'dbg-info');
       }
       proxyAC('AudioContext');
       proxyAC('webkitAudioContext');
 
-      /* ── 2. Resume ALL known contexts ──
-       * Called from every real user activation event. Resumes
-       * any suspended context and plays a silent buffer to
-       * prime iOS audio hardware.
+      /* ── 2. Generate a silent WAV blob URL (once) ──
+       * Playing an HTML <audio> element from a user gesture
+       * switches iOS from "ambient" audio session (muted by
+       * silent switch) to "playback" session (ignores switch).
+       * This is the same technique YouTube uses.
        */
-      function resumeAll(evtName) {
-        // Pick up SDL2's context even if created before our Proxy
+      var silentWavUrl = null;
+      function getSilentWavUrl() {
+        if (silentWavUrl) return silentWavUrl;
+        var sr = 44100, ns = 4410; // 0.1s of silence
+        var ds = ns * 2;
+        var buf = new ArrayBuffer(44 + ds);
+        var v = new DataView(buf);
+        function w(o, s) { for (var i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); }
+        w(0,'RIFF'); v.setUint32(4, 36+ds, true); w(8,'WAVE');
+        w(12,'fmt '); v.setUint32(16, 16, true);
+        v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+        v.setUint32(24, sr, true); v.setUint32(28, sr*2, true);
+        v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+        w(36,'data'); v.setUint32(40, ds, true);
+        silentWavUrl = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+        return silentWavUrl;
+      }
+
+      /* ── 3. Unlock iOS audio session ──
+       * Plays silent WAV via <audio> to switch audio session.
+       * Only needs to succeed once. Called from every user
+       * activation event until it succeeds.
+       */
+      function unlockAudioSession() {
+        if (audioSessionUnlocked) return;
+        try {
+          var audio = new Audio(getSilentWavUrl());
+          audio.setAttribute('playsinline', '');
+          var p = audio.play();
+          if (p) p.then(function() {
+            audioSessionUnlocked = true;
+            setTimeout(function() { audio.pause(); }, 200);
+          }).catch(function() {});
+        } catch(e) {}
+      }
+
+      /* ── 4. Resume ALL known AudioContexts ──
+       * Called from every user activation event. Also triggers
+       * the audio session unlock on iOS.
+       */
+      function resumeAll() {
+        unlockAudioSession();
+
+        // Pick up SDL2's context if created before our Proxy
         try {
           var sdlCtx = Module && Module.SDL2 && Module.SDL2.audioContext;
-          if (sdlCtx && allCtx.indexOf(sdlCtx) === -1) {
-            allCtx.push(sdlCtx);
-            window._dbg && window._dbg('Picked up SDL2 ctx, state=' + sdlCtx.state, 'dbg-info');
-          }
+          if (sdlCtx && allCtx.indexOf(sdlCtx) === -1) allCtx.push(sdlCtx);
         } catch(e) {}
 
-        var src_evt = evtName || '?';
         for (var i = 0; i < allCtx.length; i++) {
           try {
             var ctx = allCtx[i];
-            var before = ctx.state;
             if (ctx.state === 'suspended') {
-              ctx.resume().then(function() {
-                window._dbg && window._dbg('resume() RESOLVED ctx#' + i + ' state=' + ctx.state, 'dbg-info');
-              }).catch(function(err) {
-                window._dbg && window._dbg('resume() REJECTED: ' + err, 'dbg-err');
-              });
-              // Silent buffer kickstarts iOS audio hardware
+              ctx.resume();
+              // Silent buffer primes iOS audio hardware
               var buf = ctx.createBuffer(1, 1, ctx.sampleRate || 44100);
               var src = ctx.createBufferSource();
               src.buffer = buf;
               src.connect(ctx.destination);
               src.start(0);
-              window._dbg && window._dbg('resumeAll via ' + src_evt + ' ctx#' + i + ' ' + before + '->' + ctx.state, 'dbg-warn');
             }
-          } catch(e) {
-            window._dbg && window._dbg('resumeAll ERR ctx#' + i + ': ' + e, 'dbg-err');
-          }
-        }
-
-        if (allCtx.length === 0 && evtName) {
-          window._dbg && window._dbg('resumeAll via ' + src_evt + ': NO contexts yet', 'dbg-warn');
+          } catch(e) {}
         }
 
         if (!unlocked) {
@@ -882,151 +663,59 @@
         }
       }
 
-      /* ── 3. Activation-event listeners ──
+      /* ── 5. Activation-event listeners ──
+       * ONLY real user activation events (NOT touchstart).
+       * Per WebKit: touchend, mousedown, pointerdown (mouse),
+       *   pointerup (non-mouse), keydown (except Escape)
+       * Per Chrome: also click, contextmenu, auxclick, dblclick,
+       *   mouseup, keyup
        *
-       * CRITICAL: Only listen on REAL user activation events.
-       * Per WebKit (webkit.org/blog/13862/), Safari's activation
-       * triggering events are ONLY:
-       *   touchend, mousedown, pointerdown (mouse), pointerup
-       *   (non-mouse), keydown (except Escape)
-       *
-       * touchstart is explicitly NOT an activation event on Safari.
-       * Calling .resume() from a touchstart handler is silently
-       * ignored and may interfere with the subsequent touchend.
-       *
-       * Per Chrome (developer.chrome.com/blog/web-audio-autoplay),
-       * also include: click, contextmenu, auxclick, dblclick,
-       * mouseup, keyup.
-       *
-       * Combined list covers all browsers. Capture phase fires
-       * BEFORE bubble-phase handlers (before touch controls call
-       * preventDefault). Passive for performance. NOT { once }.
+       * Capture phase, passive, permanent (not { once }).
        */
-      var ACTIVATION_EVENTS = [
-        'touchend',     // iOS Safari primary activation event
-        'mousedown',    // Safari, Chrome, Firefox activation event
-        'mouseup',      // Chrome activation event
-        'pointerup',    // Safari (non-mouse), Chrome activation event
-        'click',        // All browsers (fires after mouseup/touchend)
-        'dblclick',     // Chrome activation event
-        'contextmenu',  // Chrome activation event
-        'auxclick',     // Chrome activation event
-        'keydown',      // All browsers (except Escape on Safari)
-        'keyup'         // Chrome activation event
-      ];
-      ACTIVATION_EVENTS.forEach(function(evt) {
-        document.addEventListener(evt, function() { resumeAll(evt); }, { capture: true, passive: true });
+      ['touchend','mousedown','mouseup','pointerup','click',
+       'dblclick','contextmenu','auxclick','keydown','keyup'
+      ].forEach(function(evt) {
+        document.addEventListener(evt, resumeAll, { capture: true, passive: true });
       });
 
-      /* ── 4. Overlay button ──
-       * The touchend handler pre-creates an AudioContext,
-       * plays a silent <audio> to unlock the iOS audio session,
-       * and stores the context on Module.SDL2.
+      /* ── 6. Overlay button ──
+       * Pre-creates AudioContext during user gesture and stores
+       * on Module.SDL2.audioContext so SDL reuses it.
        */
-      function unlockIOSAudioSession() {
+      function onOverlayGesture(e) {
+        if (e.preventDefault) e.preventDefault();
+        unlockAudioSession();
         try {
-          // Generate a valid WAV programmatically (0.1s silence)
-          var sampleRate = 44100, numSamples = 4410;
-          var dataSize = numSamples * 2; // 16-bit mono
-          var buffer = new ArrayBuffer(44 + dataSize);
-          var view = new DataView(buffer);
-          function writeStr(off, str) { for (var i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); }
-          writeStr(0, 'RIFF');
-          view.setUint32(4, 36 + dataSize, true);
-          writeStr(8, 'WAVE');
-          writeStr(12, 'fmt ');
-          view.setUint32(16, 16, true);
-          view.setUint16(20, 1, true); // PCM
-          view.setUint16(22, 1, true); // mono
-          view.setUint32(24, sampleRate, true);
-          view.setUint32(28, sampleRate * 2, true);
-          view.setUint16(32, 2, true);
-          view.setUint16(34, 16, true);
-          writeStr(36, 'data');
-          view.setUint32(40, dataSize, true);
-          var blob = new Blob([buffer], { type: 'audio/wav' });
-          var url = URL.createObjectURL(blob);
-          var audio = new Audio(url);
-          audio.setAttribute('playsinline', '');
-          var p = audio.play();
-          if (p) p.then(function() {
-            window._dbg && window._dbg('iOS audio session: <audio>.play() OK', 'dbg-info');
-            setTimeout(function() { audio.pause(); URL.revokeObjectURL(url); }, 200);
-          }).catch(function(e) {
-            window._dbg && window._dbg('iOS audio session: play() failed: ' + e, 'dbg-err');
-            URL.revokeObjectURL(url);
-          });
-        } catch(ex) {
-          window._dbg && window._dbg('iOS audio session ERR: ' + ex, 'dbg-err');
-        }
+          if (typeof Module !== 'undefined') {
+            if (!Module.SDL2) Module.SDL2 = {};
+            if (!Module.SDL2.audioContext) {
+              Module.SDL2.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+          }
+        } catch(ex) {}
+        resumeAll();
       }
+      audioUnlockButton.addEventListener('touchend', onOverlayGesture, { passive: false });
+      audioUnlockButton.addEventListener('click', onOverlayGesture);
 
-      audioUnlockButton.addEventListener('touchend', function(e) {
-        e.preventDefault();
-        window._dbg && window._dbg('OVERLAY touchend fired', 'dbg-info');
-        unlockIOSAudioSession();
-        // Pre-create context during this real user gesture
-        try {
-          if (typeof Module !== 'undefined') {
-            if (!Module.SDL2) Module.SDL2 = {};
-            if (!Module.SDL2.audioContext) {
-              Module.SDL2.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-              window._dbg && window._dbg('Pre-created SDL2.audioContext state=' + Module.SDL2.audioContext.state, 'dbg-info');
-            } else {
-              window._dbg && window._dbg('SDL2.audioContext already exists state=' + Module.SDL2.audioContext.state, 'dbg-info');
-            }
-          }
-        } catch(ex) { window._dbg && window._dbg('Overlay pre-create ERR: ' + ex, 'dbg-err'); }
-        resumeAll('overlay-touchend');
-      }, { passive: false });
-      audioUnlockButton.addEventListener('click', function() {
-        window._dbg && window._dbg('OVERLAY click fired', 'dbg-info');
-        unlockIOSAudioSession();
-        // Same pre-creation for desktop (click = activation event)
-        try {
-          if (typeof Module !== 'undefined') {
-            if (!Module.SDL2) Module.SDL2 = {};
-            if (!Module.SDL2.audioContext) {
-              Module.SDL2.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-              window._dbg && window._dbg('Pre-created SDL2.audioContext state=' + Module.SDL2.audioContext.state, 'dbg-info');
-            }
-          }
-        } catch(ex) { window._dbg && window._dbg('Overlay pre-create ERR: ' + ex, 'dbg-err'); }
-        resumeAll('overlay-click');
-      });
-
-      /* ── 5. Expose for touch controls ── */
+      /* ── 7. Expose for touch controls ── */
       window.tryUnlockGameAudio = resumeAll;
 
-      /* ── 6. Poll for overlay visibility + debug state ── */
+      /* ── 8. Poll for overlay visibility ── */
       var pollCount = 0;
-      var lastDbgState = '';
       var pollTimer = setInterval(function() {
         try {
           var ctx = Module && Module.SDL2 && Module.SDL2.audioContext;
           if (ctx) {
-            if (allCtx.indexOf(ctx) === -1) {
-              allCtx.push(ctx);
-              window._dbg && window._dbg('Poll: discovered SDL2 ctx state=' + ctx.state, 'dbg-info');
-            }
+            if (allCtx.indexOf(ctx) === -1) allCtx.push(ctx);
             if (ctx.state === 'running') audioUnlockOverlay.classList.add('hidden');
-          }
-          // Periodic state dump (every 5s for first 30s)
-          var stateStr = 'ctxN=' + allCtx.length;
-          for (var i = 0; i < allCtx.length; i++) stateStr += ' #' + i + '=' + allCtx[i].state;
-          if (ctx) stateStr += ' SDL2=' + ctx.state;
-          if (stateStr !== lastDbgState && pollCount < 120 && pollCount % 20 === 0) {
-            window._dbg && window._dbg('Poll: ' + stateStr, 'dbg-info');
-            lastDbgState = stateStr;
           }
         } catch(e) {}
         if (++pollCount > 240) clearInterval(pollTimer);
       }, 250);
 
-      /* ── 7. Re-resume on visibility change ──
-       * iOS suspends AudioContext when app is backgrounded.
-       * When returning to foreground after user has interacted,
-       * re-resume all contexts.
+      /* ── 9. Re-resume on visibility change ──
+       * iOS suspends AudioContext when backgrounded.
        */
       document.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'visible' && unlocked) resumeAll();
@@ -1122,8 +811,7 @@
       function onEnd(e) {
         // Resume audio on touchend — touchend IS a user activation
         // event on Safari (unlike touchstart which is NOT).
-        window._dbg && window._dbg('touch-ctrl touchend fired', 'dbg-info');
-        if (window.tryUnlockGameAudio) window.tryUnlockGameAudio('ctrl-touchend');
+        if (window.tryUnlockGameAudio) window.tryUnlockGameAudio();
         e.preventDefault();
         for (var i = 0; i < e.changedTouches.length; i++) {
           var id = e.changedTouches[i].identifier;
