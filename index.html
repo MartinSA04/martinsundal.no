@@ -130,6 +130,27 @@
     progress::-webkit-progress-value { background: #5b7fff; border-radius: 6px; }
     progress::-moz-progress-bar { background: #5b7fff; border-radius: 6px; }
 
+    /* ── Debug overlay ── */
+    #debug-overlay {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      max-height: 35vh;
+      overflow-y: auto;
+      background: rgba(0,0,0,0.85);
+      color: #0f0;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      line-height: 1.3;
+      padding: 4px 6px;
+      z-index: 9999;
+      pointer-events: auto;
+      -webkit-overflow-scrolling: touch;
+      word-wrap: break-word;
+    }
+    #debug-overlay .dbg-warn { color: #ff0; }
+    #debug-overlay .dbg-err  { color: #f44; }
+    #debug-overlay .dbg-info { color: #4cf; }
+
     /* ── Audio unlock overlay ── */
     #audio-unlock {
       position: fixed;
@@ -356,7 +377,60 @@
     <button id="audio-unlock-btn" type="button">Tap to enable audio</button>
   </div>
 
+  <div id="debug-overlay"></div>
+
   <script>
+    /* ═══════════════════════════════════════════════════════════
+     *  DEBUG OVERLAY — mirrors console to on-screen div
+     *  TEMPORARY: remove when audio issue is resolved
+     * ═══════════════════════════════════════════════════════════ */
+    (function() {
+      var dbg = document.getElementById('debug-overlay');
+      var maxLines = 80;
+      var lineCount = 0;
+      function addLine(msg, cls) {
+        var d = document.createElement('div');
+        if (cls) d.className = cls;
+        d.textContent = msg;
+        dbg.appendChild(d);
+        lineCount++;
+        if (lineCount > maxLines) dbg.removeChild(dbg.firstChild);
+        dbg.scrollTop = dbg.scrollHeight;
+      }
+      window._dbg = function(msg, cls) { addLine(msg, cls); };
+
+      // Intercept console methods
+      var origLog  = console.log;
+      var origWarn = console.warn;
+      var origErr  = console.error;
+      console.log = function() {
+        origLog.apply(console, arguments);
+        addLine(Array.prototype.slice.call(arguments).join(' '));
+      };
+      console.warn = function() {
+        origWarn.apply(console, arguments);
+        addLine('WARN: ' + Array.prototype.slice.call(arguments).join(' '), 'dbg-warn');
+      };
+      console.error = function() {
+        origErr.apply(console, arguments);
+        addLine('ERR: ' + Array.prototype.slice.call(arguments).join(' '), 'dbg-err');
+      };
+
+      // Catch unhandled errors
+      window.addEventListener('error', function(e) {
+        addLine('UNCAUGHT: ' + e.message + ' @ ' + e.filename + ':' + e.lineno, 'dbg-err');
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        addLine('PROMISE: ' + (e.reason || e), 'dbg-err');
+      });
+
+      addLine('=== Debug overlay active ===', 'dbg-info');
+      addLine('UA: ' + navigator.userAgent.substring(0, 80), 'dbg-info');
+      addLine('AudioContext: ' + (typeof AudioContext) + ', webkit: ' + (typeof webkitAudioContext), 'dbg-info');
+      addLine('Proxy: ' + (typeof Proxy), 'dbg-info');
+      addLine('userActivation: ' + (typeof navigator.userActivation), 'dbg-info');
+    })();
+
     /* ═══════════════════════════════════════════════════════════
      *  DOM REFERENCES
      * ═══════════════════════════════════════════════════════════ */
@@ -576,14 +650,19 @@
        */
       function proxyAC(CtorName) {
         var Original = window[CtorName];
-        if (!Original || typeof Proxy === 'undefined') return;
+        if (!Original || typeof Proxy === 'undefined') {
+          window._dbg && window._dbg('Proxy skip: ' + CtorName + ' orig=' + !!Original + ' Proxy=' + (typeof Proxy), 'dbg-warn');
+          return;
+        }
         window[CtorName] = new Proxy(Original, {
           construct: function(target, args) {
             var ctx = new (Function.prototype.bind.apply(target, [null].concat(args)))();
             allCtx.push(ctx);
+            window._dbg && window._dbg('AudioCtx CREATED via Proxy (' + CtorName + ') state=' + ctx.state + ' total=' + allCtx.length, 'dbg-info');
             return ctx;
           }
         });
+        window._dbg && window._dbg('Proxied ' + CtorName + ' OK', 'dbg-info');
       }
       proxyAC('AudioContext');
       proxyAC('webkitAudioContext');
@@ -593,26 +672,42 @@
        * any suspended context and plays a silent buffer to
        * prime iOS audio hardware.
        */
-      function resumeAll() {
+      function resumeAll(evtName) {
         // Pick up SDL2's context even if created before our Proxy
         try {
           var sdlCtx = Module && Module.SDL2 && Module.SDL2.audioContext;
-          if (sdlCtx && allCtx.indexOf(sdlCtx) === -1) allCtx.push(sdlCtx);
+          if (sdlCtx && allCtx.indexOf(sdlCtx) === -1) {
+            allCtx.push(sdlCtx);
+            window._dbg && window._dbg('Picked up SDL2 ctx, state=' + sdlCtx.state, 'dbg-info');
+          }
         } catch(e) {}
 
+        var src_evt = evtName || '?';
         for (var i = 0; i < allCtx.length; i++) {
           try {
             var ctx = allCtx[i];
+            var before = ctx.state;
             if (ctx.state === 'suspended') {
-              ctx.resume();
+              ctx.resume().then(function() {
+                window._dbg && window._dbg('resume() RESOLVED ctx#' + i + ' state=' + ctx.state, 'dbg-info');
+              }).catch(function(err) {
+                window._dbg && window._dbg('resume() REJECTED: ' + err, 'dbg-err');
+              });
               // Silent buffer kickstarts iOS audio hardware
               var buf = ctx.createBuffer(1, 1, ctx.sampleRate || 44100);
               var src = ctx.createBufferSource();
               src.buffer = buf;
               src.connect(ctx.destination);
               src.start(0);
+              window._dbg && window._dbg('resumeAll via ' + src_evt + ' ctx#' + i + ' ' + before + '->' + ctx.state, 'dbg-warn');
             }
-          } catch(e) {}
+          } catch(e) {
+            window._dbg && window._dbg('resumeAll ERR ctx#' + i + ': ' + e, 'dbg-err');
+          }
+        }
+
+        if (allCtx.length === 0 && evtName) {
+          window._dbg && window._dbg('resumeAll via ' + src_evt + ': NO contexts yet', 'dbg-warn');
         }
 
         if (!unlocked) {
@@ -654,7 +749,7 @@
         'keyup'         // Chrome activation event
       ];
       ACTIVATION_EVENTS.forEach(function(evt) {
-        document.addEventListener(evt, resumeAll, { capture: true, passive: true });
+        document.addEventListener(evt, function() { resumeAll(evt); }, { capture: true, passive: true });
       });
 
       /* ── 4. Overlay button ──
@@ -665,41 +760,59 @@
        */
       audioUnlockButton.addEventListener('touchend', function(e) {
         e.preventDefault();
+        window._dbg && window._dbg('OVERLAY touchend fired', 'dbg-info');
         // Pre-create context during this real user gesture
         try {
           if (typeof Module !== 'undefined') {
             if (!Module.SDL2) Module.SDL2 = {};
             if (!Module.SDL2.audioContext) {
               Module.SDL2.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+              window._dbg && window._dbg('Pre-created SDL2.audioContext state=' + Module.SDL2.audioContext.state, 'dbg-info');
+            } else {
+              window._dbg && window._dbg('SDL2.audioContext already exists state=' + Module.SDL2.audioContext.state, 'dbg-info');
             }
           }
-        } catch(ex) {}
-        resumeAll();
+        } catch(ex) { window._dbg && window._dbg('Overlay pre-create ERR: ' + ex, 'dbg-err'); }
+        resumeAll('overlay-touchend');
       }, { passive: false });
       audioUnlockButton.addEventListener('click', function() {
+        window._dbg && window._dbg('OVERLAY click fired', 'dbg-info');
         // Same pre-creation for desktop (click = activation event)
         try {
           if (typeof Module !== 'undefined') {
             if (!Module.SDL2) Module.SDL2 = {};
             if (!Module.SDL2.audioContext) {
               Module.SDL2.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+              window._dbg && window._dbg('Pre-created SDL2.audioContext state=' + Module.SDL2.audioContext.state, 'dbg-info');
             }
           }
-        } catch(ex) {}
-        resumeAll();
+        } catch(ex) { window._dbg && window._dbg('Overlay pre-create ERR: ' + ex, 'dbg-err'); }
+        resumeAll('overlay-click');
       });
 
       /* ── 5. Expose for touch controls ── */
       window.tryUnlockGameAudio = resumeAll;
 
-      /* ── 6. Poll for overlay visibility ── */
+      /* ── 6. Poll for overlay visibility + debug state ── */
       var pollCount = 0;
+      var lastDbgState = '';
       var pollTimer = setInterval(function() {
         try {
           var ctx = Module && Module.SDL2 && Module.SDL2.audioContext;
           if (ctx) {
-            if (allCtx.indexOf(ctx) === -1) allCtx.push(ctx);
+            if (allCtx.indexOf(ctx) === -1) {
+              allCtx.push(ctx);
+              window._dbg && window._dbg('Poll: discovered SDL2 ctx state=' + ctx.state, 'dbg-info');
+            }
             if (ctx.state === 'running') audioUnlockOverlay.classList.add('hidden');
+          }
+          // Periodic state dump (every 5s for first 30s)
+          var stateStr = 'ctxN=' + allCtx.length;
+          for (var i = 0; i < allCtx.length; i++) stateStr += ' #' + i + '=' + allCtx[i].state;
+          if (ctx) stateStr += ' SDL2=' + ctx.state;
+          if (stateStr !== lastDbgState && pollCount < 120 && pollCount % 20 === 0) {
+            window._dbg && window._dbg('Poll: ' + stateStr, 'dbg-info');
+            lastDbgState = stateStr;
           }
         } catch(e) {}
         if (++pollCount > 240) clearInterval(pollTimer);
@@ -804,7 +917,8 @@
       function onEnd(e) {
         // Resume audio on touchend — touchend IS a user activation
         // event on Safari (unlike touchstart which is NOT).
-        if (window.tryUnlockGameAudio) window.tryUnlockGameAudio();
+        window._dbg && window._dbg('touch-ctrl touchend fired', 'dbg-info');
+        if (window.tryUnlockGameAudio) window.tryUnlockGameAudio('ctrl-touchend');
         e.preventDefault();
         for (var i = 0; i < e.changedTouches.length; i++) {
           var id = e.changedTouches[i].identifier;
