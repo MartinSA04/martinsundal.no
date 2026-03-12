@@ -14,254 +14,360 @@
     />
     <meta property="og:type" content="website" />
     <title>Martin Sundal Aspås</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="site-header">
-      <div class="container header-inner">
-        <button class="logo" type="button" aria-label="Logo secret trigger">MSA</button>
+    <div class="site-shell">
+      <header class="site-header">
+        <div class="container header-inner">
+          <a href="#home" class="logo" aria-label="Home">MSA</a>
 
-        <nav id="site-nav" class="site-nav" aria-label="Primary navigation">
-          <a href="#work">Work</a>
-          <a href="#projects">Projects</a>
-          <a href="#skills">Skills</a>
-          <a href="#contact">Contact</a>
-        </nav>
+          <nav id="site-nav" class="site-nav" aria-label="Primary navigation">
+            <a href="#about">About</a>
+            <a href="#work">Work</a>
+            <a href="#projects">Projects</a>
+            <a href="#skills">Skills</a>
+            <a href="#contact">Contact</a>
+          </nav>
 
-        <div class="header-actions">
-          <button
-            id="theme-toggle"
-            class="theme-toggle"
-            type="button"
-            aria-label="Toggle theme"
-            title="Toggle theme"
-          >
-            ◐
-          </button>
+          <div class="header-actions">
+            <button
+              id="theme-toggle"
+              class="theme-toggle"
+              type="button"
+              aria-label="Toggle theme"
+              title="Toggle theme"
+            >
+              ◐
+            </button>
 
-          <button
-            class="nav-toggle"
-            type="button"
-            aria-expanded="false"
-            aria-controls="site-nav"
-            aria-label="Toggle navigation menu"
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
+            <button
+              class="nav-toggle"
+              type="button"
+              aria-expanded="false"
+              aria-controls="site-nav"
+              aria-label="Toggle navigation menu"
+            >
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
 
-    <div id="egg-banner" class="egg-banner" aria-live="polite"></div>
+      <main>
+        <section id="home" class="hero section">
+          <div class="container hero-grid">
+            <div>
+              <p class="eyebrow">Software Engineer @ Aker Solutions · NTNU Student</p>
+              <h1>Hi, I’m Martin.</h1>
+              <p class="lead">
+                I like building software for things that feel real — robotics,
+                simulation, engineering tools, and the occasional side project just
+                because it sounds fun.
+              </p>
 
-    <main>
-      <section id="home" class="hero section">
-        <div class="container hero-grid">
-          <div>
-            <p class="eyebrow">
-              Software Engineer @ Aker Solutions · NTNU Student
-            </p>
-            <h1>Hi, I'm Martin.</h1>
-            <p class="lead">
-              I like building software for things that feel real — robotics,
-              simulation, engineering tools, and the occasional side project
-              just because it's a fun side quest.
-            </p>
+              <div class="hero-actions">
+                <a class="btn btn-primary" href="#projects">See projects</a>
+                <a
+                  class="btn btn-secondary"
+                  href="https://linkedin.com/in/martinsa04"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  LinkedIn
+                </a>
+              </div>
+            </div>
 
-            <div class="hero-actions">
-              <a class="btn btn-primary" href="#projects">See projects</a>
+            <aside class="hero-card card">
+              <span class="status-chip">Based in Trondheim, Norway</span>
+              <h2>A bit about me</h2>
+              <p>
+                I work with software at Aker Solutions and study Applied Physics
+                and Mathematics at NTNU. Most of what I enjoy sits somewhere
+                between code, math, and physical systems.
+              </p>
+              <ul class="tag-list">
+                <li>C++</li>
+                <li>Python</li>
+                <li>Robotics</li>
+                <li>Simulation</li>
+                <li>Side projects</li>
+              </ul>
+            </aside>
+          </div>
+        </section>
+
+        <section id="about" class="section">
+          <div class="container section-narrow">
+            <div class="section-head">
+              <h2>About</h2>
+            </div>
+            <div class="card prose-card">
+              <p>
+                I’m Martin Sundal Aspås, a software engineer based in Trondheim.
+                I work at Aker Solutions, where I spend time on industrial
+                software, automation, and engineering-related systems.
+              </p>
+              <p>
+                Alongside that, I study <strong>Applied Physics and
+                Mathematics</strong> at <strong>NTNU</strong>. I enjoy projects
+                that combine programming with problem-solving in the real world.
+              </p>
+              <p>
+                Outside of work and school, I like making things that help me
+                learn — from game systems to graphics experiments to tools that
+                are useful just because they’re fun to build.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="work" class="section">
+          <div class="container">
+            <div class="section-head">
+              <h2>What I work on</h2>
+            </div>
+
+            <div class="card-grid">
+              <article class="card">
+                <h3>Industrial software</h3>
+                <p>
+                  Building software that supports engineering workflows,
+                  automation, and production-oriented systems.
+                </p>
+              </article>
+
+              <article class="card">
+                <h3>Robotics & simulation</h3>
+                <p>
+                  Working on systems where software connects with geometry,
+                  motion, and physical constraints.
+                </p>
+              </article>
+
+              <article class="card">
+                <h3>Side projects</h3>
+                <p>
+                  Making smaller projects that let me explore graphics, gameplay,
+                  tools, and ideas I find interesting.
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="projects" class="section">
+          <div class="container">
+            <div class="section-head">
+              <h2>Projects</h2>
+              <p>A few things I’ve built recently.</p>
+            </div>
+
+            <div class="project-grid">
+              <article class="project-card card" data-secret-card>
+                <div class="project-content">
+                  <h3>Cipherbound</h3>
+                  <p>
+                    A Pokémon-like game built from scratch in C++, focused on core
+                    systems, gameplay, and building a complete project from the
+                    ground up.
+                  </p>
+                  <ul class="tag-list">
+                    <li>C++</li>
+                    <li>Game systems</li>
+                    <li>Architecture</li>
+                  </ul>
+                  <a
+                    class="btn btn-primary"
+                    href="https://cipherbound.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Visit Cipherbound
+                  </a>
+                </div>
+              </article>
+
+              <article class="project-card card">
+                <img
+                  src="render.png"
+                  alt="Rendered black hole image"
+                  class="project-image"
+                />
+                <div class="project-content">
+                  <h3>Interactive Black Hole Renderer</h3>
+                  <p>
+                    A renderer written in C++ that simulates gravitational
+                    lensing around a Schwarzschild black hole.
+                  </p>
+                  <ul class="tag-list">
+                    <li>C++</li>
+                    <li>Physics simulation</li>
+                    <li>Rendering</li>
+                  </ul>
+                  <a
+                    class="btn btn-secondary"
+                    href="https://github.com/MartinSA04/Black-Hole-Simulator"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View on GitHub
+                  </a>
+                </div>
+              </article>
+            </div>
+
+            <article class="card secret-project hidden" id="secret-project" aria-hidden="true">
+              <div class="secret-project-head">
+                <h3>Late Night Build</h3>
+                <button
+                  id="secret-project-close"
+                  class="secret-project-close"
+                  type="button"
+                  aria-label="Hide late night build"
+                >
+                  Hide
+                </button>
+              </div>
+              <p>
+                You found the after-hours card. This slot is reserved for strange ideas,
+                half-finished experiments, and things that accidentally became real.
+              </p>
+              <ul class="tag-list">
+                <li>Night mode</li>
+                <li>Secret unlocked</li>
+                <li>Prototype energy</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section id="skills" class="section">
+          <div class="container section-narrow">
+            <div class="section-head">
+              <h2>Languages & tools</h2>
+            </div>
+            <div class="card">
+              <ul class="skill-list">
+                <li>C++</li>
+                <li>Python</li>
+                <li>ROS2</li>
+                <li>Docker</li>
+                <li>Git</li>
+                <li>Linux</li>
+                <li>Bash</li>
+                <li>NumPy</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="contact" class="section">
+          <div class="container section-narrow">
+            <div class="section-head">
+              <h2>Contact</h2>
+              <p>You can find me here.</p>
+            </div>
+
+            <div class="contact-links card">
               <a
-                class="btn btn-secondary"
+                class="contact-link"
                 href="https://linkedin.com/in/martinsa04"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                LinkedIn
+                <span>LinkedIn</span>
+                <span>martinsa04</span>
+              </a>
+              <a class="contact-link" href="mailto:martin.s.aspas@gmail.com">
+                <span>Email</span>
+                <span>martin.s.aspas@gmail.com</span>
+              </a>
+              <a
+                class="contact-link"
+                href="https://www.buymeacoffee.com/martinsa04"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>Buy Me a Coffee</span>
+                <span>For side projects</span>
               </a>
             </div>
           </div>
+        </section>
+      </main>
 
-          <aside class="hero-card card">
-            <span class="status-chip">Based in Trondheim, Norway</span>
-            <h2>A bit about me</h2>
-            <p>
-              I work with software at Aker Solutions and study Applied Physics
-              and Mathematics at NTNU. Most of what I enjoy sits somewhere
-              between code, math, and physical systems.
-            </p>
-            <ul class="tag-list">
-              <li>C++</li>
-              <li>Python</li>
-              <li>Robotics</li>
-              <li>Simulation</li>
-              <li>Side projects</li>
-            </ul>
-          </aside>
+      <footer class="site-footer">
+        <div class="container footer-inner">
+          <p>© 2026 Martin Sundal Aspås</p>
+          <button class="footer-stars" id="footer-stars" type="button" aria-label="Try a constellation puzzle">
+            <span data-star="0">✦</span>
+            <span data-star="1">✦</span>
+            <span data-star="2">✦</span>
+            <span data-star="3">✦</span>
+          </button>
         </div>
-      </section>
+      </footer>
+    </div>
 
-      <section id="work" class="section">
-        <div class="container">
-          <div class="section-head">
-            <h2>What I work on</h2>
-          </div>
+    <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="false"></div>
 
-          <div class="card-grid">
-            <article class="card">
-              <h3>Industrial software</h3>
-              <p>
-                Building software that supports engineering workflows,
-                automation, and production-oriented systems.
-              </p>
-            </article>
-
-            <article class="card">
-              <h3>Robotics & simulation</h3>
-              <p>
-                Working on systems where software connects with geometry,
-                motion, and physical constraints.
-              </p>
-            </article>
-
-            <article class="card">
-              <h3>Side projects</h3>
-              <p>
-                Making smaller projects that let me explore graphics, gameplay,
-                tools, and ideas I find interesting while farming XP.
-              </p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section id="projects" class="section">
-        <div class="container">
-          <div class="section-head">
-            <h2>Projects</h2>
-            <p>A few recent builds and side quests.</p>
-          </div>
-
-          <div class="project-grid">
-            <article class="project-card card">
-              <div class="project-content">
-                <h3>Cipherbound</h3>
-                <p>
-                  A Pokémon-like game built from scratch in C++, focused on core
-                  systems, gameplay, and building a complete project from the
-                  ground up.
-                </p>
-                <ul class="tag-list">
-                  <li>C++</li>
-                  <li>Game systems</li>
-                  <li>Architecture</li>
-                </ul>
-                <a
-                  class="btn btn-primary"
-                  href="https://cipherbound.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Press Start
-                </a>
-              </div>
-            </article>
-
-            <article id="black-hole-project" class="project-card card">
-              <img
-                src="render.png"
-                alt="Rendered black hole image"
-                class="project-image"
-              />
-              <div class="project-content">
-                <h3>Interactive Black Hole Renderer</h3>
-                <p>
-                  A renderer written in C++ that simulates gravitational lensing
-                  around a Schwarzschild black hole.
-                </p>
-                <ul class="tag-list">
-                  <li>C++</li>
-                  <li>Physics simulation</li>
-                  <li>Rendering</li>
-                </ul>
-                <a
-                  class="btn btn-secondary"
-                  href="https://github.com/MartinSA04/Black-Hole-Simulator"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View on GitHub
-                </a>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section id="skills" class="section">
-        <div class="container section-narrow">
-          <div class="section-head">
-            <h2>Languages & tools</h2>
-          </div>
-          <div class="card">
-            <ul class="skill-list">
-              <li>C++</li>
-              <li>Python</li>
-              <li>ROS2</li>
-              <li>Docker</li>
-              <li>Git</li>
-              <li>Linux</li>
-              <li>Bash</li>
-              <li>NumPy</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section id="contact" class="section">
-        <div class="container section-narrow">
-          <div class="section-head">
-            <h2>Contact</h2>
-            <p>Ping me if you want to team up.</p>
-          </div>
-
-          <div class="contact-links card">
-            <a
-              class="contact-link"
-              href="https://linkedin.com/in/martinsa04"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <span>LinkedIn</span>
-              <span>martinsa04</span>
-            </a>
-            <a class="contact-link" href="mailto:martin.s.aspas@gmail.com">
-              <span>Email</span>
-              <span>martin.s.aspas@gmail.com</span>
-            </a>
-            <a
-              class="contact-link"
-              href="https://www.buymeacoffee.com/martinsa04"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <span>Buy Me a Coffee</span>
-              <span>For side projects</span>
-            </a>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <div class="container footer-inner">
-        <p>© 2026 Martin Sundal Aspås</p>
-        <p class="footer-note">Psst: keyboard combos and curious clicks may reveal secrets.</p>
-        <button id="reset-secrets" class="reset-secrets" type="button">Reset secrets</button>
-        <p id="easter-egg" class="easter-egg" aria-live="polite"></p>
+    <div class="terminal hidden" id="terminal" aria-hidden="true">
+      <div class="terminal-header">
+        <strong>msa://terminal</strong>
+        <button class="terminal-close" id="terminal-close" type="button" aria-label="Close terminal">×</button>
       </div>
-    </footer>
+      <div class="terminal-body" id="terminal-body">
+        <p><span class="terminal-prompt">></span> curious mind detected</p>
+        <p>Try: <code>whoami</code>, <code>list_projects</code>, <code>current_focus</code>, <code>fun_fact</code>, <code>help</code></p>
+      </div>
+      <form class="terminal-form" id="terminal-form">
+        <span class="terminal-prompt">></span>
+        <input id="terminal-input" type="text" autocomplete="off" spellcheck="false" aria-label="Terminal input" />
+      </form>
+    </div>
+
+    <div class="command-palette hidden" id="command-palette" aria-hidden="true">
+      <div class="command-panel">
+        <div class="command-top">
+          <strong>Command palette</strong>
+          <button id="command-close" type="button" aria-label="Close command palette">×</button>
+        </div>
+        <div class="command-list">
+          <button data-command="projects">Go to Projects</button>
+          <button data-command="theme">Toggle Theme</button>
+          <button data-command="blackhole">Launch Arcade Mode</button>
+          <button data-command="retro">Enable Retro Mode</button>
+          <button data-command="linkedin">Open LinkedIn</button>
+          <button data-command="secret">Summon Secret</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="secret-facts hidden" id="secret-facts" aria-hidden="true">
+      <div class="card secret-facts-card">
+        <h3>Personal debug info</h3>
+        <p id="secret-fact-text">Loading fun facts…</p>
+      </div>
+    </div>
+
+    <div class="retro-overlay hidden" id="retro-overlay" aria-hidden="true">
+      <div class="card retro-card">
+        <h3>Retro mode unlocked</h3>
+        <p>
+          A temporary low-res interface for anyone who enjoys unnecessary alternate realities.
+        </p>
+      </div>
+    </div>
 
     <script src="script.js"></script>
   </body>

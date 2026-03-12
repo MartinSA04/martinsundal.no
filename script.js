@@ -1,53 +1,90 @@
 const root = document.documentElement;
+const body = document.body;
 const themeToggle = document.getElementById("theme-toggle");
 const navToggle = document.querySelector(".nav-toggle");
 const siteNav = document.getElementById("site-nav");
 const navLinks = siteNav.querySelectorAll("a");
 const logo = document.querySelector(".logo");
-const easterEgg = document.getElementById("easter-egg");
-const eggBanner = document.getElementById("egg-banner");
-const resetSecretsButton = document.getElementById("reset-secrets");
-const blackHoleProject = document.getElementById("black-hole-project");
+const toastStack = document.getElementById("toast-stack");
+const terminal = document.getElementById("terminal");
+const terminalBody = document.getElementById("terminal-body");
+const terminalForm = document.getElementById("terminal-form");
+const terminalInput = document.getElementById("terminal-input");
+const terminalClose = document.getElementById("terminal-close");
+const commandPalette = document.getElementById("command-palette");
+const commandClose = document.getElementById("command-close");
+const commandButtons = document.querySelectorAll("[data-command]");
+const footerStars = document.getElementById("footer-stars");
+const secretProject = document.getElementById("secret-project");
+const secretProjectClose = document.getElementById("secret-project-close");
+const secretFacts = document.getElementById("secret-facts");
+const secretFactText = document.getElementById("secret-fact-text");
+const retroOverlay = document.getElementById("retro-overlay");
 const storageKey = "msa-theme";
-const konamiStorageKey = "msa-easter-konami";
-const logoStorageKey = "msa-easter-logo";
-const blackHoleDriftSelector = [
-  ".site-header .logo",
-  ".site-nav a",
-  ".header-actions > button",
-  "#egg-banner",
-  "main .eyebrow",
-  "main h1",
-  "main h2",
-  "main h3",
-  "main p",
-  "main .btn",
-  "main .card",
-  "main .status-chip",
-  "main .tag-list li",
-  "main .skill-list li",
-  "main .contact-link",
-  ".site-footer .footer-inner > p",
-  ".site-footer .footer-inner > button",
-].join(", ");
-const blackHoleLensSelector = [
-  "main h1",
-  "main h2",
-  "main h3",
-  "main p",
-  ".site-nav a",
-  ".status-chip",
-  ".tag-list li",
-  ".skill-list li",
-  ".contact-link span",
-].join(", ");
+const secretSequence = [0, 2, 1, 3];
+const konami = [
+  "ArrowUp",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowLeft",
+  "ArrowRight",
+  "b",
+  "a",
+];
 
-let gravityResizeFrame = 0;
+let konamiBuffer = [];
+let typedBuffer = "";
+let logoClicks = 0;
+let achievements = new Set();
+let visitedSections = new Set();
+let footerProgress = [];
+let themeCycleCount = 0;
+let secretFactIndex = 0;
+let gameModeActive = false;
+let idleTimer;
+
+const TOAST_DURATION = 4200;
+const RETRO_POPUP_DURATION = 3200;
+
+const terminalCommands = {
+  help: "Available commands: whoami, list_projects, current_focus, fun_fact, clear",
+  whoami: "Martin Sundal Aspås — software engineer, physics & mathematics student, side-project enjoyer.",
+  list_projects: "Cipherbound, Interactive Black Hole Renderer, and a rotating backlog of experiments.",
+  current_focus: "Robotics, simulation, engineering software, and learning through building.",
+  fun_fact: "One of the nicer parts of programming is accidentally finding a new hobby inside a side project.",
+  clear: "__CLEAR__",
+};
+
+const personalFacts = [
+  "Current status: probably thinking about some combination of code, math, and a weird side project.",
+  "Preferred project shape: interesting enough to be slightly inconvenient.",
+  "Debug personality: calm until proven otherwise.",
+  "Favorite category of build: something technically unnecessary but deeply satisfying.",
+];
+
+const gameCopyOverrides = [
+  ["#home h1", "PLAYER ONE: MARTIN"],
+  [
+    "#home .lead",
+    "Quest briefing: ship reliable software for robotics, simulation, and side quests that should probably not exist.",
+  ],
+  ["#work .section-head h2", "Quest Log"],
+  ["#projects .section-head h2", "Level Select"],
+  ["#projects .section-head p", "Choose your next side quest."],
+  ["#contact .section-head h2", "Co-op Lobby"],
+  ["#contact .section-head p", "Send a ping to join the party."],
+  [".hero-actions .btn-primary", "Start Quest"],
+  ["#projects .project-card:first-child .btn-primary", "Enter Cipherbound"],
+  ["#projects .project-card:nth-child(2) .btn-secondary", "Inspect Artifact"],
+];
 
 const getPreferredTheme = () => {
   const savedTheme = localStorage.getItem(storageKey);
 
-  if (savedTheme === "light" || savedTheme === "dark") {
+  if (["light", "dark", "deep-space"].includes(savedTheme)) {
     return savedTheme;
   }
 
@@ -57,173 +94,263 @@ const getPreferredTheme = () => {
 };
 
 const applyTheme = (theme) => {
-  if (theme === "dark") {
-    root.setAttribute("data-theme", "dark");
-    themeToggle.textContent = "☾";
-    themeToggle.setAttribute("aria-label", "Switch to light theme");
-    themeToggle.setAttribute("title", "Switch to light theme");
-  } else {
+  if (theme === "light") {
     root.removeAttribute("data-theme");
     themeToggle.textContent = "☀";
-    themeToggle.setAttribute("aria-label", "Switch to dark theme");
-    themeToggle.setAttribute("title", "Switch to dark theme");
-  }
-};
-
-const revealEasterEgg = (message) => {
-  if (!easterEgg) {
+    themeToggle.setAttribute("aria-label", "Switch theme");
+    themeToggle.setAttribute("title", "Switch theme");
     return;
   }
 
-  easterEgg.textContent = message;
-  easterEgg.classList.add("is-visible");
+  root.setAttribute("data-theme", theme);
+  themeToggle.textContent = theme === "deep-space" ? "✦" : "☾";
+  themeToggle.setAttribute("aria-label", "Switch theme");
+  themeToggle.setAttribute("title", "Switch theme");
 };
 
-const hideEasterEgg = () => {
-  if (!easterEgg) {
-    return;
+const cycleTheme = () => {
+  const current = root.getAttribute("data-theme") || "light";
+  const shouldResetGameMode = gameModeActive;
+  const shouldResetRetroMode = body.classList.contains("retro-mode");
+  let nextTheme = "dark";
+
+  if (current === "dark") {
+    nextTheme = "light";
+  } else if (current === "light") {
+    nextTheme = "dark";
   }
 
-  easterEgg.textContent = "";
-  easterEgg.classList.remove("is-visible");
-};
+  themeCycleCount += 1;
 
-const setBanner = (message) => {
-  if (!eggBanner) {
-    return;
+  if (themeCycleCount >= 5 && current === "dark") {
+    nextTheme = "deep-space";
+    showToast("Deep space mode unlocked.");
+    unlockAchievement("Dark mode engineer");
   }
 
-  if (message) {
-    eggBanner.textContent = message;
-    eggBanner.classList.add("is-visible");
-    return;
+  if (current === "deep-space") {
+    nextTheme = "light";
   }
 
-  eggBanner.textContent = "";
-  eggBanner.classList.remove("is-visible");
-};
-
-const setSecretControlsVisible = (isVisible) => {
-  if (resetSecretsButton) {
-    resetSecretsButton.classList.toggle("is-visible", isVisible);
-  }
-};
-
-const getAbsoluteCenter = (element) => {
-  const rect = element.getBoundingClientRect();
-
-  return {
-    x: rect.left + window.scrollX + rect.width / 2,
-    y: rect.top + window.scrollY + rect.height / 2,
-  };
-};
-
-const collectLeafDriftTargets = () => {
-  const candidates = Array.from(document.querySelectorAll(blackHoleDriftSelector));
-
-  return candidates.filter(
-    (candidate) =>
-      !candidates.some(
-        (other) => other !== candidate && candidate.contains(other),
-      ),
-  );
-};
-
-const clearBlackHoleGravity = () => {
-  document.querySelectorAll(".bh-drift-target").forEach((element) => {
-    element.style.removeProperty("--bh-shift-x");
-    element.style.removeProperty("--bh-shift-y");
-    element.classList.remove("bh-drift-target");
-  });
-
-  document.querySelectorAll(".bh-lens-target").forEach((element) => {
-    element.classList.remove("bh-lens-target");
-  });
-};
-
-const applyBlackHoleGravity = () => {
-  if (!blackHoleProject) {
-    return;
+  if (shouldResetGameMode) {
+    resetGameMode();
   }
 
-  const blackHoleCenter = getAbsoluteCenter(blackHoleProject);
-  const targets = collectLeafDriftTargets();
+  if (shouldResetRetroMode) {
+    resetRetroMode();
+  }
 
-  targets.forEach((target) => {
-    const targetCenter = getAbsoluteCenter(target);
-    const dx = blackHoleCenter.x - targetCenter.x;
-    const dy = blackHoleCenter.y - targetCenter.y;
-    const distance = Math.hypot(dx, dy);
+  localStorage.setItem(storageKey, nextTheme);
+  applyTheme(nextTheme);
+};
 
-    if (distance < 1) {
-      target.style.setProperty("--bh-shift-x", "0px");
-      target.style.setProperty("--bh-shift-y", "0px");
-      target.classList.add("bh-drift-target");
+const showToast = (message, duration = TOAST_DURATION) => {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+  toastStack.appendChild(toast);
+
+  window.setTimeout(() => {
+    toast.remove();
+  }, duration);
+};
+
+const unlockAchievement = (name) => {
+  if (achievements.has(name)) return;
+  achievements.add(name);
+  showToast(`Achievement unlocked: ${name}`);
+};
+
+const revealSecretProject = () => {
+  secretProject.classList.remove("hidden");
+  secretProject.setAttribute("aria-hidden", "false");
+};
+
+const hideSecretProject = () => {
+  secretProject.classList.add("hidden");
+  secretProject.setAttribute("aria-hidden", "true");
+};
+
+const applyGameReferences = () => {
+  gameCopyOverrides.forEach(([selector, text]) => {
+    const element = document.querySelector(selector);
+    if (!element) {
       return;
     }
 
-    const pullStrength = Math.max(0.2, 1 - Math.min(distance, 1900) / 1900);
-    const magnitude = 1.6 + pullStrength * 6.4;
-    const shiftX = (dx / distance) * magnitude;
-    const shiftY = (dy / distance) * magnitude;
+    if (!element.dataset.originalCopy) {
+      element.dataset.originalCopy = element.textContent;
+    }
 
-    target.style.setProperty("--bh-shift-x", `${shiftX.toFixed(2)}px`);
-    target.style.setProperty("--bh-shift-y", `${shiftY.toFixed(2)}px`);
-    target.classList.add("bh-drift-target");
-  });
-
-  document.querySelectorAll(blackHoleLensSelector).forEach((element) => {
-    element.classList.add("bh-lens-target");
+    element.textContent = text;
   });
 };
 
-const refreshBlackHoleGravity = () => {
-  clearBlackHoleGravity();
-
-  if (root.classList.contains("egg-konami")) {
-    applyBlackHoleGravity();
-  }
+const resetGameReferences = () => {
+  document.querySelectorAll("[data-original-copy]").forEach((element) => {
+    element.textContent = element.dataset.originalCopy;
+    delete element.dataset.originalCopy;
+  });
 };
 
-const updateEggMode = () => {
-  const konamiUnlocked = localStorage.getItem(konamiStorageKey) === "1";
-  const logoUnlocked = localStorage.getItem(logoStorageKey) === "1";
-  const hasUnlockedSecrets = konamiUnlocked || logoUnlocked;
-
-  root.classList.toggle("egg-konami", konamiUnlocked);
-  root.classList.toggle("egg-logo", logoUnlocked);
-  setSecretControlsVisible(hasUnlockedSecrets);
-  refreshBlackHoleGravity();
-
-  if (konamiUnlocked && logoUnlocked) {
-    revealEasterEgg("Spacetime curvature increased.");
-    setBanner("BLACK HOLE MODE — Relic layer detected");
+const resetGameMode = () => {
+  if (!gameModeActive) {
     return;
   }
 
-  if (konamiUnlocked) {
-    revealEasterEgg("Spacetime curvature increased.");
-    setBanner("BLACK HOLE MODE — Gravitational lensing active");
+  gameModeActive = false;
+  body.classList.remove("game-mode");
+  resetGameReferences();
+};
+
+const launchGameMode = () => {
+  if (gameModeActive) return;
+
+  localStorage.setItem(storageKey, "dark");
+  applyTheme("dark");
+
+  gameModeActive = true;
+  body.classList.add("game-mode");
+  applyGameReferences();
+  showToast("Arcade mode engaged.");
+  unlockAchievement("Konami champion");
+  revealSecretProject();
+};
+
+const openTerminal = () => {
+  terminal.classList.remove("hidden");
+  terminal.setAttribute("aria-hidden", "false");
+  terminalInput.focus();
+};
+
+const closeTerminal = () => {
+  terminal.classList.add("hidden");
+  terminal.setAttribute("aria-hidden", "true");
+};
+
+const appendTerminalLine = (text, isCommand = false) => {
+  const line = document.createElement("p");
+  line.innerHTML = isCommand
+    ? `<span class="terminal-prompt">&gt;</span> ${text}`
+    : text;
+  terminalBody.appendChild(line);
+  terminalBody.scrollTop = terminalBody.scrollHeight;
+};
+
+const handleTerminalCommand = (command) => {
+  const normalized = command.trim().toLowerCase();
+  appendTerminalLine(command, true);
+
+  if (!normalized) return;
+
+  const output = terminalCommands[normalized] || "Unknown command. Try help.";
+
+  if (output === "__CLEAR__") {
+    terminalBody.innerHTML = "";
     return;
   }
 
-  if (logoUnlocked) {
-    revealEasterEgg("Logo secret active: relic mode enabled ✨");
-    setBanner("RELIC MODE — Hidden developer layer enabled");
-    return;
-  }
+  appendTerminalLine(output);
+};
 
-  hideEasterEgg();
-  setBanner("");
+const openCommandPalette = () => {
+  commandPalette.classList.remove("hidden");
+  commandPalette.setAttribute("aria-hidden", "false");
+};
+
+const closeCommandPalette = () => {
+  commandPalette.classList.add("hidden");
+  commandPalette.setAttribute("aria-hidden", "true");
+};
+
+const showPersonalFacts = () => {
+  secretFacts.classList.remove("hidden");
+  secretFacts.setAttribute("aria-hidden", "false");
+  secretFactText.textContent = personalFacts[secretFactIndex % personalFacts.length];
+  secretFactIndex += 1;
+};
+
+const hidePersonalFacts = () => {
+  secretFacts.classList.add("hidden");
+  secretFacts.setAttribute("aria-hidden", "true");
+};
+
+const hideRetroOverlay = () => {
+  retroOverlay.classList.add("hidden");
+  retroOverlay.setAttribute("aria-hidden", "true");
+};
+
+const resetRetroMode = () => {
+  body.classList.remove("retro-mode");
+  hideRetroOverlay();
+};
+
+const enableRetroMode = () => {
+  body.classList.add("retro-mode");
+  retroOverlay.classList.remove("hidden");
+  retroOverlay.setAttribute("aria-hidden", "false");
+  showToast("Retro mode engaged.");
+  window.setTimeout(() => {
+    hideRetroOverlay();
+  }, RETRO_POPUP_DURATION);
+};
+
+const trackSectionVisits = () => {
+  const sections = document.querySelectorAll("main section[id]");
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          visitedSections.add(entry.target.id);
+          if (visitedSections.size >= 5) {
+            unlockAchievement("Curious mind");
+          }
+        }
+      });
+    },
+    { threshold: 0.45 }
+  );
+
+  sections.forEach((section) => observer.observe(section));
+};
+
+const startIdleWatcher = () => {
+  const reset = () => {
+    window.clearTimeout(idleTimer);
+    idleTimer = window.setTimeout(() => {
+      unlockAchievement("Touch grass");
+    }, 120000);
+  };
+
+  ["mousemove", "scroll", "keydown", "click"].forEach((eventName) => {
+    window.addEventListener(eventName, reset, { passive: true });
+  });
+
+  reset();
 };
 
 applyTheme(getPreferredTheme());
+trackSectionVisits();
+startIdleWatcher();
 
-themeToggle.addEventListener("click", () => {
-  const nextTheme = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-  localStorage.setItem(storageKey, nextTheme);
-  applyTheme(nextTheme);
+const nightHour = new Date().getHours();
+if (nightHour >= 22 || nightHour < 5) {
+  revealSecretProject();
+}
+
+logo.addEventListener("click", () => {
+  logoClicks += 1;
+  if (logoClicks === 5) {
+    openTerminal();
+    showToast("Developer terminal unlocked.");
+  }
 });
+
+if (secretProjectClose) {
+  secretProjectClose.addEventListener("click", hideSecretProject);
+}
+
+themeToggle.addEventListener("click", cycleTheme);
 
 navToggle.addEventListener("click", () => {
   const isOpen = navToggle.getAttribute("aria-expanded") === "true";
@@ -238,72 +365,120 @@ navLinks.forEach((link) => {
   });
 });
 
-updateEggMode();
+terminalForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  handleTerminalCommand(terminalInput.value);
+  terminalInput.value = "";
+});
 
-const konamiCode = [
-  "ArrowUp",
-  "ArrowUp",
-  "ArrowDown",
-  "ArrowDown",
-  "ArrowLeft",
-  "ArrowRight",
-  "ArrowLeft",
-  "ArrowRight",
-  "b",
-  "a",
-];
+terminalClose.addEventListener("click", closeTerminal);
+commandClose.addEventListener("click", closeCommandPalette);
 
-let konamiIndex = 0;
+commandButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const command = button.dataset.command;
 
-document.addEventListener("keydown", (event) => {
-  const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
-  const expected = konamiCode[konamiIndex];
-
-  if (key === expected) {
-    konamiIndex += 1;
-
-    if (konamiIndex === konamiCode.length) {
-      localStorage.setItem(konamiStorageKey, "1");
-      updateEggMode();
-      konamiIndex = 0;
+    if (command === "projects") {
+      document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
+    } else if (command === "theme") {
+      cycleTheme();
+    } else if (command === "blackhole") {
+      launchGameMode();
+    } else if (command === "retro") {
+      enableRetroMode();
+    } else if (command === "linkedin") {
+      window.open("https://linkedin.com/in/martinsa04", "_blank", "noopener,noreferrer");
+    } else if (command === "secret") {
+      revealSecretProject();
+      showToast("Curiosity detected.");
     }
-  } else {
-    konamiIndex = key === konamiCode[0] ? 1 : 0;
+
+    closeCommandPalette();
+  });
+});
+
+footerStars.addEventListener("click", (event) => {
+  const star = event.target.closest("[data-star]");
+  if (!star) return;
+
+  const value = Number(star.dataset.star);
+  footerProgress.push(value);
+  star.classList.add("active");
+
+  window.setTimeout(() => {
+    star.classList.remove("active");
+  }, 300);
+
+  if (footerProgress.length > secretSequence.length) {
+    footerProgress.shift();
+  }
+
+  const matched = secretSequence.every((item, index) => footerProgress[index] === item);
+  if (matched) {
+    revealSecretProject();
+    showToast("Constellation recognized.");
+    footerProgress = [];
   }
 });
 
-let logoClicks = 0;
-
-if (logo) {
-  logo.addEventListener("click", () => {
-    logoClicks += 1;
-
-    if (logoClicks === 7) {
-      localStorage.setItem(logoStorageKey, "1");
-      updateEggMode();
-      logoClicks = 0;
-    }
-  });
-}
-
-if (resetSecretsButton) {
-  resetSecretsButton.addEventListener("click", () => {
-    localStorage.removeItem(konamiStorageKey);
-    localStorage.removeItem(logoStorageKey);
-    updateEggMode();
-  });
-}
-
-window.addEventListener("resize", () => {
-  if (!root.classList.contains("egg-konami")) {
+window.addEventListener("keydown", (event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+    event.preventDefault();
+    openCommandPalette();
     return;
   }
 
-  if (gravityResizeFrame) {
-    cancelAnimationFrame(gravityResizeFrame);
+  if (event.key === "/" && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
+    event.preventDefault();
+    openCommandPalette();
+    return;
   }
 
-  gravityResizeFrame = requestAnimationFrame(() => {
-    refreshBlackHoleGravity();
+  konamiBuffer.push(event.key.length === 1 ? event.key.toLowerCase() : event.key);
+  if (konamiBuffer.length > konami.length) {
+    konamiBuffer.shift();
+  }
+
+  const matchesKonami = konami.every((key, index) => konamiBuffer[index] === key);
+  if (matchesKonami) {
+    launchGameMode();
+    konamiBuffer = [];
+  }
+
+  if (event.key.length === 1 && /[a-z]/i.test(event.key)) {
+    typedBuffer += event.key.toLowerCase();
+    typedBuffer = typedBuffer.slice(-12);
+
+    if (typedBuffer.includes("martin")) {
+      showPersonalFacts();
+      unlockAchievement("Pattern recognized");
+      typedBuffer = "";
+    }
+
+    if (typedBuffer.includes("retro")) {
+      enableRetroMode();
+      typedBuffer = "";
+    }
+  }
+});
+
+[commandPalette, secretFacts].forEach((overlay) => {
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) {
+      overlay.classList.add("hidden");
+      overlay.setAttribute("aria-hidden", "true");
+    }
   });
+});
+
+secretFacts.addEventListener("click", (event) => {
+  if (event.target === secretFacts) {
+    hidePersonalFacts();
+  }
+});
+
+window.addEventListener("click", (event) => {
+  if (event.target === retroOverlay) {
+    hideRetroOverlay();
+  }
 });
