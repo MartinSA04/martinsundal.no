@@ -51,10 +51,10 @@ const RETRO_POPUP_DURATION = 3200;
 
 const terminalCommands = {
   help: "Available commands: whoami, list_projects, current_focus, fun_fact, clear",
-  whoami: "Martin Sundal Aspås — software engineer, physics & mathematics student, side-project enjoyer.",
-  list_projects: "Cipherbound, Interactive Black Hole Renderer, and a rotating backlog of experiments.",
-  current_focus: "Robotics, simulation, engineering software, and learning through building.",
-  fun_fact: "One of the nicer parts of programming is accidentally finding a new hobby inside a side project.",
+  whoami: "Martin Sundal Aspås — software engineer by day, physics/math student by night, side-project enjoyer at all hours.",
+  list_projects: "Cipherbound, Interactive Black Hole Renderer, and a rotating backlog of experiments that definitely did not need to exist.",
+  current_focus: "Robotics, simulation, engineering software, and learning by building things that are technically unnecessary.",
+  fun_fact: "The best part of programming is accidentally discovering a new hobby while trying to finish an old one.",
   clear: "__CLEAR__",
 };
 

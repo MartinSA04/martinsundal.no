@@ -142,7 +142,7 @@
               aria-label="Toggle theme"
               title="Toggle theme"
             >
-              ◐
+              <span aria-hidden="true">◐</span>
             </button>
 
             <button
@@ -152,9 +152,9 @@
               aria-controls="site-nav"
               aria-label="Toggle navigation menu"
             >
-              <span></span>
-              <span></span>
-              <span></span>
+              <span aria-hidden="true"></span>
+              <span aria-hidden="true"></span>
+              <span aria-hidden="true"></span>
             </button>
           </div>
         </div>
@@ -167,9 +167,9 @@
               <p class="eyebrow">Software Engineer @ Aker Solutions · NTNU Student</p>
               <h1>Hi, I’m Martin.</h1>
               <p class="lead">
-                I like building software for things that feel real — robotics,
-                simulation, engineering tools, and the occasional side project just
-                because it sounds fun.
+                I write software for things that move, compute, or occasionally do
+                both at once — robotics, simulation, engineering tools, and a
+                steady pile of side projects that seemed like a great idea at 1am.
               </p>
 
               <div class="hero-actions">
@@ -189,9 +189,10 @@
               <span class="status-chip">Based in Trondheim, Norway</span>
               <h2>A bit about me</h2>
               <p>
-                I work with software at Aker Solutions and study Applied Physics
-                and Mathematics at NTNU. Most of what I enjoy sits somewhere
-                between code, math, and physical systems.
+                I work on software at Aker Solutions and study Applied Physics
+                and Mathematics at NTNU, which mostly means I spend my days
+                Googling error messages in two languages and pretending the
+                whiteboard makes sense.
               </p>
               <ul class="tag-list">
                 <li>C++</li>
@@ -211,19 +212,23 @@
             </div>
             <div class="card prose-card">
               <p>
-                I’m Martin Sundal Aspås, a software engineer based in Trondheim.
-                I work at Aker Solutions, where I spend time on industrial
-                software, automation, and engineering-related systems.
+                I’m Martin, a software engineer in Trondheim. At Aker Solutions
+                I work on industrial software and automation, which is a fancy
+                way of saying I try to make complicated systems slightly less
+                complicated — with mixed but occasionally promising results.
               </p>
               <p>
                 Alongside that, I study <strong>Applied Physics and
-                Mathematics</strong> at <strong>NTNU</strong>. I enjoy projects
-                that combine programming with problem-solving in the real world.
+                Mathematics</strong> at <strong>NTNU</strong>. It sounds
+                impressive until you see me at 2am arguing with a partial
+                derivative that clearly started the fight.
               </p>
               <p>
-                Outside of work and school, I like making things that help me
-                learn — from game systems to graphics experiments to tools that
-                are useful just because they’re fun to build.
+                Outside of work and school, I build things that are technically
+                unnecessary but deeply satisfying — little games, graphics
+                experiments, tools I could’ve just downloaded. It’s how I
+                learn, and an excellent excuse to justify another mechanical
+                keyboard.
               </p>
             </div>
           </div>
@@ -272,6 +277,14 @@
 
             <div class="project-grid">
               <article class="project-card card" data-secret-card>
+                <img
+                  src="cipherbound.png"
+                  alt="Cipherbound screenshot showing a pixel-art town with two characters"
+                  class="project-image"
+                  width="1533"
+                  height="1146"
+                  loading="lazy"
+                />
                 <div class="project-content">
                   <h3>Cipherbound</h3>
                   <p>
@@ -279,19 +292,34 @@
                     systems, gameplay, and building a complete project from the
                     ground up.
                   </p>
+                  <p>
+                    Somehow this one won <strong>Best Project</strong> in the
+                    <strong>TDT4102</strong> course at <strong>NTNU</strong>,
+                    which I am still a little suspicious about.
+                  </p>
                   <ul class="tag-list">
                     <li>C++</li>
                     <li>Game systems</li>
                     <li>Architecture</li>
                   </ul>
-                  <a
-                    class="btn btn-primary"
-                    href="https://cipherbound.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Visit Cipherbound
-                  </a>
+                  <div class="project-actions">
+                    <a
+                      class="btn btn-primary"
+                      href="https://cipherbound.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Visit Cipherbound
+                    </a>
+                    <a
+                      class="btn btn-secondary"
+                      href="https://github.com/MartinSA04/CipherBound"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View on GitHub
+                    </a>
+                  </div>
                 </div>
               </article>
 
@@ -411,10 +439,10 @@
         <div class="container footer-inner">
           <p>© 2026 Martin Sundal Aspås</p>
           <button class="footer-stars" id="footer-stars" type="button" aria-label="Try a constellation puzzle">
-            <span data-star="0">✦</span>
-            <span data-star="1">✦</span>
-            <span data-star="2">✦</span>
-            <span data-star="3">✦</span>
+            <span data-star="0" aria-hidden="true">✦</span>
+            <span data-star="1" aria-hidden="true">✦</span>
+            <span data-star="2" aria-hidden="true">✦</span>
+            <span data-star="3" aria-hidden="true">✦</span>
           </button>
         </div>
       </footer>
@@ -428,12 +456,12 @@
         <button class="terminal-close" id="terminal-close" type="button" aria-label="Close terminal">×</button>
       </div>
       <div class="terminal-body" id="terminal-body">
-        <p><span class="terminal-prompt">></span> curious mind detected</p>
+        <p><span class="terminal-prompt" aria-hidden="true">></span> curious mind detected</p>
         <p>Try: <code>whoami</code>, <code>list_projects</code>, <code>current_focus</code>, <code>fun_fact</code>, <code>help</code></p>
       </div>
       <form class="terminal-form" id="terminal-form">
-        <span class="terminal-prompt">></span>
-        <input id="terminal-input" type="text" autocomplete="off" spellcheck="false" aria-label="Terminal input" />
+        <span class="terminal-prompt" aria-hidden="true">></span>
+        <input id="terminal-input" name="terminal-input" type="text" autocomplete="off" spellcheck="false" aria-label="Terminal input" />
       </form>
     </div>
 
