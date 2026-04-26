@@ -20,6 +20,11 @@ const secretProjectClose = document.getElementById("secret-project-close");
 const secretFacts = document.getElementById("secret-facts");
 const secretFactText = document.getElementById("secret-fact-text");
 const retroOverlay = document.getElementById("retro-overlay");
+const lifeCanvas = document.getElementById("life-canvas");
+const lifeResetButton = document.getElementById("life-reset");
+const lifeRunningState = document.getElementById("life-running-state");
+const lifeStatus = document.getElementById("life-status");
+const lifePlanData = document.getElementById("life-plan-data");
 const storageKey = "msa-theme";
 const secretSequence = [0, 2, 1, 3];
 const konami = [
@@ -34,6 +39,11 @@ const konami = [
   "b",
   "a",
 ];
+const lifeCtx = lifeCanvas ? lifeCanvas.getContext("2d") : null;
+
+if (lifeCtx) {
+  lifeCtx.imageSmoothingEnabled = false;
+}
 
 let konamiBuffer = [];
 let typedBuffer = "";
@@ -52,7 +62,7 @@ const RETRO_POPUP_DURATION = 3200;
 const terminalCommands = {
   help: "Available commands: whoami, list_projects, current_focus, fun_fact, clear",
   whoami: "Martin Sundal Aspås — software engineer by day, physics/math student by night, side-project enjoyer at all hours.",
-  list_projects: "Cipherbound, Interactive Black Hole Renderer, and a rotating backlog of experiments that definitely did not need to exist.",
+  list_projects: "Conway's Game of Life, Cipherbound, Interactive Black Hole Renderer, and a rotating backlog of experiments that definitely did not need to exist.",
   current_focus: "Robotics, simulation, engineering software, and learning by building things that are technically unnecessary.",
   fun_fact: "The best part of programming is accidentally discovering a new hobby while trying to finish an old one.",
   clear: "__CLEAR__",
@@ -81,6 +91,26 @@ const gameCopyOverrides = [
   ["#projects .project-card:nth-child(2) .btn-secondary", "Inspect Artifact"],
 ];
 
+const lifeState = {
+  ready: false,
+  running: false,
+  width: 0,
+  height: 0,
+  generation: 0,
+  liveCells: 0,
+  speed: 10,
+  initialBoard: null,
+  currentBoard: null,
+  nextBoard: null,
+  imageData: null,
+  liveColor: [122, 245, 149],
+};
+
+const lifeFrameState = {
+  accumulator: 0,
+  lastTimestamp: 0,
+};
+
 const getPreferredTheme = () => {
   const savedTheme = localStorage.getItem(storageKey);
 
@@ -99,6 +129,7 @@ const applyTheme = (theme) => {
     themeToggle.textContent = "☀";
     themeToggle.setAttribute("aria-label", "Switch theme");
     themeToggle.setAttribute("title", "Switch theme");
+    syncLifeTheme();
     return;
   }
 
@@ -106,6 +137,7 @@ const applyTheme = (theme) => {
   themeToggle.textContent = theme === "deep-space" ? "✦" : "☾";
   themeToggle.setAttribute("aria-label", "Switch theme");
   themeToggle.setAttribute("title", "Switch theme");
+  syncLifeTheme();
 };
 
 const cycleTheme = () => {
@@ -211,6 +243,8 @@ const launchGameMode = () => {
 
   gameModeActive = true;
   body.classList.add("game-mode");
+  resetLifeFrame();
+  syncLifeTheme();
   applyGameReferences();
   showToast("Arcade mode engaged.");
   unlockAchievement("Konami champion");
@@ -329,9 +363,460 @@ const startIdleWatcher = () => {
   reset();
 };
 
+function colorToRgb(value) {
+  const trimmed = value.trim();
+
+  if (trimmed.startsWith("#")) {
+    const hex = trimmed.slice(1);
+    const normalized = hex.length === 3
+      ? hex.split("").map((character) => character + character).join("")
+      : hex;
+
+    return [
+      Number.parseInt(normalized.slice(0, 2), 16),
+      Number.parseInt(normalized.slice(2, 4), 16),
+      Number.parseInt(normalized.slice(4, 6), 16),
+    ];
+  }
+
+  const rgbMatch = trimmed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+  if (rgbMatch) {
+    return [
+      Number.parseInt(rgbMatch[1], 10),
+      Number.parseInt(rgbMatch[2], 10),
+      Number.parseInt(rgbMatch[3], 10),
+    ];
+  }
+
+  return [255, 255, 255];
+}
+
+function updateLifePalette() {
+  if (!lifeCtx) {
+    return;
+  }
+
+  lifeState.liveColor = colorToRgb(
+    getComputedStyle(root).getPropertyValue("--life-cell")
+  );
+}
+
+function syncLifeTheme() {
+  if (!lifeState.ready) {
+    return;
+  }
+
+  updateLifePalette();
+  renderLifeBoard();
+}
+
+function parseLifePlan(text) {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  let width = 0;
+  let height = 0;
+  const coordinates = [];
+
+  lines.forEach((line) => {
+    if (line.startsWith("#")) {
+      const match = line.match(/board_size\s*=\s*(\d+)\s*,\s*(\d+)/i);
+      if (match) {
+        width = Number.parseInt(match[1], 10);
+        height = Number.parseInt(match[2], 10);
+      }
+      return;
+    }
+
+    const match = line.match(/^(\d+)\s*,\s*(\d+)$/);
+    if (!match) {
+      return;
+    }
+
+    coordinates.push([
+      Number.parseInt(match[1], 10),
+      Number.parseInt(match[2], 10),
+    ]);
+  });
+
+  if (!width || !height) {
+    let maxX = 0;
+    let maxY = 0;
+
+    coordinates.forEach(([x, y]) => {
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    });
+
+    width = maxX + 1;
+    height = maxY + 1;
+  }
+
+  return { width, height, coordinates };
+}
+
+function createLifeSeedBoard(plan) {
+  const board = new Uint8Array(plan.width * plan.height);
+  let liveCells = 0;
+  let minX = plan.width;
+  let minY = plan.height;
+  let maxX = 0;
+  let maxY = 0;
+
+  plan.coordinates.forEach(([x, y]) => {
+    if (x < 0 || x >= plan.width || y < 0 || y >= plan.height) {
+      return;
+    }
+
+    const index = y * plan.width + x;
+    if (board[index] === 1) {
+      return;
+    }
+
+    board[index] = 1;
+    liveCells += 1;
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x);
+    maxY = Math.max(maxY, y);
+  });
+
+  return {
+    board,
+    liveCells,
+    bounds: liveCells === 0
+      ? null
+      : {
+          minX,
+          minY,
+          maxX,
+          maxY,
+          width: maxX - minX + 1,
+          height: maxY - minY + 1,
+        },
+  };
+}
+
+function updateLifeControls() {
+  if (lifeResetButton) {
+    lifeResetButton.disabled = !lifeState.ready;
+  }
+}
+
+function updateLifeStatus() {
+  if (!lifeRunningState || !lifeStatus) {
+    return;
+  }
+
+  if (!lifeState.ready) {
+    lifeRunningState.textContent = "Loading";
+    lifeRunningState.classList.remove("is-running");
+    lifeStatus.textContent = "Loading seed...";
+    return;
+  }
+
+  lifeRunningState.textContent = lifeState.running ? "Live" : "Paused";
+  lifeRunningState.classList.toggle("is-running", lifeState.running);
+  lifeStatus.textContent = lifeState.running
+    ? "Click the board to pause, or replay the original seed."
+    : "Paused. Click the board to continue.";
+}
+
+function updateLifeStats() {
+  updateLifeStatus();
+}
+
+function renderLifeBoard() {
+  if (!lifeCtx || !lifeState.ready || !lifeState.imageData || !lifeState.currentBoard) {
+    return;
+  }
+
+  const data = lifeState.imageData.data;
+  data.fill(0);
+
+  const [red, green, blue] = lifeState.liveColor;
+  for (let index = 0; index < lifeState.currentBoard.length; index += 1) {
+    if (lifeState.currentBoard[index] !== 1) {
+      continue;
+    }
+
+    const pixelOffset = index * 4;
+    data[pixelOffset] = red;
+    data[pixelOffset + 1] = green;
+    data[pixelOffset + 2] = blue;
+    data[pixelOffset + 3] = 255;
+  }
+
+  lifeCtx.clearRect(0, 0, lifeState.width, lifeState.height);
+  lifeCtx.putImageData(lifeState.imageData, 0, 0);
+}
+
+function resetLifeFrame() {
+  lifeFrameState.accumulator = 0;
+  lifeFrameState.lastTimestamp = 0;
+}
+
+function setLifeRunning(shouldRun) {
+  if (!lifeState.ready) {
+    return;
+  }
+
+  lifeState.running = shouldRun;
+  resetLifeFrame();
+  updateLifeControls();
+  updateLifeStatus();
+}
+
+function advanceLifeGeneration() {
+  if (!lifeState.ready || !lifeState.currentBoard || !lifeState.nextBoard) {
+    return;
+  }
+
+  const { width, height, currentBoard, nextBoard } = lifeState;
+  let liveCells = 0;
+
+  for (let y = 0; y < height; y += 1) {
+    const rowOffset = y * width;
+    const previousRow = y > 0 ? rowOffset - width : -1;
+    const nextRow = y < height - 1 ? rowOffset + width : -1;
+
+    for (let x = 0; x < width; x += 1) {
+      const index = rowOffset + x;
+      let neighbors = 0;
+
+      if (x > 0) {
+        neighbors += currentBoard[index - 1];
+        if (previousRow >= 0) {
+          neighbors += currentBoard[previousRow + x - 1];
+        }
+        if (nextRow >= 0) {
+          neighbors += currentBoard[nextRow + x - 1];
+        }
+      }
+
+      if (x < width - 1) {
+        neighbors += currentBoard[index + 1];
+        if (previousRow >= 0) {
+          neighbors += currentBoard[previousRow + x + 1];
+        }
+        if (nextRow >= 0) {
+          neighbors += currentBoard[nextRow + x + 1];
+        }
+      }
+
+      if (previousRow >= 0) {
+        neighbors += currentBoard[previousRow + x];
+      }
+      if (nextRow >= 0) {
+        neighbors += currentBoard[nextRow + x];
+      }
+
+      const alive = currentBoard[index] === 1;
+      const nextAlive = neighbors === 3 || (alive && neighbors === 2);
+      nextBoard[index] = nextAlive ? 1 : 0;
+      if (nextAlive) {
+        liveCells += 1;
+      }
+    }
+  }
+
+  lifeState.currentBoard = nextBoard;
+  lifeState.nextBoard = currentBoard;
+  lifeState.liveCells = liveCells;
+  lifeState.generation += 1;
+}
+
+function stepLifeOnce() {
+  if (!lifeState.ready) {
+    return;
+  }
+
+  advanceLifeGeneration();
+  renderLifeBoard();
+  updateLifeStats();
+}
+
+function countLifeCells(board) {
+  let count = 0;
+  for (let index = 0; index < board.length; index += 1) {
+    count += board[index];
+  }
+  return count;
+}
+
+function resetLifeBoard() {
+  if (!lifeState.ready || !lifeState.initialBoard) {
+    return;
+  }
+
+  resetLifeFrame();
+  lifeState.currentBoard = lifeState.initialBoard.slice();
+  lifeState.nextBoard = new Uint8Array(lifeState.initialBoard.length);
+  lifeState.generation = 0;
+  lifeState.liveCells = countLifeCells(lifeState.currentBoard);
+  renderLifeBoard();
+  updateLifeStats();
+}
+
+function lifeAnimationLoop(timestamp) {
+  if (lifeState.running && lifeState.ready) {
+    if (lifeFrameState.lastTimestamp === 0) {
+      lifeFrameState.lastTimestamp = timestamp;
+    }
+
+    const frameDelta = Math.min(timestamp - lifeFrameState.lastTimestamp, 250);
+    lifeFrameState.lastTimestamp = timestamp;
+    lifeFrameState.accumulator += frameDelta;
+
+    const interval = 1000 / lifeState.speed;
+    let stepped = false;
+
+    while (lifeFrameState.accumulator >= interval) {
+      advanceLifeGeneration();
+      lifeFrameState.accumulator -= interval;
+      stepped = true;
+    }
+
+    if (stepped) {
+      renderLifeBoard();
+      updateLifeStats();
+    }
+  }
+
+  window.requestAnimationFrame(lifeAnimationLoop);
+}
+
+async function loadLifeSeed() {
+  if (!lifeCanvas || !lifeCtx) {
+    return;
+  }
+
+  let text = "";
+
+  if (lifePlanData?.textContent.trim()) {
+    text = atob(lifePlanData.textContent.trim());
+  } else {
+    const response = await fetch("martin_plan.txt");
+    if (!response.ok) {
+      throw new Error(`Unable to load martin_plan.txt (${response.status})`);
+    }
+
+    text = await response.text();
+  }
+  const plan = parseLifePlan(text);
+  const seed = createLifeSeedBoard(plan);
+
+  lifeState.ready = true;
+  lifeState.width = plan.width;
+  lifeState.height = plan.height;
+  lifeState.initialBoard = seed.board;
+  lifeState.currentBoard = seed.board.slice();
+  lifeState.nextBoard = new Uint8Array(seed.board.length);
+  lifeState.imageData = null;
+  lifeState.generation = 0;
+  lifeState.liveCells = seed.liveCells;
+
+  lifeCanvas.width = plan.width;
+  lifeCanvas.height = plan.height;
+  lifeCtx.imageSmoothingEnabled = false;
+  lifeState.imageData = lifeCtx.createImageData(plan.width, plan.height);
+
+  updateLifePalette();
+  updateLifeControls();
+  updateLifeStats();
+  renderLifeBoard();
+  setLifeRunning(true);
+}
+
+function reportLifeError(message) {
+  lifeState.ready = false;
+  lifeState.running = false;
+
+  if (lifeRunningState) {
+    lifeRunningState.textContent = "Error";
+    lifeRunningState.classList.remove("is-running");
+  }
+
+  if (lifeStatus) {
+    lifeStatus.textContent = message;
+  }
+
+  updateLifeControls();
+}
+
+function handleLifeKeydown(event) {
+  if (!lifeCanvas || !lifeState.ready) {
+    return;
+  }
+
+  if (
+    !terminal.classList.contains("hidden") ||
+    !commandPalette.classList.contains("hidden") ||
+    !secretFacts.classList.contains("hidden") ||
+    !retroOverlay.classList.contains("hidden")
+  ) {
+    return;
+  }
+
+  const target = event.target;
+  if (
+    target instanceof HTMLElement &&
+    ["INPUT", "BUTTON", "TEXTAREA", "SELECT"].includes(target.tagName)
+  ) {
+    return;
+  }
+
+  if (event.code === "Space") {
+    event.preventDefault();
+    setLifeRunning(!lifeState.running);
+    return;
+  }
+
+  if (event.key === "n" || event.key === "N") {
+    event.preventDefault();
+    setLifeRunning(false);
+    stepLifeOnce();
+    return;
+  }
+
+  if (event.key === "r" || event.key === "R") {
+    event.preventDefault();
+    resetLifeBoard();
+  }
+}
+
+function initializeLife() {
+  if (!lifeCanvas || !lifeCtx) {
+    return;
+  }
+
+  updateLifeControls();
+  updateLifeStatus();
+
+  if (lifeResetButton) {
+    lifeResetButton.addEventListener("click", () => {
+      resetLifeBoard();
+    });
+  }
+
+  lifeCanvas.addEventListener("click", () => {
+    setLifeRunning(!lifeState.running);
+  });
+
+  window.addEventListener("keydown", handleLifeKeydown);
+  window.requestAnimationFrame(lifeAnimationLoop);
+
+  loadLifeSeed().catch((error) => {
+    reportLifeError(error.message);
+  });
+}
+
 applyTheme(getPreferredTheme());
 trackSectionVisits();
 startIdleWatcher();
+initializeLife();
 
 const nightHour = new Date().getHours();
 if (nightHour >= 22 || nightHour < 5) {
@@ -378,7 +863,9 @@ commandButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const command = button.dataset.command;
 
-    if (command === "projects") {
+    if (command === "life") {
+      document.getElementById("home").scrollIntoView({ behavior: "smooth" });
+    } else if (command === "projects") {
       document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
     } else if (command === "theme") {
       cycleTheme();
