@@ -102,6 +102,7 @@ const projectLifeState = createLifeScene({
   speed: 18,
   loopAfter: 540,
   restartOnExtinction: true,
+  pauseWhenOffscreen: true,
 });
 
 const lifeScenes = [lifeState, projectLifeState].filter(Boolean);
@@ -113,6 +114,7 @@ function createLifeScene({
   speed = 10,
   loopAfter = null,
   restartOnExtinction = false,
+  pauseWhenOffscreen = false,
 }) {
   const ctx = canvas ? canvas.getContext("2d") : null;
   if (!canvas || !ctx) {
@@ -129,8 +131,10 @@ function createLifeScene({
     speed,
     loopAfter,
     restartOnExtinction,
+    pauseWhenOffscreen,
     ready: false,
     running: false,
+    isVisible: !pauseWhenOffscreen,
     width: 0,
     height: 0,
     generation: 0,
@@ -770,6 +774,37 @@ function lifeAnimationLoop(timestamp) {
   window.requestAnimationFrame(lifeAnimationLoop);
 }
 
+function initializeLifeSceneVisibility(scene, options = {}) {
+  if (!scene?.pauseWhenOffscreen) {
+    return;
+  }
+
+  if (!("IntersectionObserver" in window)) {
+    scene.isVisible = true;
+    if (scene.ready) {
+      setLifeRunning(scene, true);
+    }
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        scene.isVisible = entry.isIntersecting;
+
+        if (!scene.ready) {
+          return;
+        }
+
+        setLifeRunning(scene, entry.isIntersecting);
+      });
+    },
+    options
+  );
+
+  observer.observe(scene.canvas);
+}
+
 async function loadLifeScene(scene) {
   if (!scene) {
     return;
@@ -810,7 +845,7 @@ async function loadLifeScene(scene) {
 
   updateLifePalette(scene);
   renderLifeBoard(scene);
-  setLifeRunning(scene, true);
+  setLifeRunning(scene, !scene.pauseWhenOffscreen || scene.isVisible);
 
   if (scene === lifeState) {
     updateLifeControls();
@@ -912,6 +947,10 @@ function initializeProjectLifePreview() {
   if (!projectLifeState) {
     return;
   }
+
+  initializeLifeSceneVisibility(projectLifeState, {
+    threshold: 0.2,
+  });
 
   loadLifeScene(projectLifeState).catch((error) => {
     console.error(error);
