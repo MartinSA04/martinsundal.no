@@ -559,6 +559,28 @@ body.game-mode h1::after {
   background: var(--surface-soft);
 }
 
+.project-life-preview {
+  display: grid;
+  place-items: center;
+  padding: 0.9rem;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-soft) 88%, transparent), color-mix(in srgb, var(--surface) 82%, transparent)),
+    linear-gradient(to right, var(--life-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--life-grid) 1px, transparent 1px);
+  background-size: auto, 16px 16px, 16px 16px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--life-cell) 18%, transparent);
+}
+
+.project-life-canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: pixelated;
+  background: transparent;
+}
+
 .tag-list,
 .skill-list {
   list-style: none;

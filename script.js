@@ -21,10 +21,12 @@ const secretFacts = document.getElementById("secret-facts");
 const secretFactText = document.getElementById("secret-fact-text");
 const retroOverlay = document.getElementById("retro-overlay");
 const lifeCanvas = document.getElementById("life-canvas");
+const projectLifeCanvas = document.getElementById("project-life-canvas");
 const lifeResetButton = document.getElementById("life-reset");
 const lifeRunningState = document.getElementById("life-running-state");
 const lifeStatus = document.getElementById("life-status");
 const lifePlanData = document.getElementById("life-plan-data");
+const projectLifePlanData = document.getElementById("project-life-plan-data");
 const storageKey = "msa-theme";
 const secretSequence = [0, 2, 1, 3];
 const konami = [
@@ -39,11 +41,6 @@ const konami = [
   "b",
   "a",
 ];
-const lifeCtx = lifeCanvas ? lifeCanvas.getContext("2d") : null;
-
-if (lifeCtx) {
-  lifeCtx.imageSmoothingEnabled = false;
-}
 
 let konamiBuffer = [];
 let typedBuffer = "";
@@ -62,7 +59,7 @@ const RETRO_POPUP_DURATION = 3200;
 const terminalCommands = {
   help: "Available commands: whoami, list_projects, current_focus, fun_fact, clear",
   whoami: "Martin Sundal Aspås — software engineer by day, physics/math student by night, side-project enjoyer at all hours.",
-  list_projects: "Conway's Game of Life, Cipherbound, Interactive Black Hole Renderer, and a rotating backlog of experiments that definitely did not need to exist.",
+  list_projects: "Cipherbound, Interactive Black Hole Renderer, Game of Life Text Generator, and a rotating backlog of experiments that definitely did not need to exist.",
   current_focus: "Robotics, simulation, engineering software, and learning by building things that are technically unnecessary.",
   fun_fact: "The best part of programming is accidentally discovering a new hobby while trying to finish an old one.",
   clear: "__CLEAR__",
@@ -91,25 +88,62 @@ const gameCopyOverrides = [
   ["#projects .project-card:nth-child(2) .btn-secondary", "Inspect Artifact"],
 ];
 
-const lifeState = {
-  ready: false,
-  running: false,
-  width: 0,
-  height: 0,
-  generation: 0,
-  liveCells: 0,
+const lifeState = createLifeScene({
+  canvas: lifeCanvas,
+  inlinePlanNode: lifePlanData,
+  planSrc: "martin_plan.txt",
   speed: 10,
-  initialBoard: null,
-  currentBoard: null,
-  nextBoard: null,
-  imageData: null,
-  liveColor: [122, 245, 149],
-};
+});
 
-const lifeFrameState = {
-  accumulator: 0,
-  lastTimestamp: 0,
-};
+const projectLifeState = createLifeScene({
+  canvas: projectLifeCanvas,
+  inlinePlanNode: projectLifePlanData,
+  planSrc: "game_of_life_plan.txt",
+  speed: 18,
+  loopAfter: 540,
+  restartOnExtinction: true,
+});
+
+const lifeScenes = [lifeState, projectLifeState].filter(Boolean);
+
+function createLifeScene({
+  canvas,
+  inlinePlanNode = null,
+  planSrc = "",
+  speed = 10,
+  loopAfter = null,
+  restartOnExtinction = false,
+}) {
+  const ctx = canvas ? canvas.getContext("2d") : null;
+  if (!canvas || !ctx) {
+    return null;
+  }
+
+  ctx.imageSmoothingEnabled = false;
+
+  return {
+    canvas,
+    ctx,
+    inlinePlanNode,
+    planSrc,
+    speed,
+    loopAfter,
+    restartOnExtinction,
+    ready: false,
+    running: false,
+    width: 0,
+    height: 0,
+    generation: 0,
+    liveCells: 0,
+    initialBoard: null,
+    currentBoard: null,
+    nextBoard: null,
+    imageData: null,
+    liveColor: [122, 245, 149],
+    accumulator: 0,
+    lastTimestamp: 0,
+  };
+}
 
 const getPreferredTheme = () => {
   const savedTheme = localStorage.getItem(storageKey);
@@ -391,23 +425,25 @@ function colorToRgb(value) {
   return [255, 255, 255];
 }
 
-function updateLifePalette() {
-  if (!lifeCtx) {
+function updateLifePalette(scene) {
+  if (!scene) {
     return;
   }
 
-  lifeState.liveColor = colorToRgb(
+  scene.liveColor = colorToRgb(
     getComputedStyle(root).getPropertyValue("--life-cell")
   );
 }
 
 function syncLifeTheme() {
-  if (!lifeState.ready) {
-    return;
-  }
+  lifeScenes.forEach((scene) => {
+    if (!scene?.ready) {
+      return;
+    }
 
-  updateLifePalette();
-  renderLifeBoard();
+    updateLifePalette(scene);
+    renderLifeBoard(scene);
+  });
 }
 
 function parseLifePlan(text) {
@@ -501,7 +537,7 @@ function createLifeSeedBoard(plan) {
 
 function updateLifeControls() {
   if (lifeResetButton) {
-    lifeResetButton.disabled = !lifeState.ready;
+    lifeResetButton.disabled = !lifeState?.ready;
   }
 }
 
@@ -510,7 +546,7 @@ function updateLifeStatus() {
     return;
   }
 
-  if (!lifeState.ready) {
+  if (!lifeState || !lifeState.ready) {
     lifeRunningState.textContent = "Loading";
     lifeRunningState.classList.remove("is-running");
     lifeStatus.textContent = "Loading seed...";
@@ -528,17 +564,17 @@ function updateLifeStats() {
   updateLifeStatus();
 }
 
-function renderLifeBoard() {
-  if (!lifeCtx || !lifeState.ready || !lifeState.imageData || !lifeState.currentBoard) {
+function renderLifeBoard(scene) {
+  if (!scene || !scene.ready || !scene.imageData || !scene.currentBoard) {
     return;
   }
 
-  const data = lifeState.imageData.data;
+  const data = scene.imageData.data;
   data.fill(0);
 
-  const [red, green, blue] = lifeState.liveColor;
-  for (let index = 0; index < lifeState.currentBoard.length; index += 1) {
-    if (lifeState.currentBoard[index] !== 1) {
+  const [red, green, blue] = scene.liveColor;
+  for (let index = 0; index < scene.currentBoard.length; index += 1) {
+    if (scene.currentBoard[index] !== 1) {
       continue;
     }
 
@@ -549,32 +585,39 @@ function renderLifeBoard() {
     data[pixelOffset + 3] = 255;
   }
 
-  lifeCtx.clearRect(0, 0, lifeState.width, lifeState.height);
-  lifeCtx.putImageData(lifeState.imageData, 0, 0);
+  scene.ctx.clearRect(0, 0, scene.width, scene.height);
+  scene.ctx.putImageData(scene.imageData, 0, 0);
 }
 
-function resetLifeFrame() {
-  lifeFrameState.accumulator = 0;
-  lifeFrameState.lastTimestamp = 0;
-}
-
-function setLifeRunning(shouldRun) {
-  if (!lifeState.ready) {
+function resetLifeFrame(scene) {
+  if (!scene) {
     return;
   }
 
-  lifeState.running = shouldRun;
-  resetLifeFrame();
-  updateLifeControls();
-  updateLifeStatus();
+  scene.accumulator = 0;
+  scene.lastTimestamp = 0;
 }
 
-function advanceLifeGeneration() {
-  if (!lifeState.ready || !lifeState.currentBoard || !lifeState.nextBoard) {
+function setLifeRunning(scene, shouldRun) {
+  if (!scene?.ready) {
     return;
   }
 
-  const { width, height, currentBoard, nextBoard } = lifeState;
+  scene.running = shouldRun;
+  resetLifeFrame(scene);
+
+  if (scene === lifeState) {
+    updateLifeControls();
+    updateLifeStatus();
+  }
+}
+
+function advanceLifeGeneration(scene) {
+  if (!scene?.ready || !scene.currentBoard || !scene.nextBoard) {
+    return;
+  }
+
+  const { width, height, currentBoard, nextBoard } = scene;
   let liveCells = 0;
 
   for (let y = 0; y < height; y += 1) {
@@ -622,20 +665,23 @@ function advanceLifeGeneration() {
     }
   }
 
-  lifeState.currentBoard = nextBoard;
-  lifeState.nextBoard = currentBoard;
-  lifeState.liveCells = liveCells;
-  lifeState.generation += 1;
+  scene.currentBoard = nextBoard;
+  scene.nextBoard = currentBoard;
+  scene.liveCells = liveCells;
+  scene.generation += 1;
 }
 
-function stepLifeOnce() {
-  if (!lifeState.ready) {
+function stepLifeOnce(scene) {
+  if (!scene?.ready) {
     return;
   }
 
-  advanceLifeGeneration();
-  renderLifeBoard();
-  updateLifeStats();
+  advanceLifeGeneration(scene);
+  renderLifeBoard(scene);
+
+  if (scene === lifeState) {
+    updateLifeStats();
+  }
 }
 
 function countLifeCells(board) {
@@ -646,91 +692,137 @@ function countLifeCells(board) {
   return count;
 }
 
-function resetLifeBoard() {
-  if (!lifeState.ready || !lifeState.initialBoard) {
+function resetLifeBoard(scene) {
+  if (!scene?.ready || !scene.initialBoard) {
     return;
   }
 
-  resetLifeFrame();
-  lifeState.currentBoard = lifeState.initialBoard.slice();
-  lifeState.nextBoard = new Uint8Array(lifeState.initialBoard.length);
-  lifeState.generation = 0;
-  lifeState.liveCells = countLifeCells(lifeState.currentBoard);
-  renderLifeBoard();
-  updateLifeStats();
+  resetLifeFrame(scene);
+  scene.currentBoard = scene.initialBoard.slice();
+  scene.nextBoard = new Uint8Array(scene.initialBoard.length);
+  scene.generation = 0;
+  scene.liveCells = countLifeCells(scene.currentBoard);
+  renderLifeBoard(scene);
+
+  if (scene === lifeState) {
+    updateLifeStats();
+  }
 }
 
-function lifeAnimationLoop(timestamp) {
-  if (lifeState.running && lifeState.ready) {
-    if (lifeFrameState.lastTimestamp === 0) {
-      lifeFrameState.lastTimestamp = timestamp;
+function shouldLoopLifeScene(scene) {
+  if (!scene?.ready) {
+    return false;
+  }
+
+  if (scene.loopAfter !== null && scene.generation >= scene.loopAfter) {
+    resetLifeBoard(scene);
+    return true;
+  }
+
+  if (scene.restartOnExtinction && scene.liveCells === 0) {
+    resetLifeBoard(scene);
+    return true;
+  }
+
+  return false;
+}
+
+function animateLifeScene(scene, timestamp) {
+  if (!scene?.running || !scene.ready) {
+    return;
+  }
+
+  if (scene.lastTimestamp === 0) {
+    scene.lastTimestamp = timestamp;
+  }
+
+  const frameDelta = Math.min(timestamp - scene.lastTimestamp, 250);
+  scene.lastTimestamp = timestamp;
+  scene.accumulator += frameDelta;
+
+  const interval = 1000 / scene.speed;
+  let stepped = false;
+
+  while (scene.accumulator >= interval) {
+    advanceLifeGeneration(scene);
+    scene.accumulator -= interval;
+    stepped = true;
+
+    if (shouldLoopLifeScene(scene)) {
+      break;
     }
+  }
 
-    const frameDelta = Math.min(timestamp - lifeFrameState.lastTimestamp, 250);
-    lifeFrameState.lastTimestamp = timestamp;
-    lifeFrameState.accumulator += frameDelta;
+  if (stepped) {
+    renderLifeBoard(scene);
 
-    const interval = 1000 / lifeState.speed;
-    let stepped = false;
-
-    while (lifeFrameState.accumulator >= interval) {
-      advanceLifeGeneration();
-      lifeFrameState.accumulator -= interval;
-      stepped = true;
-    }
-
-    if (stepped) {
-      renderLifeBoard();
+    if (scene === lifeState) {
       updateLifeStats();
     }
   }
+}
+
+function lifeAnimationLoop(timestamp) {
+  lifeScenes.forEach((scene) => {
+    animateLifeScene(scene, timestamp);
+  });
 
   window.requestAnimationFrame(lifeAnimationLoop);
 }
 
-async function loadLifeSeed() {
-  if (!lifeCanvas || !lifeCtx) {
+async function loadLifeScene(scene) {
+  if (!scene) {
     return;
   }
 
   let text = "";
 
-  if (lifePlanData?.textContent.trim()) {
-    text = atob(lifePlanData.textContent.trim());
-  } else {
-    const response = await fetch("martin_plan.txt");
+  if (scene.inlinePlanNode?.textContent.trim()) {
+    text = atob(scene.inlinePlanNode.textContent.trim());
+  } else if (scene.planSrc) {
+    const response = await fetch(scene.planSrc);
     if (!response.ok) {
-      throw new Error(`Unable to load martin_plan.txt (${response.status})`);
+      throw new Error(`Unable to load ${scene.planSrc} (${response.status})`);
     }
 
     text = await response.text();
+  } else {
+    throw new Error("No life plan source configured.");
   }
+
   const plan = parseLifePlan(text);
   const seed = createLifeSeedBoard(plan);
 
-  lifeState.ready = true;
-  lifeState.width = plan.width;
-  lifeState.height = plan.height;
-  lifeState.initialBoard = seed.board;
-  lifeState.currentBoard = seed.board.slice();
-  lifeState.nextBoard = new Uint8Array(seed.board.length);
-  lifeState.imageData = null;
-  lifeState.generation = 0;
-  lifeState.liveCells = seed.liveCells;
+  scene.ready = true;
+  scene.width = plan.width;
+  scene.height = plan.height;
+  scene.initialBoard = seed.board;
+  scene.currentBoard = seed.board.slice();
+  scene.nextBoard = new Uint8Array(seed.board.length);
+  scene.imageData = null;
+  scene.generation = 0;
+  scene.liveCells = seed.liveCells;
 
-  lifeCanvas.width = plan.width;
-  lifeCanvas.height = plan.height;
-  lifeCtx.imageSmoothingEnabled = false;
-  lifeState.imageData = lifeCtx.createImageData(plan.width, plan.height);
+  scene.canvas.width = plan.width;
+  scene.canvas.height = plan.height;
+  scene.ctx.imageSmoothingEnabled = false;
+  scene.imageData = scene.ctx.createImageData(plan.width, plan.height);
 
-  updateLifePalette();
-  updateLifeControls();
-  updateLifeStats();
-  renderLifeBoard();
-  setLifeRunning(true);
+  updateLifePalette(scene);
+  renderLifeBoard(scene);
+  setLifeRunning(scene, true);
+
+  if (scene === lifeState) {
+    updateLifeControls();
+    updateLifeStats();
+  }
 }
 
 function reportLifeError(message) {
+  if (!lifeState) {
+    return;
+  }
+
   lifeState.ready = false;
   lifeState.running = false;
 
@@ -747,7 +839,7 @@ function reportLifeError(message) {
 }
 
 function handleLifeKeydown(event) {
-  if (!lifeCanvas || !lifeState.ready) {
+  if (!lifeState || !lifeState.ready) {
     return;
   }
 
@@ -774,25 +866,25 @@ function handleLifeKeydown(event) {
 
   if (event.code === "Space") {
     event.preventDefault();
-    setLifeRunning(!lifeState.running);
+    setLifeRunning(lifeState, !lifeState.running);
     return;
   }
 
   if (event.key === "n" || event.key === "N") {
     event.preventDefault();
-    setLifeRunning(false);
-    stepLifeOnce();
+    setLifeRunning(lifeState, false);
+    stepLifeOnce(lifeState);
     return;
   }
 
   if (event.key === "r" || event.key === "R") {
     event.preventDefault();
-    resetLifeBoard();
+    resetLifeBoard(lifeState);
   }
 }
 
 function initializeLife() {
-  if (!lifeCanvas || !lifeCtx) {
+  if (!lifeState) {
     return;
   }
 
@@ -801,19 +893,28 @@ function initializeLife() {
 
   if (lifeResetButton) {
     lifeResetButton.addEventListener("click", () => {
-      resetLifeBoard();
+      resetLifeBoard(lifeState);
     });
   }
 
-  lifeCanvas.addEventListener("click", () => {
-    setLifeRunning(!lifeState.running);
+  lifeState.canvas.addEventListener("click", () => {
+    setLifeRunning(lifeState, !lifeState.running);
   });
 
   window.addEventListener("keydown", handleLifeKeydown);
-  window.requestAnimationFrame(lifeAnimationLoop);
 
-  loadLifeSeed().catch((error) => {
+  loadLifeScene(lifeState).catch((error) => {
     reportLifeError(error.message);
+  });
+}
+
+function initializeProjectLifePreview() {
+  if (!projectLifeState) {
+    return;
+  }
+
+  loadLifeScene(projectLifeState).catch((error) => {
+    console.error(error);
   });
 }
 
@@ -821,6 +922,11 @@ applyTheme(getPreferredTheme());
 trackSectionVisits();
 startIdleWatcher();
 initializeLife();
+initializeProjectLifePreview();
+
+if (lifeScenes.length > 0) {
+  window.requestAnimationFrame(lifeAnimationLoop);
+}
 
 const nightHour = new Date().getHours();
 if (nightHour >= 22 || nightHour < 5) {
