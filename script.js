@@ -768,6 +768,10 @@ function handleLifeKeydown(event) {
     return;
   }
 
+  if (event.ctrlKey || event.metaKey || event.altKey) {
+    return;
+  }
+
   if (event.code === "Space") {
     event.preventDefault();
     setLifeRunning(!lifeState.running);
