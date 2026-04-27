@@ -481,6 +481,7 @@
       window.removeEventListener("touchmove", this._onWheel);
       document.documentElement.style.scrollBehavior = this._previousScrollBehavior ?? "";
       this.player.attackTimer = 0;
+      if (this.world === "page") this._ensurePageNpcs();
       if (this.world === "matrix") this._syncMatrixCamera();
       else this._syncCameraToScroll();
       this._render();
@@ -565,21 +566,19 @@
 
       this.entities.splice(1);
       npcs.forEach((spec) => {
-        this.addEntity(
-          new Entity({
-            x: spec.x,
-            y: spec.y,
-            kind: spec.kind ?? "npc",
-            sheet: spec.sheet,
-            direction: spec.direction ?? "down",
-            dialogue: spec.dialogue,
-            width: spec.width,
-            height: spec.height,
-            hitboxWidth: spec.hitboxWidth,
-            hitboxHeight: spec.hitboxHeight,
-            spriteSize: spec.spriteSize ?? spec.size,
-          }),
-        );
+        this.addEntity(createNpcEntity(spec));
+      });
+    }
+
+    _ensurePageNpcs() {
+      if (this.world !== "page") return;
+      const spawn = getCipherboundSpawn();
+      if (!spawn) return;
+
+      spawn.npcs.forEach((spec) => {
+        const kind = spec.kind ?? "npc";
+        const existing = this.entities.find((entity) => entity !== this.player && entity.kind === kind);
+        if (!existing) this.addEntity(createNpcEntity(spec));
       });
     }
 
@@ -765,6 +764,7 @@
       } else {
         this._placeInitialEntities();
       }
+      this._ensurePageNpcs();
       this._returnFromMatrix = null;
       this.refreshCollisionRects();
       this._syncCameraToScroll();
@@ -1050,6 +1050,22 @@
     entity.width = hitbox.width;
     entity.height = hitbox.height;
     entity.spriteSize = spriteSize;
+  }
+
+  function createNpcEntity(spec) {
+    return new Entity({
+      x: spec.x,
+      y: spec.y,
+      kind: spec.kind ?? "npc",
+      sheet: spec.sheet,
+      direction: spec.direction ?? "down",
+      dialogue: spec.dialogue,
+      width: spec.width,
+      height: spec.height,
+      hitboxWidth: spec.hitboxWidth,
+      hitboxHeight: spec.hitboxHeight,
+      spriteSize: spec.spriteSize ?? spec.size,
+    });
   }
 
   function getEntitySpriteSize(spec = {}) {
