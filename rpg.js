@@ -1,6 +1,6 @@
 // Top-down RPG that plays out on the live page. Solid DOM elements act as walls;
-// the camera follows the player by scrolling the window. Two sprites sit on the
-// Cipherbound screenshot in ambient mode and become controllable on Konami.
+// the camera follows the player by scrolling the window. A canvas is mounted on
+// boot for static sprites and only starts animating once Konami activates play.
 // Exposes window.MSA_RPG = { start, stop, isActive, Entity, Player, Game }.
 (function () {
   "use strict";
@@ -9,6 +9,8 @@
   // The screenshot shows 32px RPG sprites captured at 4x scale.
   const CIPHERBOUND_SPRITE_SOURCE_SIZE = 128;
   const CIPHERBOUND_SPRITE_SCALE = 1.5;
+  const ENTITY_HITBOX_WIDTH_RATIO = 0.42;
+  const ENTITY_HITBOX_HEIGHT_RATIO = 0.34;
   const SPRITE_FRAME_SIZE = 32;
   const SPRITE_FRAMES = 4;
   const ANIM_FPS = 8;
@@ -78,15 +80,17 @@
 
   class Entity {
     constructor(opts) {
+      const spriteSize = getEntitySpriteSize(opts);
+      const hitbox = getEntityHitbox(opts, spriteSize);
       this.x = opts.x;
       this.y = opts.y;
-      this.width = opts.width ?? opts.size ?? DEFAULT_ENTITY_SIZE;
-      this.height = opts.height ?? opts.size ?? DEFAULT_ENTITY_SIZE;
+      this.width = hitbox.width;
+      this.height = hitbox.height;
       this.kind = opts.kind ?? "generic";
       this.direction = opts.direction ?? "down";
       this.solid = opts.solid !== false;
       this.sheet = opts.sheet ?? null;
-      this.spriteSize = opts.spriteSize ?? Math.max(this.width, this.height);
+      this.spriteSize = spriteSize;
       this.frame = 0;
       this.frameTime = 0;
     }
@@ -105,14 +109,10 @@
 
   class Player extends Entity {
     constructor(opts = {}) {
-      const size = opts.size ?? opts.width ?? DEFAULT_ENTITY_SIZE;
       super({
         ...opts,
         kind: "player",
         sheet: SHEETS.player,
-        width: opts.width ?? size,
-        height: opts.height ?? size,
-        spriteSize: opts.spriteSize ?? size,
       });
       this.speed = PLAYER_SPEED;
       this.maxHealth = 6;
@@ -266,7 +266,7 @@
         position: "fixed",
         inset: "0",
         pointerEvents: "none",
-        zIndex: "9999",
+        zIndex: "20",
       });
       this.ctx = this.canvas.getContext("2d");
       this.input = new Input();
@@ -276,13 +276,20 @@
       this.collisionRects = [];
       this.cameraX = 0;
       this.cameraY = 0;
+      this.mounted = false;
       this.running = false;
       this.lastTime = 0;
+      this._rafId = null;
+      this._hasGameplayState = false;
       this._customSpawn = null;
+      this._staticRenderQueued = false;
     }
 
     setSpawn(playerPos, npcs = []) {
       this._customSpawn = { playerPos, npcs };
+      this._applySpawn(playerPos, npcs);
+      this._syncCameraToScroll();
+      if (this.mounted && !this.running) this._render();
     }
 
     addEntity(entity) {
@@ -350,43 +357,74 @@
       return true;
     }
 
-    start() {
-      if (this.running) return;
-      document.body.appendChild(this.canvas);
+    mount() {
+      if (this.mounted) return;
       this._resizeCanvas();
+      document.body.appendChild(this.canvas);
 
       this._previousScrollBehavior = document.documentElement.style.scrollBehavior;
-      document.documentElement.style.scrollBehavior = "auto";
-
       this.refreshCollisionRects();
-      this._placePlayer();
-
-      this.input.bind();
+      this._placeInitialEntities();
+      this._syncCameraToScroll();
+      this._render();
 
       this._onResize = () => {
         this._resizeCanvas();
         this.refreshCollisionRects();
+        if (!this.running) {
+          if (!this._hasGameplayState) this._placeInitialEntities();
+          this._syncCameraToScroll();
+          this._requestStaticRender();
+        }
       };
-      this._onWheel = (event) => event.preventDefault();
+      this._onScroll = () => {
+        if (!this.running) {
+          this._syncCameraToScroll();
+          this._requestStaticRender();
+        }
+      };
       window.addEventListener("resize", this._onResize);
+      window.addEventListener("scroll", this._onScroll, { passive: true });
+      this._bindAssetRenderEvents();
+      this.mounted = true;
+    }
+
+    start() {
+      if (this.running) return;
+      this.mount();
+      this._hasGameplayState = true;
+
+      document.documentElement.style.scrollBehavior = "auto";
+
+      this.refreshCollisionRects();
+      this._centerCameraOnPlayer();
+
+      this.input.bind();
+
+      this._onWheel = (event) => event.preventDefault();
       window.addEventListener("wheel", this._onWheel, { passive: false });
       window.addEventListener("touchmove", this._onWheel, { passive: false });
 
       this.running = true;
       this.lastTime = performance.now();
       this._frame = (t) => this._tick(t);
-      requestAnimationFrame(this._frame);
+      this._rafId = requestAnimationFrame(this._frame);
     }
 
     stop() {
       if (!this.running) return;
       this.running = false;
+      if (this._rafId !== null) {
+        cancelAnimationFrame(this._rafId);
+        this._rafId = null;
+      }
       this.input.unbind();
-      window.removeEventListener("resize", this._onResize);
       window.removeEventListener("wheel", this._onWheel);
       window.removeEventListener("touchmove", this._onWheel);
       document.documentElement.style.scrollBehavior = this._previousScrollBehavior ?? "";
-      this.canvas.remove();
+      this.player.attackTimer = 0;
+      this._syncCameraToScroll();
+      this._render();
     }
 
     _resizeCanvas() {
@@ -395,44 +433,52 @@
       this.ctx.imageSmoothingEnabled = false;
     }
 
-    _placePlayer() {
+    _bindAssetRenderEvents() {
+      const redraw = () => {
+        if (!this.running) {
+          if (!this._hasGameplayState) this._placeInitialEntities();
+          this._syncCameraToScroll();
+          this._requestStaticRender();
+        }
+      };
+      const spawnImg = getSpawnImage();
+      if (spawnImg && !spawnImg.complete) {
+        spawnImg.addEventListener("load", redraw, { once: true });
+      }
+      Object.values(SHEETS).forEach((sheet) => {
+        if (!sheet.image.complete) {
+          sheet.image.addEventListener("load", redraw, { once: true });
+        }
+      });
+    }
+
+    _requestStaticRender() {
+      if (this.running || this._staticRenderQueued) return;
+      this._staticRenderQueued = true;
+      requestAnimationFrame(() => {
+        this._staticRenderQueued = false;
+        if (!this.running) {
+          this._syncCameraToScroll();
+          this._render();
+        }
+      });
+    }
+
+    _syncCameraToScroll() {
+      this.cameraX = window.scrollX;
+      this.cameraY = window.scrollY;
+    }
+
+    _placeInitialEntities() {
       if (this._customSpawn) {
         const { playerPos, npcs } = this._customSpawn;
-        this.player.x = playerPos.x;
-        this.player.y = playerPos.y;
-        applyEntitySize(this.player, playerPos);
-        npcs.forEach((spec) => {
-          const npcSize = spec.size ?? spec.width ?? DEFAULT_ENTITY_SIZE;
-          this.addEntity(
-            new Entity({
-              x: spec.x,
-              y: spec.y,
-              kind: spec.kind ?? "npc",
-              sheet: spec.sheet,
-              direction: spec.direction ?? "down",
-              width: spec.width ?? npcSize,
-              height: spec.height ?? npcSize,
-              spriteSize: spec.spriteSize ?? npcSize,
-            }),
-          );
-        });
-        this._centerCameraOnPlayer();
+        this._applySpawn(playerPos, npcs);
         return;
       }
 
-      const spawnEl = document.querySelector(SPAWN_SELECTOR);
-      const target = spawnEl?.querySelector("img") ?? spawnEl;
-
-      if (target) {
-        if (target instanceof HTMLImageElement) {
-          applyEntitySize(this.player, { size: getCipherboundSpriteSize(target) });
-        }
-        const r = target.getBoundingClientRect();
-        const docCx = r.left + window.scrollX + r.width / 2;
-        const docCy = r.top + window.scrollY + r.height / 2;
-        this.player.x = docCx - this.player.width / 2;
-        this.player.y = docCy - this.player.height / 2;
-        this._centerCameraOnPlayer();
+      const spawn = getCipherboundSpawn();
+      if (spawn) {
+        this._applySpawn(spawn.playerPos, spawn.npcs);
         return;
       }
 
@@ -441,8 +487,31 @@
       const candidate = this._findOpenSpot(cx, cy, this.player);
       this.player.x = candidate.x;
       this.player.y = candidate.y;
-      this.cameraX = window.scrollX;
-      this.cameraY = window.scrollY;
+      this.entities.splice(1);
+    }
+
+    _applySpawn(playerPos, npcs = []) {
+      this.player.x = playerPos.x;
+      this.player.y = playerPos.y;
+      applyEntitySize(this.player, playerPos);
+
+      this.entities.splice(1);
+      npcs.forEach((spec) => {
+        this.addEntity(
+          new Entity({
+            x: spec.x,
+            y: spec.y,
+            kind: spec.kind ?? "npc",
+            sheet: spec.sheet,
+            direction: spec.direction ?? "down",
+            width: spec.width,
+            height: spec.height,
+            hitboxWidth: spec.hitboxWidth,
+            hitboxHeight: spec.hitboxHeight,
+            spriteSize: spec.spriteSize ?? spec.size,
+          }),
+        );
+      });
     }
 
     _centerCameraOnPlayer() {
@@ -478,7 +547,7 @@
       this.lastTime = now;
       this._update(dt);
       this._render();
-      requestAnimationFrame(this._frame);
+      this._rafId = requestAnimationFrame(this._frame);
     }
 
     _update(dt) {
@@ -514,13 +583,19 @@
       const ctx = this.ctx;
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-      for (const e of this.entities) {
+      const drawOrder = [...this.entities].sort((a, b) => {
+        const aFeet = a.y + a.height;
+        const bFeet = b.y + b.height;
+        return aFeet - bFeet || a.x - b.x;
+      });
+
+      for (const e of drawOrder) {
         const sx = Math.round(e.x - this.cameraX);
         const sy = Math.round(e.y - this.cameraY);
         e.draw(ctx, sx, sy);
       }
 
-      if (this.player.attackTimer > 0) {
+      if (this.running && this.player.attackTimer > 0) {
         const sx = Math.round(this.player.x - this.cameraX);
         const sy = Math.round(this.player.y - this.cameraY);
         const [dx, dy] = DIR_VECTORS[this.player.direction];
@@ -547,7 +622,7 @@
         ctx.strokeRect(rx + 0.5, ry + 0.5, swing - 1, swing - 1);
       }
 
-      this._renderHUD();
+      if (this.running) this._renderHUD();
     }
 
     _renderHUD() {
@@ -573,88 +648,42 @@
     }
   }
 
-  // === Ambient sprite layer (DOM-based, visible until Konami) ===
+  // === Static canvas spawn helpers ===
 
-  let ambient = null;
+  function getSpawnImage() {
+    return document.querySelector(`${SPAWN_SELECTOR} img`);
+  }
 
-  function ensureAmbientLayer() {
-    if (ambient) return ambient;
-    const article = document.querySelector(SPAWN_SELECTOR);
-    if (!article) return null;
-    const img = article.querySelector("img");
+  function getCipherboundSpawn() {
+    const img = getSpawnImage();
     if (!img) return null;
 
-    if (getComputedStyle(article).position === "static") {
-      article.style.position = "relative";
-    }
+    const rect = img.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return null;
 
-    const playerEl = createAmbientSpriteEl(SHEETS.player);
-    const girlEl = createAmbientSpriteEl(SHEETS.girl);
-    article.appendChild(playerEl);
-    article.appendChild(girlEl);
+    const size = getCipherboundSpriteSize(img, rect);
+    const hitbox = getSpriteHitbox(size);
+    const docLeft = rect.left + window.scrollX;
+    const docTop = rect.top + window.scrollY;
+    const atAnchor = (anchor) => {
+      const feetX = docLeft + anchor.x * rect.width;
+      const feetY = docTop + anchor.y * rect.height;
+      return {
+        x: feetX - hitbox.width / 2,
+        y: feetY - hitbox.height,
+        spriteSize: size,
+      };
+    };
 
-    ambient = { article, img, playerEl, girlEl };
-
-    const update = () => positionAmbient();
-    window.addEventListener("resize", update);
-    if (!img.complete) img.addEventListener("load", update);
-    positionAmbient();
-    return ambient;
-  }
-
-  function createAmbientSpriteEl(sheet) {
-    const el = document.createElement("div");
-    el.className = "rpg-ambient-sprite";
-    Object.assign(el.style, {
-      position: "absolute",
-      backgroundImage: `url(${sheet.src})`,
-      backgroundSize: "400% 400%",
-      backgroundPosition: "0% 0%",
-      imageRendering: "pixelated",
-      pointerEvents: "none",
-      transform: "translate(-50%, -100%)",
-      zIndex: "2",
-    });
-    return el;
-  }
-
-  function positionAmbient() {
-    if (!ambient) return;
-    const { article, img, playerEl, girlEl } = ambient;
-    const articleRect = article.getBoundingClientRect();
-    const imgRect = img.getBoundingClientRect();
-    const localLeft = imgRect.left - articleRect.left;
-    const localTop = imgRect.top - articleRect.top;
-    const spriteSize = getCipherboundSpriteSize(img, imgRect);
-
-    playerEl.style.width = `${spriteSize}px`;
-    playerEl.style.height = `${spriteSize}px`;
-    girlEl.style.width = `${spriteSize}px`;
-    girlEl.style.height = `${spriteSize}px`;
-
-    playerEl.style.left = `${localLeft + PLAYER_AMBIENT_POS.x * imgRect.width}px`;
-    playerEl.style.top = `${localTop + PLAYER_AMBIENT_POS.y * imgRect.height}px`;
-    girlEl.style.left = `${localLeft + GIRL_AMBIENT_POS.x * imgRect.width}px`;
-    girlEl.style.top = `${localTop + GIRL_AMBIENT_POS.y * imgRect.height}px`;
-  }
-
-  function getAmbientFeet() {
-    if (!ambient) return null;
-    const playerRect = ambient.playerEl.getBoundingClientRect();
-    const girlRect = ambient.girlEl.getBoundingClientRect();
     return {
-      player: {
-        x: playerRect.left + window.scrollX + playerRect.width / 2,
-        y: playerRect.bottom + window.scrollY,
-        width: playerRect.width,
-        height: playerRect.height,
-      },
-      girl: {
-        x: girlRect.left + window.scrollX + girlRect.width / 2,
-        y: girlRect.bottom + window.scrollY,
-        width: girlRect.width,
-        height: girlRect.height,
-      },
+      playerPos: atAnchor(PLAYER_AMBIENT_POS),
+      npcs: [
+        {
+          ...atAnchor(GIRL_AMBIENT_POS),
+          kind: "girl",
+          sheet: SHEETS.girl,
+        },
+      ],
     };
   }
 
@@ -687,57 +716,59 @@
   }
 
   function applyEntitySize(entity, spec) {
-    const size = spec.size ?? spec.width ?? DEFAULT_ENTITY_SIZE;
-    entity.width = spec.width ?? size;
-    entity.height = spec.height ?? size;
-    entity.spriteSize = spec.spriteSize ?? Math.max(entity.width, entity.height);
+    const spriteSize = getEntitySpriteSize(spec);
+    const hitbox = getEntityHitbox(spec, spriteSize);
+    entity.width = hitbox.width;
+    entity.height = hitbox.height;
+    entity.spriteSize = spriteSize;
   }
 
-  function setAmbientVisible(visible) {
-    if (!ambient) return;
-    ambient.playerEl.style.visibility = visible ? "" : "hidden";
-    ambient.girlEl.style.visibility = visible ? "" : "hidden";
+  function getEntitySpriteSize(spec = {}) {
+    const explicitSize =
+      spec.spriteSize ?? spec.size ?? Math.max(spec.width ?? 0, spec.height ?? 0);
+    return explicitSize || DEFAULT_ENTITY_SIZE;
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", ensureAmbientLayer);
-  } else {
-    ensureAmbientLayer();
+  function getEntityHitbox(spec = {}, spriteSize = getEntitySpriteSize(spec)) {
+    const fallback = getSpriteHitbox(spriteSize);
+    return {
+      width: spec.hitboxWidth ?? spec.collisionWidth ?? spec.width ?? fallback.width,
+      height: spec.hitboxHeight ?? spec.collisionHeight ?? spec.height ?? fallback.height,
+    };
+  }
+
+  function getSpriteHitbox(spriteSize) {
+    return {
+      width: Math.max(8, Math.round(spriteSize * ENTITY_HITBOX_WIDTH_RATIO)),
+      height: Math.max(8, Math.round(spriteSize * ENTITY_HITBOX_HEIGHT_RATIO)),
+    };
   }
 
   // === Public entry points ===
 
+  let game = null;
   let active = null;
+
+  function ensureGame() {
+    if (!game) game = new Game();
+    game.mount();
+    return game;
+  }
+
+  function boot() {
+    ensureGame();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot, { once: true });
+  } else {
+    boot();
+  }
 
   function start() {
     if (active) return;
-    ensureAmbientLayer();
-    const feet = getAmbientFeet();
-
-    const game = new Game();
-
-    if (feet) {
-      const playerSpawn = {
-        x: feet.player.x - feet.player.width / 2,
-        y: feet.player.y - feet.player.height,
-        width: feet.player.width,
-        height: feet.player.height,
-        spriteSize: Math.max(feet.player.width, feet.player.height),
-      };
-      const girlSpawn = {
-        x: feet.girl.x - feet.girl.width / 2,
-        y: feet.girl.y - feet.girl.height,
-        width: feet.girl.width,
-        height: feet.girl.height,
-        spriteSize: Math.max(feet.girl.width, feet.girl.height),
-        kind: "girl",
-        sheet: SHEETS.girl,
-      };
-      game.setSpawn(playerSpawn, [girlSpawn]);
-    }
-
-    setAmbientVisible(false);
-    game.start();
+    const currentGame = ensureGame();
+    currentGame.start();
 
     const escHandler = (event) => {
       if (event.key === "Escape") {
@@ -747,14 +778,13 @@
     };
     window.addEventListener("keydown", escHandler);
 
-    active = { game, escHandler };
+    active = { game: currentGame, escHandler };
   }
 
   function stop() {
     if (!active) return;
     window.removeEventListener("keydown", active.escHandler);
     active.game.stop();
-    setAmbientVisible(true);
     active = null;
   }
 
