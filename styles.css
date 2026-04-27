@@ -82,36 +82,6 @@ body {
   transition: background-color 220ms ease, color 220ms ease;
 }
 
-body.game-mode {
-  --life-screen: #071015;
-  --life-cell: #7dffad;
-  --life-grid: rgba(125, 255, 173, 0.1);
-  --life-glow: rgba(125, 255, 173, 0.2);
-  background:
-    repeating-linear-gradient(
-      0deg,
-      rgba(125, 255, 173, 0.08) 0,
-      rgba(125, 255, 173, 0.08) 2px,
-      transparent 2px,
-      transparent 4px
-    ),
-    radial-gradient(circle at 50% 18%, rgba(125, 255, 173, 0.08), transparent 38%),
-    #090f16;
-  color: #d9ffe5;
-  text-shadow: 0 0 1px rgba(125, 255, 173, 0.2);
-}
-
-body.retro-mode {
-  image-rendering: pixelated;
-  font-family: "Silkscreen", "Courier New", Courier, monospace;
-  letter-spacing: 0.01em;
-}
-
-body.retro-mode * {
-  border-radius: 0 !important;
-  box-shadow: none !important;
-}
-
 a {
   color: inherit;
   text-decoration: none;
@@ -208,10 +178,6 @@ img {
 
 .theme-toggle,
 .nav-toggle,
-.footer-stars,
-.command-list button,
-.terminal-close,
-#command-close,
 .control-button {
   border: 1px solid var(--line);
   background: var(--surface);
@@ -365,9 +331,7 @@ h3 {
 .lead,
 .card p,
 .section-head p,
-.contact-link span:last-child,
-.secret-project p,
-#secret-fact-text {
+.contact-link span:last-child {
   color: var(--muted);
 }
 
@@ -442,61 +406,6 @@ h3 {
   box-shadow: var(--shadow);
   padding: 1.4rem;
   transition: transform 220ms ease;
-}
-
-body.game-mode .site-header,
-body.game-mode .card,
-body.game-mode .contact-link,
-body.game-mode .site-nav.is-open,
-body.game-mode .command-panel,
-body.game-mode .secret-facts-card,
-body.game-mode .retro-card,
-body.game-mode .terminal-header,
-body.game-mode .terminal-body,
-body.game-mode .terminal-form,
-body.game-mode .status-pill,
-body.game-mode .control-button {
-  border-color: rgba(125, 255, 173, 0.4);
-}
-
-body.game-mode .site-header,
-body.game-mode .card,
-body.game-mode .contact-link,
-body.game-mode .site-nav.is-open,
-body.game-mode .status-pill,
-body.game-mode .control-button {
-  background: rgba(9, 18, 24, 0.9);
-}
-
-body.game-mode .btn-primary,
-body.game-mode .control-button.is-primary {
-  background: linear-gradient(90deg, #39ff88, #24d96f);
-  color: #08120a;
-}
-
-body.game-mode .btn-secondary,
-body.game-mode .theme-toggle,
-body.game-mode .nav-toggle,
-body.game-mode .footer-stars {
-  background: rgba(13, 22, 28, 0.95);
-}
-
-body.game-mode .status-pill.is-running {
-  color: #7dffad;
-}
-
-body.game-mode .section-head h2::before {
-  content: "> ";
-  color: #7dffad;
-}
-
-body.game-mode h1::after {
-  content: " // INSERT COIN";
-  display: inline-block;
-  margin-left: 0.35rem;
-  font-size: 0.28em;
-  letter-spacing: 0.08em;
-  color: #7dffad;
 }
 
 .section-head {
@@ -647,22 +556,6 @@ body.game-mode h1::after {
   gap: 1rem;
 }
 
-.footer-stars {
-  display: inline-flex;
-  gap: 0.35rem;
-  padding: 0.4rem 0.55rem;
-}
-
-.footer-stars span {
-  display: inline-block;
-  transition: transform 160ms ease, color 160ms ease;
-}
-
-.footer-stars span.active {
-  color: var(--accent);
-  transform: scale(1.18);
-}
-
 .toast-stack {
   position: fixed;
   right: 1rem;
@@ -695,185 +588,6 @@ body.game-mode h1::after {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.terminal,
-.command-palette,
-.secret-facts,
-.retro-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 70;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: rgba(10, 12, 16, 0.45);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-}
-
-.terminal {
-  align-items: end;
-  justify-items: end;
-  background: transparent;
-  pointer-events: none;
-}
-
-.terminal:not(.hidden) {
-  pointer-events: auto;
-}
-
-.terminal > * {
-  pointer-events: auto;
-}
-
-.terminal {
-  padding: 1rem;
-}
-
-.terminal-header,
-.command-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.terminal {
-  place-items: end;
-}
-
-.terminal-body,
-.terminal-form,
-.command-panel,
-.secret-facts-card,
-.retro-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
-}
-
-.terminal-body,
-.terminal-form {
-  background: #0d1117;
-  color: #d8f7dd;
-  border-color: #243242;
-}
-
-.terminal {
-  grid-template-rows: auto;
-}
-
-#terminal {
-  width: min(540px, calc(100% - 2rem));
-  overflow: hidden;
-  border-radius: 16px;
-  isolation: isolate;
-}
-
-#terminal .terminal-header {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  padding: 0.85rem 1rem;
-  background: #111827;
-  color: #eef2f4;
-  border: 1px solid #243242;
-  border-bottom: none;
-  border-radius: 16px 16px 0 0;
-}
-
-#terminal .terminal-body {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  min-height: 230px;
-  padding: 1rem;
-  overflow: auto;
-}
-
-#terminal .terminal-form {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.9rem 1rem;
-  border-top: 1px solid #243242;
-  border-radius: 0 0 16px 16px;
-}
-
-#terminal input {
-  flex: 1;
-  background: transparent;
-  color: inherit;
-  border: none;
-  outline: none;
-}
-
-.terminal-prompt {
-  color: #8ad3a7;
-}
-
-.command-panel,
-.secret-facts-card,
-.retro-card {
-  width: min(460px, 100%);
-  border-radius: 18px;
-  padding: 1.2rem;
-}
-
-.command-list {
-  display: grid;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.command-list button,
-#command-close,
-.terminal-close {
-  padding: 0.75rem 0.9rem;
-}
-
-.command-list button {
-  text-align: left;
-}
-
-.secret-project {
-  margin-top: 1.25rem;
-}
-
-.secret-project-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.secret-project-head h3 {
-  margin: 0;
-}
-
-.secret-project-close {
-  border: 1px solid var(--line);
-  background: var(--surface-soft);
-  color: var(--muted);
-  border-radius: 10px;
-  padding: 0.3rem 0.6rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.secret-project-close:hover,
-.secret-project-close:focus-visible {
-  color: var(--text);
-  border-color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
-}
-
-.retro-card,
-.secret-facts-card {
-  text-align: center;
 }
 
 @media (max-width: 900px) {
