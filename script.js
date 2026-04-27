@@ -609,6 +609,10 @@ function handleLifeKeydown(event) {
     return;
   }
 
+  if (window.MSA_RPG?.isActive()) {
+    return;
+  }
+
   const target = event.target;
   if (
     target instanceof HTMLElement &&
@@ -700,4 +704,36 @@ navLinks.forEach((link) => {
     navToggle.setAttribute("aria-expanded", "false");
     siteNav.classList.remove("is-open");
   });
+});
+
+const KONAMI_SEQUENCE = [
+  "ArrowUp",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowLeft",
+  "ArrowRight",
+  "b",
+  "a",
+];
+let konamiBuffer = [];
+
+window.addEventListener("keydown", (event) => {
+  if (window.MSA_RPG?.isActive()) return;
+
+  const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+  konamiBuffer.push(key);
+  if (konamiBuffer.length > KONAMI_SEQUENCE.length) {
+    konamiBuffer.shift();
+  }
+
+  if (
+    konamiBuffer.length === KONAMI_SEQUENCE.length &&
+    KONAMI_SEQUENCE.every((expected, index) => konamiBuffer[index] === expected)
+  ) {
+    konamiBuffer = [];
+    window.MSA_RPG?.start();
+  }
 });
