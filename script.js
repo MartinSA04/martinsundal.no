@@ -9,8 +9,6 @@ const projectLifeCanvas = document.getElementById("project-life-canvas");
 const lifeResetButton = document.getElementById("life-reset");
 const lifeRunningState = document.getElementById("life-running-state");
 const lifeStatus = document.getElementById("life-status");
-const lifePlanData = document.getElementById("life-plan-data");
-const projectLifePlanData = document.getElementById("project-life-plan-data");
 const storageKey = "msa-theme";
 
 let themeCycleCount = 0;
@@ -19,14 +17,12 @@ const TOAST_DURATION = 4200;
 
 const lifeState = createLifeScene({
   canvas: lifeCanvas,
-  inlinePlanNode: lifePlanData,
   planSrc: "martin_plan.txt",
   speed: 10,
 });
 
 const projectLifeState = createLifeScene({
   canvas: projectLifeCanvas,
-  inlinePlanNode: projectLifePlanData,
   planSrc: "game_of_life_plan.txt",
   speed: 18,
   loopAfter: 540,
@@ -38,7 +34,6 @@ const lifeScenes = [lifeState, projectLifeState].filter(Boolean);
 
 function createLifeScene({
   canvas,
-  inlinePlanNode = null,
   planSrc = "",
   speed = 10,
   loopAfter = null,
@@ -55,7 +50,6 @@ function createLifeScene({
   return {
     canvas,
     ctx,
-    inlinePlanNode,
     planSrc,
     speed,
     loopAfter,
@@ -552,21 +546,16 @@ async function loadLifeScene(scene) {
     return;
   }
 
-  let text = "";
-
-  if (scene.inlinePlanNode?.textContent.trim()) {
-    text = atob(scene.inlinePlanNode.textContent.trim());
-  } else if (scene.planSrc) {
-    const response = await fetch(scene.planSrc);
-    if (!response.ok) {
-      throw new Error(`Unable to load ${scene.planSrc} (${response.status})`);
-    }
-
-    text = await response.text();
-  } else {
+  if (!scene.planSrc) {
     throw new Error("No life plan source configured.");
   }
 
+  const response = await fetch(scene.planSrc);
+  if (!response.ok) {
+    throw new Error(`Unable to load ${scene.planSrc} (${response.status})`);
+  }
+
+  const text = await response.text();
   const plan = parseLifePlan(text);
   const seed = createLifeSeedBoard(plan);
 
