@@ -20,7 +20,11 @@
   const ATTACK_REACH = 24;
   const CAMERA_MARGIN = 160;
   const DIALOGUE_DURATION = 4.2;
+  const BLACK_HOLE_TRANSITION_DURATION = 2.2;
+  const BLACK_HOLE_TRIGGER_RADIUS_RATIO = 0.22;
+  const MATRIX_CANVAS_OVERSCAN = 6;
   const GIRL_DIALOGUE = "So you know the code. Welcome behind the page.";
+
 
   const COLLISION_SELECTORS = [
     ".site-header",
@@ -35,6 +39,7 @@
 
   const COLLISION_EXCLUDE_ANCESTOR = "#home, [data-rpg-spawn]";
   const SPAWN_SELECTOR = "[data-rpg-spawn]";
+  const BLACK_HOLE_IMAGE_SELECTOR = 'img[src*="render.png"]';
 
   // Ambient sprite anchor points expressed as fractions of the cipherbound image.
   const PLAYER_AMBIENT_POS = { x: 0.54, y: 0.68 };
@@ -52,6 +57,8 @@
     player: createSheet("assets/player_sheet.png"),
     girl: createSheet("assets/girl_sheet.png"),
   };
+
+  let cachedHeaderBottomOffset = null;
 
   function createSheet(src) {
     const image = new Image();
@@ -204,6 +211,10 @@
     unbind() {
       window.removeEventListener("keydown", this._down);
       window.removeEventListener("keyup", this._up);
+      this.clear();
+    }
+
+    clear() {
       this.held.clear();
       this.priority.length = 0;
       this._attackQueued = false;
@@ -277,7 +288,10 @@
       this.canvas = document.createElement("canvas");
       Object.assign(this.canvas.style, {
         position: "fixed",
-        inset: "0",
+        top: "0",
+        left: "0",
+        width: "100vw",
+        height: `calc(100vh + ${MATRIX_CANVAS_OVERSCAN}px)`,
         pointerEvents: "none",
         zIndex: "20",
       });
@@ -287,7 +301,13 @@
       this.player = new Player({ x: 0, y: 0 });
       this.entities.push(this.player);
       this.collisionRects = [];
+      this.blackHoleRect = null;
       this.dialogue = null;
+      this.world = "page";
+      this.transition = null;
+      this.matrixTime = 0;
+      this.exitDoor = null;
+      this._returnFromMatrix = null;
       this.cameraX = 0;
       this.cameraY = 0;
       this.mounted = false;
@@ -318,8 +338,11 @@
 
     refreshCollisionRects() {
       const rects = [];
+      refreshHeaderBottomOffset();
+      this.blackHoleRect = getBlackHoleImageDocRect();
       document.querySelectorAll(COLLISION_SELECTORS).forEach((el) => {
         if (el.closest(COLLISION_EXCLUDE_ANCESTOR)) return;
+        if (isBlackHoleWalkableElement(el)) return;
         const position = getComputedStyle(el).position;
         if (position === "fixed" || position === "sticky") return;
         const r = el.getBoundingClientRect();
@@ -339,6 +362,19 @@
       const top = y;
       const right = x + entity.width;
       const bottom = y + entity.height;
+
+      if (this.world === "matrix") {
+        const topBound = getHeaderBottomOffset() + 6;
+        if (
+          left < 0 ||
+          top < topBound ||
+          right > this.canvas.width ||
+          bottom > this.canvas.height
+        ) {
+          return false;
+        }
+        return true;
+      }
 
       const docW = Math.max(
         document.documentElement.scrollWidth,
@@ -377,23 +413,27 @@
       document.body.appendChild(this.canvas);
 
       this._previousScrollBehavior = document.documentElement.style.scrollBehavior;
+      refreshHeaderBottomOffset();
       this.refreshCollisionRects();
       this._placeInitialEntities();
       this._syncCameraToScroll();
       this._render();
 
       this._onResize = () => {
+        refreshHeaderBottomOffset();
         this._resizeCanvas();
         this.refreshCollisionRects();
         if (!this.running) {
           if (!this._hasGameplayState) this._placeInitialEntities();
-          this._syncCameraToScroll();
+          if (this.world === "matrix") this._syncMatrixCamera();
+          else this._syncCameraToScroll();
           this._requestStaticRender();
         }
       };
       this._onScroll = () => {
         if (!this.running) {
-          this._syncCameraToScroll();
+          if (this.world === "matrix") this._syncMatrixCamera();
+          else this._syncCameraToScroll();
           this._requestStaticRender();
         }
       };
@@ -411,7 +451,11 @@
       document.documentElement.style.scrollBehavior = "auto";
 
       this.refreshCollisionRects();
-      this._centerCameraOnPlayer();
+      if (this.world === "page") {
+        this._centerCameraOnPlayer();
+      } else {
+        this._syncMatrixCamera();
+      }
 
       this.input.bind();
 
@@ -437,21 +481,25 @@
       window.removeEventListener("touchmove", this._onWheel);
       document.documentElement.style.scrollBehavior = this._previousScrollBehavior ?? "";
       this.player.attackTimer = 0;
-      this._syncCameraToScroll();
+      if (this.world === "matrix") this._syncMatrixCamera();
+      else this._syncCameraToScroll();
       this._render();
     }
 
     _resizeCanvas() {
+      refreshHeaderBottomOffset();
       this.canvas.width = window.innerWidth;
-      this.canvas.height = window.innerHeight;
+      this.canvas.height = window.innerHeight + MATRIX_CANVAS_OVERSCAN;
       this.ctx.imageSmoothingEnabled = false;
+      if (this.world === "matrix") this._positionExitDoor();
     }
 
     _bindAssetRenderEvents() {
       const redraw = () => {
         if (!this.running) {
           if (!this._hasGameplayState) this._placeInitialEntities();
-          this._syncCameraToScroll();
+          if (this.world === "matrix") this._syncMatrixCamera();
+          else this._syncCameraToScroll();
           this._requestStaticRender();
         }
       };
@@ -472,7 +520,8 @@
       requestAnimationFrame(() => {
         this._staticRenderQueued = false;
         if (!this.running) {
-          this._syncCameraToScroll();
+          if (this.world === "matrix") this._syncMatrixCamera();
+          else this._syncCameraToScroll();
           this._render();
         }
       });
@@ -481,6 +530,11 @@
     _syncCameraToScroll() {
       this.cameraX = window.scrollX;
       this.cameraY = window.scrollY;
+    }
+
+    _syncMatrixCamera() {
+      this.cameraX = 0;
+      this.cameraY = 0;
     }
 
     _placeInitialEntities() {
@@ -566,16 +620,154 @@
     }
 
     _update(dt) {
+      if (this.transition) {
+        this._updateTransition(dt);
+        return;
+      }
+
+      this.matrixTime += this.world === "matrix" ? dt : 0;
       for (const e of this.entities) e.update(dt, this);
       if (this.dialogue) {
         this.dialogue.timer -= dt;
         if (this.dialogue.timer <= 0) this.dialogue = null;
       }
-      this._updateCamera();
+      if (this.world === "matrix") {
+        this._syncMatrixCamera();
+        this._checkExitDoor();
+      } else {
+        this._checkBlackHolePortal();
+        this._updateCamera();
+      }
     }
 
     showDialogue(entity, text) {
       this.dialogue = { entity, text, timer: DIALOGUE_DURATION };
+    }
+
+    _checkBlackHolePortal() {
+      const rect = this.blackHoleRect;
+      if (!rect || this.transition) return;
+
+      const feetX = this.player.x + this.player.width / 2;
+      const feetY = this.player.y + this.player.height;
+      const centerX = (rect.left + rect.right) / 2;
+      const centerY = (rect.top + rect.bottom) / 2;
+      const triggerRadius = Math.min(rect.width, rect.height) * BLACK_HOLE_TRIGGER_RADIUS_RATIO;
+
+      if (Math.hypot(feetX - centerX, feetY - centerY) <= triggerRadius) {
+        this._startBlackHoleTransition(rect);
+      }
+    }
+
+    _startBlackHoleTransition(rect) {
+      const feetX = this.player.x + this.player.width / 2;
+      const feetY = this.player.y + this.player.height;
+      this.dialogue = null;
+      this.transition = {
+        type: "black-hole",
+        timer: 0,
+        centerX: (rect.left + rect.right) / 2,
+        centerY: (rect.top + rect.bottom) / 2,
+        startFeetX: feetX,
+        startFeetY: feetY,
+        startRadius: Math.max(30, Math.hypot(feetX - (rect.left + rect.right) / 2, feetY - (rect.top + rect.bottom) / 2)),
+        startAngle: Math.atan2(feetY - (rect.top + rect.bottom) / 2, feetX - (rect.left + rect.right) / 2),
+        originalSpriteSize: this.player.spriteSize,
+      };
+      this.input.clear();
+    }
+
+    _updateTransition(dt) {
+      if (this.transition?.type !== "black-hole") return;
+      const transition = this.transition;
+      transition.timer += dt;
+      const t = clamp(transition.timer / BLACK_HOLE_TRANSITION_DURATION, 0, 1);
+      const eased = t * t * (3 - 2 * t);
+      const angle = transition.startAngle + eased * Math.PI * 6.5;
+      const radius = transition.startRadius * (1 - eased);
+      const feetX = transition.centerX + Math.cos(angle) * radius;
+      const feetY = transition.centerY + Math.sin(angle) * radius;
+
+      this.player.x = feetX - this.player.width / 2;
+      this.player.y = feetY - this.player.height;
+      this.player.spriteSize = Math.max(8, transition.originalSpriteSize * (1 - eased * 0.72));
+      this._updateCamera();
+
+      if (t >= 1) {
+        this.player.spriteSize = transition.originalSpriteSize;
+        this.transition = null;
+        this._enterMatrixWorld();
+      }
+    }
+
+    _enterMatrixWorld() {
+      this.world = "matrix";
+      this.matrixTime = 0;
+      this.dialogue = null;
+      this.transition = null;
+      this._returnFromMatrix = this._getPageReturnState();
+      this.entities.splice(1);
+      applyEntitySize(this.player, { spriteSize: Math.max(this.player.spriteSize, 40) });
+      this._positionExitDoor();
+      this.player.x = 72;
+      this.player.y = Math.max(getHeaderBottomOffset() + 58, this.canvas.height / 2 - this.player.height / 2);
+      this.player.direction = "right";
+      this._syncMatrixCamera();
+    }
+
+    _getPageReturnState() {
+      const rect = getBlackHoleImageDocRect();
+      const fallback = {
+        scrollX: window.scrollX,
+        scrollY: window.scrollY,
+        playerX: this.player.x,
+        playerY: this.player.y,
+      };
+      if (!rect) return fallback;
+
+      return {
+        scrollX: window.scrollX,
+        scrollY: window.scrollY,
+        playerX: rect.left + rect.width * 0.52 - this.player.width / 2,
+        playerY: rect.bottom + 10,
+      };
+    }
+
+    _positionExitDoor() {
+      const topBound = getHeaderBottomOffset();
+      this.exitDoor = {
+        x: Math.max(120, this.canvas.width - 106),
+        y: Math.round(Math.max(topBound + 72, this.canvas.height / 2 - 48)),
+        width: 58,
+        height: 90,
+      };
+    }
+
+    _checkExitDoor() {
+      if (!this.exitDoor) return;
+      if (rectsOverlap(this.player, this.exitDoor)) {
+        this._exitMatrixWorld();
+      }
+    }
+
+    _exitMatrixWorld() {
+      const returnState = this._returnFromMatrix;
+      this.world = "page";
+      this.matrixTime = 0;
+      this.exitDoor = null;
+      this.transition = null;
+      this.dialogue = null;
+      this.entities.splice(1);
+      if (returnState) {
+        window.scrollTo(Math.round(returnState.scrollX), Math.round(returnState.scrollY));
+        this.player.x = returnState.playerX;
+        this.player.y = returnState.playerY;
+      } else {
+        this._placeInitialEntities();
+      }
+      this._returnFromMatrix = null;
+      this.refreshCollisionRects();
+      this._syncCameraToScroll();
     }
 
     _updateCamera() {
@@ -599,12 +791,22 @@
       this.cameraX = Math.max(0, Math.min(this.cameraX, maxX));
       this.cameraY = Math.max(0, Math.min(this.cameraY, maxY));
 
-      window.scrollTo(Math.round(this.cameraX), Math.round(this.cameraY));
+      const scrollX = Math.round(this.cameraX);
+      const scrollY = Math.round(this.cameraY);
+      if (Math.round(window.scrollX) !== scrollX || Math.round(window.scrollY) !== scrollY) {
+        window.scrollTo(scrollX, scrollY);
+      }
     }
 
     _render() {
       const ctx = this.ctx;
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+      if (this.world === "matrix") {
+        this._renderMatrixWorld();
+      } else if (this.transition?.type === "black-hole") {
+        this._renderBlackHoleTransition();
+      }
 
       const drawOrder = [...this.entities].sort((a, b) => {
         const aFeet = a.y + a.height;
@@ -620,6 +822,62 @@
 
       if (this.dialogue) this._renderDialogue(this.dialogue);
       if (this.running) this._renderHUD();
+    }
+
+    _renderBlackHoleTransition() {
+      // The transition is expressed by the player's spiral movement only.
+    }
+
+    _renderMatrixWorld() {
+      const ctx = this.ctx;
+      const headerBottom = getHeaderBottomOffset();
+      ctx.fillStyle = "#020604";
+      ctx.fillRect(-2, -2, this.canvas.width + 4, this.canvas.height + 4);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, headerBottom, this.canvas.width, this.canvas.height - headerBottom);
+      ctx.clip();
+
+      ctx.font = "13px monospace";
+      const columnGap = 22;
+      for (let x = 0; x < this.canvas.width + columnGap; x += columnGap) {
+        const streamPhase = (this.matrixTime * 52 + x * 1.9) % (this.canvas.height + 180);
+        for (let row = -8; row < this.canvas.height / 20 + 8; row += 1) {
+          const y = headerBottom + ((row * 20 + streamPhase) % (this.canvas.height + 120)) - 80;
+          if (y < headerBottom - 16 || y > this.canvas.height + 16) continue;
+          const charCode = 33 + ((x * 7 + row * 11 + Math.floor(this.matrixTime * 10)) % 58);
+          const wave = Math.sin(row * 0.85 + x * 0.06 + this.matrixTime * 2.4);
+          const alpha = 0.12 + (wave + 1) * 0.08 + (row % 9 === 0 ? 0.18 : 0);
+          ctx.fillStyle = `rgba(125, 255, 173, ${clamp(alpha, 0.1, 0.42)})`;
+          ctx.fillText(String.fromCharCode(charCode), x, y);
+        }
+      }
+
+      ctx.font = '14px "Silkscreen", monospace';
+      const codeStartY = headerBottom + (this.running ? 104 : 42);
+
+      this._renderExitDoor();
+      ctx.restore();
+    }
+
+    _renderExitDoor() {
+      if (!this.exitDoor) return;
+      const ctx = this.ctx;
+      const door = this.exitDoor;
+      ctx.save();
+      ctx.fillStyle = "rgba(7, 16, 12, 0.96)";
+      ctx.fillRect(door.x, door.y, door.width, door.height);
+      ctx.strokeStyle = "#7dffad";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(door.x + 1.5, door.y + 1.5, door.width - 3, door.height - 3);
+      ctx.fillStyle = "#7dffad";
+      ctx.fillRect(door.x + door.width - 17, door.y + door.height / 2 - 3, 6, 6);
+      ctx.font = '11px "Silkscreen", monospace';
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText("EXIT", door.x + door.width / 2, door.y - 8);
+      ctx.restore();
     }
 
     _renderHUD() {
@@ -696,6 +954,32 @@
 
   function getSpawnImage() {
     return document.querySelector(`${SPAWN_SELECTOR} img`);
+  }
+
+  function getBlackHoleImage() {
+    return document.querySelector(BLACK_HOLE_IMAGE_SELECTOR);
+  }
+
+  function getBlackHoleImageDocRect() {
+    const img = getBlackHoleImage();
+    if (!img) return null;
+    const rect = img.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return null;
+    return {
+      left: rect.left + window.scrollX,
+      top: rect.top + window.scrollY,
+      right: rect.right + window.scrollX,
+      bottom: rect.bottom + window.scrollY,
+      width: rect.width,
+      height: rect.height,
+    };
+  }
+
+  function isBlackHoleWalkableElement(el) {
+    const image = getBlackHoleImage();
+    if (!image) return false;
+    const card = image.closest(".project-card");
+    return Boolean(card && (el === card || card.contains(el)));
   }
 
   function getCipherboundSpawn() {
@@ -789,6 +1073,15 @@
     };
   }
 
+  function rectsOverlap(a, b) {
+    return (
+      a.x < b.x + b.width &&
+      a.x + a.width > b.x &&
+      a.y < b.y + b.height &&
+      a.y + a.height > b.y
+    );
+  }
+
   function directionToward(entity, target) {
     const entityCx = entity.x + entity.width / 2;
     const entityCy = entity.y + entity.height / 2;
@@ -801,9 +1094,16 @@
   }
 
   function getHeaderBottomOffset() {
+    if (cachedHeaderBottomOffset !== null) return cachedHeaderBottomOffset;
+    return refreshHeaderBottomOffset();
+  }
+
+  function refreshHeaderBottomOffset() {
     const header = document.querySelector(".site-header");
-    if (!header) return 0;
-    return Math.max(0, Math.ceil(header.getBoundingClientRect().bottom));
+    cachedHeaderBottomOffset = header
+      ? Math.max(0, Math.ceil(header.getBoundingClientRect().bottom))
+      : 0;
+    return cachedHeaderBottomOffset;
   }
 
   function wrapCanvasText(ctx, text, maxWidth) {
