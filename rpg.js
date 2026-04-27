@@ -19,6 +19,8 @@
   const ATTACK_DURATION = 0.18;
   const ATTACK_REACH = 24;
   const CAMERA_MARGIN = 160;
+  const DIALOGUE_DURATION = 4.2;
+  const GIRL_DIALOGUE = "So you know the code. Welcome behind the page.";
 
   const COLLISION_SELECTORS = [
     ".site-header",
@@ -90,13 +92,19 @@
       this.direction = opts.direction ?? "down";
       this.solid = opts.solid !== false;
       this.sheet = opts.sheet ?? null;
+      this.dialogue = opts.dialogue ?? null;
       this.spriteSize = spriteSize;
       this.frame = 0;
       this.frameTime = 0;
     }
 
     update(_dt, _game) {}
-    onAttacked(_attacker, _game) {}
+
+    onAttacked(attacker, game) {
+      if (!this.dialogue) return;
+      this.direction = directionToward(this, attacker);
+      game.showDialogue(this, this.dialogue);
+    }
 
     draw(ctx, screenX, screenY) {
       const dw = this.spriteSize;
@@ -222,7 +230,12 @@
         }
         return;
       }
-      if (event.key === " " || event.key === "z" || event.key === "Z") {
+      if (
+        event.key === " " ||
+        event.key === "Enter" ||
+        event.key === "z" ||
+        event.key === "Z"
+      ) {
         event.preventDefault();
         this._attackQueued = true;
       }
@@ -274,6 +287,7 @@
       this.player = new Player({ x: 0, y: 0 });
       this.entities.push(this.player);
       this.collisionRects = [];
+      this.dialogue = null;
       this.cameraX = 0;
       this.cameraY = 0;
       this.mounted = false;
@@ -504,6 +518,7 @@
             kind: spec.kind ?? "npc",
             sheet: spec.sheet,
             direction: spec.direction ?? "down",
+            dialogue: spec.dialogue,
             width: spec.width,
             height: spec.height,
             hitboxWidth: spec.hitboxWidth,
@@ -552,7 +567,15 @@
 
     _update(dt) {
       for (const e of this.entities) e.update(dt, this);
+      if (this.dialogue) {
+        this.dialogue.timer -= dt;
+        if (this.dialogue.timer <= 0) this.dialogue = null;
+      }
       this._updateCamera();
+    }
+
+    showDialogue(entity, text) {
+      this.dialogue = { entity, text, timer: DIALOGUE_DURATION };
     }
 
     _updateCamera() {
@@ -595,56 +618,77 @@
         e.draw(ctx, sx, sy);
       }
 
-      if (this.running && this.player.attackTimer > 0) {
-        const sx = Math.round(this.player.x - this.cameraX);
-        const sy = Math.round(this.player.y - this.cameraY);
-        const [dx, dy] = DIR_VECTORS[this.player.direction];
-        const swing = ATTACK_REACH;
-        let rx;
-        let ry;
-        if (dx > 0) {
-          rx = sx + this.player.width;
-          ry = sy + (this.player.height - swing) / 2;
-        } else if (dx < 0) {
-          rx = sx - swing;
-          ry = sy + (this.player.height - swing) / 2;
-        } else if (dy > 0) {
-          rx = sx + (this.player.width - swing) / 2;
-          ry = sy + this.player.height;
-        } else {
-          rx = sx + (this.player.width - swing) / 2;
-          ry = sy - swing;
-        }
-        ctx.fillStyle = "#fff7c4";
-        ctx.fillRect(rx, ry, swing, swing);
-        ctx.strokeStyle = "rgba(0, 0, 0, 0.55)";
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(rx + 0.5, ry + 0.5, swing - 1, swing - 1);
-      }
-
+      if (this.dialogue) this._renderDialogue(this.dialogue);
       if (this.running) this._renderHUD();
     }
 
     _renderHUD() {
       const ctx = this.ctx;
+      const hudY = getHeaderBottomOffset() + 12;
+      const hudW = Math.min(this.canvas.width - 24, 344);
+      const hudH = 58;
       ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
-      ctx.fillRect(12, 12, 168, 30);
+      ctx.fillRect(12, hudY, hudW, hudH);
       ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
       ctx.lineWidth = 1;
-      ctx.strokeRect(12.5, 12.5, 167, 29);
+      ctx.strokeRect(12.5, hudY + 0.5, hudW - 1, hudH - 1);
 
-      ctx.fillStyle = "#fff";
-      ctx.font = '14px "Silkscreen", monospace';
+      ctx.font = '22px "Silkscreen", monospace';
       ctx.textBaseline = "middle";
       ctx.textAlign = "left";
       const filled = "♥".repeat(this.player.health);
       const empty = "♡".repeat(Math.max(0, this.player.maxHealth - this.player.health));
-      ctx.fillText(`${filled}${empty}`, 22, 27);
+      ctx.fillStyle = "#ff4d5f";
+      ctx.fillText(filled, 22, hudY + 19);
+      ctx.fillStyle = "rgba(255, 77, 95, 0.38)";
+      ctx.fillText(empty, 22 + ctx.measureText(filled).width, hudY + 19);
 
-      ctx.fillStyle = "rgba(255, 255, 255, 0.55)";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
       ctx.font = "11px monospace";
-      ctx.textAlign = "right";
-      ctx.fillText("Esc to exit", this.canvas.width - 14, 24);
+      ctx.textAlign = "left";
+      ctx.fillText("WASD/Arrows move | Enter/Space/Z talk | Esc", 22, hudY + 43);
+    }
+
+    _renderDialogue(dialogue) {
+      const ctx = this.ctx;
+      const entity = dialogue.entity;
+      if (!entity || !this.entities.includes(entity)) return;
+
+      const entityX = Math.round(entity.x - this.cameraX);
+      const entityY = Math.round(entity.y - this.cameraY);
+      const spriteTop = entityY + entity.height - entity.spriteSize;
+      const maxBubbleWidth = Math.max(120, Math.min(280, this.canvas.width - 16));
+      const paddingX = 12;
+      const paddingY = 9;
+
+      ctx.save();
+      ctx.font = '13px "Silkscreen", monospace';
+      const lines = wrapCanvasText(ctx, dialogue.text, maxBubbleWidth - paddingX * 2);
+      const lineHeight = 17;
+      const textWidth = Math.max(...lines.map((line) => ctx.measureText(line).width));
+      const bubbleWidth = Math.ceil(textWidth + paddingX * 2);
+      const bubbleHeight = paddingY * 2 + lines.length * lineHeight;
+      const preferredX = entityX + entity.width / 2 - bubbleWidth / 2;
+      const preferredY = spriteTop - bubbleHeight - 10;
+      const bubbleX = Math.round(clamp(preferredX, 8, this.canvas.width - bubbleWidth - 8));
+      const bubbleY = Math.round(
+        clamp(preferredY, getHeaderBottomOffset() + 8, this.canvas.height - bubbleHeight - 8),
+      );
+
+      drawRoundRect(ctx, bubbleX, bubbleY, bubbleWidth, bubbleHeight, 6);
+      ctx.fillStyle = "rgba(7, 16, 12, 0.92)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.35)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = "#e6f4e6";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      lines.forEach((line, index) => {
+        ctx.fillText(line, bubbleX + paddingX, bubbleY + paddingY + index * lineHeight);
+      });
+      ctx.restore();
     }
   }
 
@@ -682,6 +726,7 @@
           ...atAnchor(GIRL_AMBIENT_POS),
           kind: "girl",
           sheet: SHEETS.girl,
+          dialogue: GIRL_DIALOGUE,
         },
       ],
     };
@@ -742,6 +787,62 @@
       width: Math.max(8, Math.round(spriteSize * ENTITY_HITBOX_WIDTH_RATIO)),
       height: Math.max(8, Math.round(spriteSize * ENTITY_HITBOX_HEIGHT_RATIO)),
     };
+  }
+
+  function directionToward(entity, target) {
+    const entityCx = entity.x + entity.width / 2;
+    const entityCy = entity.y + entity.height / 2;
+    const targetCx = target.x + target.width / 2;
+    const targetCy = target.y + target.height / 2;
+    const dx = targetCx - entityCx;
+    const dy = targetCy - entityCy;
+    if (Math.abs(dx) > Math.abs(dy)) return dx < 0 ? "left" : "right";
+    return dy < 0 ? "up" : "down";
+  }
+
+  function getHeaderBottomOffset() {
+    const header = document.querySelector(".site-header");
+    if (!header) return 0;
+    return Math.max(0, Math.ceil(header.getBoundingClientRect().bottom));
+  }
+
+  function wrapCanvasText(ctx, text, maxWidth) {
+    const words = text.trim().split(/\s+/);
+    const lines = [];
+    let line = "";
+
+    words.forEach((word) => {
+      const testLine = line ? `${line} ${word}` : word;
+      if (line && ctx.measureText(testLine).width > maxWidth) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = testLine;
+      }
+    });
+
+    if (line) lines.push(line);
+    return lines.length ? lines : [""];
+  }
+
+  function drawRoundRect(ctx, x, y, width, height, radius) {
+    const r = Math.min(radius, width / 2, height / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + width - r, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+    ctx.lineTo(x + width, y + height - r);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    ctx.lineTo(x + r, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  function clamp(value, min, max) {
+    if (max < min) return min;
+    return Math.max(min, Math.min(value, max));
   }
 
   // === Public entry points ===
