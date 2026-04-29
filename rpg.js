@@ -19,6 +19,10 @@
   const ATTACK_DURATION = 0.18;
   const ATTACK_REACH = 24;
   const CAMERA_MARGIN = 160;
+  const SCROLL_INPUT_SETTLE_MS = 180;
+  const TOUCH_SCROLL_SETTLE_MS = 360;
+  const CAMERA_SCROLL_EVENT_MS = 120;
+  const SCROLL_EPSILON = 1;
   const DIALOGUE_DURATION = 4.2;
   const BLACK_HOLE_TRANSITION_DURATION = 2.2;
   const BLACK_HOLE_TRIGGER_RADIUS_RATIO = 0.22;
@@ -231,10 +235,10 @@
     }
 
     _handleDown(event) {
-      if (event.repeat) return;
       const dir = this._keyToDir(event.key);
       if (dir) {
         event.preventDefault();
+        if (event.repeat) return;
         if (!this.held.has(dir)) {
           this.held.add(dir);
           this.priority.push(dir);
@@ -248,6 +252,7 @@
         event.key === "Z"
       ) {
         event.preventDefault();
+        if (event.repeat) return;
         this._attackQueued = true;
       }
     }
@@ -255,6 +260,7 @@
     _handleUp(event) {
       const dir = this._keyToDir(event.key);
       if (!dir) return;
+      event.preventDefault();
       this.held.delete(dir);
       this.priority = this.priority.filter((d) => d !== dir);
     }
@@ -317,6 +323,8 @@
       this._hasGameplayState = false;
       this._customSpawn = null;
       this._staticRenderQueued = false;
+      this._scrollInputSettlesAt = 0;
+      this._cameraScrollTarget = null;
     }
 
     setSpawn(playerPos, npcs = []) {
@@ -431,7 +439,11 @@
         }
       };
       this._onScroll = () => {
-        if (!this.running) {
+        if (this.running) {
+          if (this.world === "page" && !this._isCameraScrollEvent()) {
+            this._settleScrollInput();
+          }
+        } else {
           if (this.world === "matrix") this._syncMatrixCamera();
           else this._syncCameraToScroll();
           this._requestStaticRender();
@@ -449,6 +461,8 @@
       this._hasGameplayState = true;
 
       document.documentElement.style.scrollBehavior = "auto";
+      this._scrollInputSettlesAt = 0;
+      this._cameraScrollTarget = null;
 
       this.refreshCollisionRects();
       if (this.world === "page") {
@@ -459,9 +473,13 @@
 
       this.input.bind();
 
-      this._onWheel = (event) => event.preventDefault();
+      this._onWheel = (event) => this._handleScrollInput(event);
+      this._onTouchMove = (event) => this._handleScrollInput(event);
+      this._onTouchEnd = () => this._settleScrollInput(TOUCH_SCROLL_SETTLE_MS);
       window.addEventListener("wheel", this._onWheel, { passive: false });
-      window.addEventListener("touchmove", this._onWheel, { passive: false });
+      window.addEventListener("touchmove", this._onTouchMove, { passive: false });
+      window.addEventListener("touchend", this._onTouchEnd, { passive: true });
+      window.addEventListener("touchcancel", this._onTouchEnd, { passive: true });
 
       this.running = true;
       this.lastTime = performance.now();
@@ -478,8 +496,12 @@
       }
       this.input.unbind();
       window.removeEventListener("wheel", this._onWheel);
-      window.removeEventListener("touchmove", this._onWheel);
+      window.removeEventListener("touchmove", this._onTouchMove);
+      window.removeEventListener("touchend", this._onTouchEnd);
+      window.removeEventListener("touchcancel", this._onTouchEnd);
       document.documentElement.style.scrollBehavior = this._previousScrollBehavior ?? "";
+      this._scrollInputSettlesAt = 0;
+      this._cameraScrollTarget = null;
       this.player.attackTimer = 0;
       if (this.world === "page") this._ensurePageNpcs();
       if (this.world === "matrix") this._syncMatrixCamera();
@@ -538,6 +560,43 @@
       this.cameraY = 0;
     }
 
+    _handleScrollInput(event) {
+      if (event.cancelable) event.preventDefault();
+      this._settleScrollInput();
+    }
+
+    _settleScrollInput(duration = SCROLL_INPUT_SETTLE_MS) {
+      this._scrollInputSettlesAt = performance.now() + duration;
+      if (this.world === "page") this._syncCameraToScroll();
+    }
+
+    _isScrollInputSettling() {
+      return this.world === "page" && performance.now() < this._scrollInputSettlesAt;
+    }
+
+    _scrollCameraTo(scrollX, scrollY) {
+      this._cameraScrollTarget = {
+        x: scrollX,
+        y: scrollY,
+        expiresAt: performance.now() + CAMERA_SCROLL_EVENT_MS,
+      };
+      window.scrollTo(scrollX, scrollY);
+    }
+
+    _isCameraScrollEvent() {
+      const target = this._cameraScrollTarget;
+      if (!target) return false;
+
+      const isAtTarget =
+        Math.abs(window.scrollX - target.x) <= SCROLL_EPSILON &&
+        Math.abs(window.scrollY - target.y) <= SCROLL_EPSILON;
+      if (isAtTarget || performance.now() > target.expiresAt) {
+        this._cameraScrollTarget = null;
+      }
+
+      return isAtTarget;
+    }
+
     _placeInitialEntities() {
       if (this._customSpawn) {
         const { playerPos, npcs } = this._customSpawn;
@@ -589,7 +648,7 @@
       const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
       this.cameraX = Math.max(0, Math.min(docCx - window.innerWidth / 2, maxX));
       this.cameraY = Math.max(0, Math.min(docCy - window.innerHeight / 2, maxY));
-      window.scrollTo(Math.round(this.cameraX), Math.round(this.cameraY));
+      this._scrollCameraTo(Math.round(this.cameraX), Math.round(this.cameraY));
     }
 
     _findOpenSpot(startX, startY, entity) {
@@ -758,7 +817,7 @@
       this.dialogue = null;
       this.entities.splice(1);
       if (returnState) {
-        window.scrollTo(Math.round(returnState.scrollX), Math.round(returnState.scrollY));
+        this._scrollCameraTo(Math.round(returnState.scrollX), Math.round(returnState.scrollY));
         this.player.x = returnState.playerX;
         this.player.y = returnState.playerY;
       } else {
@@ -771,6 +830,9 @@
     }
 
     _updateCamera() {
+      this._syncCameraToScroll();
+      if (this._isScrollInputSettling()) return;
+
       const cx = this.player.x + this.player.width / 2;
       const cy = this.player.y + this.player.height / 2;
       const viewW = window.innerWidth;
@@ -794,7 +856,7 @@
       const scrollX = Math.round(this.cameraX);
       const scrollY = Math.round(this.cameraY);
       if (Math.round(window.scrollX) !== scrollX || Math.round(window.scrollY) !== scrollY) {
-        window.scrollTo(scrollX, scrollY);
+        this._scrollCameraTo(scrollX, scrollY);
       }
     }
 
