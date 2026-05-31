@@ -132,7 +132,6 @@
             <a href="#about">About</a>
             <a href="#work">Work</a>
             <a href="#projects">Projects</a>
-            <a href="#skills">Skills</a>
             <a href="#contact">Contact</a>
           </nav>
 
@@ -174,9 +173,10 @@
               ></canvas>
             </div>
             <p class="lead">
-              I write software for things that move, compute, or occasionally do
-              both at once — robotics, simulation, engineering tools, and a
-              steady pile of side projects that seemed like a great idea at 1am.
+              Mostly I write software for things that move or compute, and
+              sometimes both. That covers robotics, simulation, and engineering
+              tools at work, plus a steady pile of side projects that seemed
+              like a good idea at 1am.
             </p>
 
             <div class="hero-actions">
@@ -202,9 +202,9 @@
             <div class="card prose-card">
               <p>
                 I’m Martin, a software engineer in Trondheim. At Aker Solutions
-                I work on industrial software and automation, which is a fancy
-                way of saying I try to make complicated systems slightly less
-                complicated, with mixed but occasionally promising results.
+                I work on industrial software and automation, mostly trying to
+                make complicated systems a little less complicated, with mixed
+                but occasionally promising results.
               </p>
               <p>
                 Alongside that, I study <strong>Applied Physics and
@@ -234,24 +234,25 @@
               <article class="card">
                 <h3>Industrial software</h3>
                 <p>
-                  Building software that supports engineering workflows,
-                  automation, and production-oriented systems.
+                  Automation and engineering tools at Aker Solutions, the kind
+                  meant to cut manual steps and keep production systems running.
                 </p>
               </article>
 
               <article class="card">
                 <h3>Robotics & simulation</h3>
                 <p>
-                  Working on systems where software connects with geometry,
-                  motion, and physical constraints.
+                  Software that has to deal with the physical world, where
+                  geometry and motion don’t care how clean the code is.
                 </p>
               </article>
 
               <article class="card">
                 <h3>Side projects</h3>
                 <p>
-                  Making smaller projects that let me explore graphics, gameplay,
-                  tools, and ideas I find interesting.
+                  Smaller things I build to learn something or scratch an itch,
+                  usually games, graphics experiments, or some oddly specific
+                  tool.
                 </p>
               </article>
             </div>
@@ -267,6 +268,62 @@
             </div>
 
             <div class="project-grid">
+              <article class="project-card card project-featured">
+                <div class="project-content">
+                  <p class="project-eyebrow">Framework</p>
+                  <h3>Study Companion</h3>
+                  <p>
+                    An Astro framework and component library for interactive
+                    course study guides. Each course is authored as plain data
+                    (a <code>course.yaml</code> and a handful of MDX sections)
+                    that pins a version of the framework, which owns all the
+                    design, page wiring, and twenty-odd widgets. Static output,
+                    server-rendered KaTeX, almost no client-side JavaScript.
+                  </p>
+                  <p>
+                    Every site below runs on that same versioned core, so the
+                    lecture notes, learning goals, formulas, algorithm
+                    visualizers, and exam practice all come from one codebase.
+                  </p>
+                  <ul class="tag-list">
+                    <li>Astro</li>
+                    <li>MDX</li>
+                    <li>KaTeX</li>
+                    <li>TypeScript</li>
+                    <li>Component library</li>
+                  </ul>
+                  <div class="project-actions">
+                    <a
+                      class="btn btn-primary"
+                      href="https://github.com/MartinSA04/StudyCompanion"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View on GitHub
+                    </a>
+                  </div>
+                  <div class="course-links">
+                    <!-- Add a course site here as each one ships: one <a> per course -->
+                    <a
+                      class="btn btn-secondary"
+                      href="https://optikk.martinsundal.no"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      optikk.martinsundal.no
+                    </a>
+                    <a
+                      class="btn btn-secondary"
+                      href="https://algdat.martinsundal.no"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      algdat.martinsundal.no
+                    </a>
+                  </div>
+                </div>
+              </article>
+
               <article class="project-card card" data-rpg-spawn>
                 <img
                   src="cipherbound.png"
@@ -279,9 +336,8 @@
                 <div class="project-content">
                   <h3>Cipherbound</h3>
                   <p>
-                    A Pokémon-like game built from scratch in C++, focused on core
-                    systems, gameplay, and building a complete project from the
-                    ground up.
+                    A Pokémon-like game built from scratch in C++, focused on
+                    core game systems, gameplay, and architecture.
                   </p>
                   <p>
                     This project won <strong>Best Project</strong> in the
@@ -333,14 +389,16 @@
                     <li>Physics simulation</li>
                     <li>Rendering</li>
                   </ul>
-                  <a
-                    class="btn btn-secondary"
-                    href="https://github.com/MartinSA04/Black-Hole-Simulator"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    View on GitHub
-                  </a>
+                  <div class="project-actions">
+                    <a
+                      class="btn btn-secondary"
+                      href="https://github.com/MartinSA04/Black-Hole-Simulator"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View on GitHub
+                    </a>
+                  </div>
                 </div>
               </article>
 
@@ -357,7 +415,7 @@
                   <h3>Game of Life Text Generator</h3>
                   <p>
                     A tool that builds Conway's Game of Life starting states
-                    which evolve into readable text, turning a cellular
+                    that evolve into readable text, turning a cellular
                     automaton into a very impractical typography engine.
                   </p>
                   <p>
@@ -370,70 +428,18 @@
                     <li>Cellular automata</li>
                     <li>Search</li>
                   </ul>
-                  <a
-                    class="btn btn-secondary"
-                    href="https://github.com/MartinSA04/GameOfLifeText"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    View on GitHub
-                  </a>
+                  <div class="project-actions">
+                    <a
+                      class="btn btn-secondary"
+                      href="https://github.com/MartinSA04/GameOfLifeText"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View on GitHub
+                    </a>
+                  </div>
                 </div>
               </article>
-
-
-
-
-
-              <article class="project-card card">
-                <div class="project-content">
-                  <h3>TDT4120 AlgDat study companion</h3>
-                  <p>
-                    A website to be used as a study companion in the Algorithms and Datastructures
-                    course TDT4120 at NTNU.
-                  </p>
-                  <p>
-                    It contains lecture notes, all learning goals, algorithm visualizers, and exam
-                    preparation tasks.
-                  </p>
-                  <ul class="tag-list">
-                    <li>JavaScript</li>
-                    <li>Visualizer</li>
-                  </ul>
-                  <a
-                    class="btn btn-secondary"
-                    href="https://algdat.martinsundal.no"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    View page
-                  </a>
-                </div>
-              </article>
-
-
-
-            </div>
-          </div>
-        </section>
-
-        <section id="skills" class="section">
-          <div class="container section-narrow">
-            <div class="section-head">
-              <span class="section-index">04</span>
-              <h2>Languages & tools</h2>
-            </div>
-            <div class="card">
-              <ul class="skill-list">
-                <li>C++</li>
-                <li>Python</li>
-                <li>ROS2</li>
-                <li>Docker</li>
-                <li>Git</li>
-                <li>Linux</li>
-                <li>Bash</li>
-                <li>NumPy</li>
-              </ul>
             </div>
           </div>
         </section>
@@ -441,7 +447,7 @@
         <section id="contact" class="section">
           <div class="container section-narrow">
             <div class="section-head">
-              <span class="section-index">05</span>
+              <span class="section-index">04</span>
               <h2>Contact</h2>
               <p>You can find me here.</p>
             </div>
