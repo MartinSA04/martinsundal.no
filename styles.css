@@ -700,12 +700,103 @@ h3 {
   color: var(--muted);
 }
 
-/* Course sites built on the framework — wraps as more courses ship */
-.course-links {
+/* Course guides built on the framework, grouped by semester — reads as a table */
+.course-table {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-top: 0.85rem;
+  flex-direction: column;
+  gap: 1.4rem;
+  margin-top: 1.1rem;
+}
+
+.course-term-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 0.7rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.95rem;
+}
+
+.course-term-count {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.course-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.course-row {
+  display: grid;
+  grid-template-columns: 5.25rem 1fr auto;
+  grid-template-areas: "code name host";
+  align-items: center;
+  gap: 0.3rem 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-soft);
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.course-row:hover,
+.course-row:focus-visible {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.course-code {
+  grid-area: code;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-strong);
+}
+
+.course-name {
+  grid-area: name;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.course-host {
+  grid-area: host;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.course-arrow {
+  color: var(--accent);
+}
+
+@media (max-width: 560px) {
+  .course-row {
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "code name"
+      "host host";
+    gap: 0.35rem 0.75rem;
+  }
+
+  .course-host {
+    justify-self: start;
+  }
 }
 
 /* =========================================================================
