@@ -632,6 +632,39 @@ h3 {
   background-size: 16px 16px;
 }
 
+/* Terminal-style preview (NTNU API/MCP card) — same footprint as the
+   image/Life previews, colored with the Game of Life palette so it follows
+   all three themes. */
+.project-terminal-preview {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  aspect-ratio: 16 / 10;
+  max-height: 280px;
+  padding: 1.5rem;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  background: var(--life-screen);
+}
+
+.terminal-lines {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.9;
+  color: var(--muted);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.terminal-cmd {
+  color: var(--text);
+}
+
+.terminal-ok {
+  color: var(--life-cell);
+}
+
 .project-life-canvas {
   width: 100%;
   height: auto;
