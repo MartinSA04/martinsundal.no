@@ -1,0 +1,114 @@
+/* World 04 — the void. Thin display serif, readouts floating in space. */
+@import "../styles/project.css";
+
+[data-world="black-hole"] {
+  padding-block: var(--space-4) var(--space-8);
+}
+
+[data-world="black-hole"] :is(h1, h2, h3) {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+}
+
+[data-world="black-hole"] .head h1 {
+  font-size: var(--step-5);
+  line-height: 1;
+  max-width: 15ch;
+}
+
+[data-world="black-hole"] .lede {
+  font-family: var(--font-serif);
+  font-size: var(--step-2);
+  font-weight: 300;
+  line-height: 1.4;
+  color: color-mix(in oklab, var(--ink) 78%, var(--sub));
+}
+
+[data-world="black-hole"] .prose p {
+  font-family: var(--font-serif);
+  font-size: var(--step-1);
+  line-height: 1.65;
+}
+
+/* --- the lensing canvas --------------------------------------------------- */
+
+.bh-stage {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: #000;
+  border: var(--rule) solid var(--hair);
+  overflow: hidden;
+}
+
+.bh-canvas,
+.bh-fallback {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.bh-canvas {
+  cursor: grab;
+  touch-action: none;
+}
+
+.bh-canvas:active {
+  cursor: grabbing;
+}
+
+.bh-canvas:focus-visible {
+  outline: 2px solid var(--sig);
+  outline-offset: -2px;
+}
+
+/* Readouts sit over the void, the way instrument overlays do. */
+.bh-readouts {
+  position: absolute;
+  inset: auto var(--space-2) var(--space-2) var(--space-2);
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  pointer-events: none;
+}
+
+.bh-readout {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.bh-readout dt {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--ink) 55%, transparent);
+}
+
+.bh-readout dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--sig);
+  font-variant-numeric: tabular-nums;
+}
+
+.bh-hint {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--ink) 45%, transparent);
+}
+
+.bh-note {
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.08em;
+  color: color-mix(in oklab, var(--ink) 50%, var(--sub));
+}

@@ -1,0 +1,49 @@
+---
+import { getEntry, render } from "astro:content";
+import ProjectShell from "../../components/project/ProjectShell.astro";
+import VideoFacade from "../../components/work/VideoFacade.astro";
+import "../../worlds/cipherbound.css";
+
+const entry = await getEntry("projects", "cipherbound");
+if (!entry) throw new Error("missing content: projects/cipherbound");
+const { Content } = await render(entry);
+---
+
+<ProjectShell entry={entry} centerpieceLabel="Trailer and dialogue box">
+  <div slot="centerpiece">
+    <div class="cb-video cb-frame">
+      <VideoFacade
+        poster="/cipherbound/poster.avif"
+        webm="/cipherbound/trailer.webm"
+        mp4="/cipherbound/trailer.mp4"
+        width={1280}
+        height={720}
+        label="Play the Cipherbound trailer"
+        posterAlt="Cipherbound gameplay: a pixel-art overworld with the player character"
+      />
+    </div>
+
+    <div class="cb-dialogue cb-frame" data-cb-dialogue>
+      <span class="cb-speaker">SYSTEMS</span>
+      {/* The first line is server-rendered, so the box says something even
+          before the script runs. Everything it says also appears in the prose
+          below — the interaction hides nothing. */}
+      <p class="cb-text" data-cb-text>
+        Every tile carries its own walkability, so the world is data. A new area
+        is a new file, not new code.
+      </p>
+      <div class="cb-progress" data-cb-pips aria-hidden="true"></div>
+      <button class="cb-next" type="button" data-cb-next aria-label="Next line">
+        Next
+      </button>
+    </div>
+  </div>
+
+  <Content />
+</ProjectShell>
+
+<div class="cb-sprite" data-cb-sprite aria-hidden="true"></div>
+
+<script>
+  import "../../worlds/cipherbound.ts";
+</script>

@@ -69,8 +69,9 @@ for (const path of PAGES) {
 
 test("sitemap lists all seven pages and excludes the kitchen sink", async ({ request }) => {
   const index = await (await request.get("/sitemap-index.xml")).text();
-  const url = index.match(/<loc>([^<]+sitemap-0\.xml)<\/loc>/)![1];
-  const body = await (await request.get(url)).text();
+  const loc = index.match(/<loc>([^<]+sitemap-0\.xml)<\/loc>/)![1]!;
+  // The index carries absolute production URLs; fetch the same file locally.
+  const body = await (await request.get(new URL(loc).pathname)).text();
   for (const p of PAGES) expect(body).toContain(`https://martinsundal.no${p}`);
   expect(body).not.toContain("kitchen-sink");
 });

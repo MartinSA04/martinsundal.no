@@ -1,0 +1,177 @@
+/* World 03 — GBA era. Pixel type, CRT scanlines, framed panels. */
+@import "../styles/project.css";
+
+[data-world="cipherbound"] {
+  position: relative;
+  --frame: 3px;
+}
+
+/* Scanlines over the whole world, faint enough to read through. */
+[data-world="cipherbound"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 2px,
+    color-mix(in oklab, #000 22%, transparent) 2px 3px
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+[data-world="cipherbound"] :is(h1, h2, h3),
+[data-world="cipherbound"] .micro-label,
+[data-world="cipherbound"] .micro-index,
+[data-world="cipherbound"] .links a,
+[data-world="cipherbound"] .micro-spec dt {
+  font-family: var(--font-pixel);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[data-world="cipherbound"] .head h1 {
+  font-size: var(--step-3);
+  line-height: 1.15;
+  text-shadow: 3px 3px 0 color-mix(in oklab, var(--sig) 55%, transparent);
+  max-width: 14ch;
+}
+
+[data-world="cipherbound"] .lede {
+  font-family: var(--font-pixel);
+  font-size: var(--step-0);
+  line-height: 1.7;
+}
+
+[data-world="cipherbound"] .prose h2 {
+  font-size: var(--step-1);
+  border-bottom: var(--frame) solid var(--hair);
+  padding-bottom: 0.4rem;
+}
+
+[data-world="cipherbound"] .micro-spec,
+[data-world="cipherbound"] .links a {
+  border-color: var(--hair);
+}
+
+/* Chunky GBA-style frame, drawn with a stepped border. */
+.cb-frame {
+  border: var(--frame) solid var(--ink);
+  box-shadow:
+    0 0 0 var(--frame) var(--sub),
+    0 0 0 calc(var(--frame) * 2) var(--hair);
+  background: color-mix(in oklab, var(--ink) 6%, var(--sub));
+}
+
+.cb-video {
+  margin-bottom: var(--space-4);
+}
+
+/* --- dialogue box --------------------------------------------------------- */
+
+.cb-dialogue {
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+  font-family: var(--font-pixel);
+  min-height: 11rem;
+  align-content: start;
+}
+
+.cb-speaker {
+  color: var(--sig);
+  font-size: var(--step--1);
+}
+
+.cb-text {
+  font-size: var(--step-0);
+  line-height: 1.8;
+  margin: 0;
+  min-height: 5.5lh;
+}
+
+/* The little blinking triangle that means "press A". */
+.cb-next {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: none;
+  border: 0;
+  color: var(--sig);
+  font-family: var(--font-pixel);
+  font-size: var(--step--1);
+  cursor: pointer;
+  padding: 0.4rem 0.2rem;
+}
+
+.cb-next::after {
+  content: "\25bc";
+  display: inline-block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cb-next::after {
+    animation: cb-bob 1s steps(2, end) infinite;
+  }
+  @keyframes cb-bob {
+    0%,
+    50% {
+      transform: translateY(0);
+    }
+    51%,
+    100% {
+      transform: translateY(3px);
+    }
+  }
+}
+
+.cb-next[hidden] {
+  display: none;
+}
+
+.cb-progress {
+  display: flex;
+  gap: 4px;
+}
+
+.cb-pip {
+  width: 8px;
+  height: 8px;
+  background: var(--hair);
+}
+
+.cb-pip[data-on] {
+  background: var(--sig);
+}
+
+/* --- the sprite that walks the margin ------------------------------------- */
+
+.cb-sprite {
+  position: fixed;
+  left: max(0.5rem, calc(50vw - 40rem));
+  bottom: 12vh;
+  width: 48px;
+  height: 48px;
+  z-index: 3;
+  pointer-events: none;
+  background-image: url("/sprites/player_sheet.png");
+  background-repeat: no-repeat;
+  /* 4x4 sheet of 32px frames, scaled 1.5x. */
+  background-size: 192px 192px;
+  image-rendering: pixelated;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.cb-sprite[data-visible] {
+  opacity: 1;
+}
+
+@media (max-width: 72rem), (prefers-reduced-motion: reduce) {
+  .cb-sprite {
+    display: none;
+  }
+}

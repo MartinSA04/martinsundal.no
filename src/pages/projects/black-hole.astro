@@ -1,0 +1,110 @@
+---
+import { getEntry, render } from "astro:content";
+import ProjectShell from "../../components/project/ProjectShell.astro";
+import "../../worlds/black-hole.css";
+
+const entry = await getEntry("projects", "black-hole");
+if (!entry) throw new Error("missing content: projects/black-hole");
+const { Content } = await render(entry);
+const img = entry.data.image!;
+---
+
+<ProjectShell entry={entry} centerpieceLabel="Real-time gravitational lensing">
+  <div slot="centerpiece">
+    <div class="bh-stage" data-bh-stage>
+      {/* Without WebGL2 this <img> is what stays on the page. It must keep the
+          filename render.png — the Konami RPG selects on it. */}
+      <img
+        class="bh-fallback"
+        data-bh-fallback
+        src={img.src}
+        alt={img.alt}
+        width={img.width}
+        height={img.height}
+        decoding="async"
+      />
+
+      <canvas
+        class="bh-canvas"
+        data-lensing
+        tabindex="0"
+        role="img"
+        aria-label="Interactive render of gravitational lensing around a Schwarzschild black hole. Use the arrow keys to orbit the camera."
+        hidden></canvas>
+
+      <span class="bh-hint" data-bh-hint hidden>Drag or arrow keys to orbit</span>
+
+      <dl class="bh-readouts" data-bh-readouts hidden>
+        <div class="bh-readout">
+          <dt>Metric</dt>
+          <dd>Schwarzschild</dd>
+        </div>
+        <div class="bh-readout">
+          <dt>Horizon</dt>
+          <dd>r = 1.00 r<sub>s</sub></dd>
+        </div>
+        <div class="bh-readout">
+          <dt>Photon sphere</dt>
+          <dd>r = 1.50 r<sub>s</sub></dd>
+        </div>
+        <div class="bh-readout">
+          <dt>Integrator</dt>
+          <dd>300 steps / ray</dd>
+        </div>
+      </dl>
+    </div>
+    <p class="bh-note" data-bh-note>
+      Rendered in your browser by integrating null geodesics per pixel.
+    </p>
+  </div>
+
+  <Content />
+</ProjectShell>
+
+<script>
+  import { createRenderer } from "../../lib/lensing.ts";
+
+  const canvas = document.querySelector<HTMLCanvasElement>("[data-lensing]");
+  const fallback = document.querySelector<HTMLElement>("[data-bh-fallback]");
+  const note = document.querySelector<HTMLElement>("[data-bh-note]");
+
+  if (canvas) {
+    // Reveal the canvas only once we know WebGL2 works, so a browser without
+    // it never sees a black rectangle where the render should be.
+    const renderer = createRenderer(canvas);
+
+    if (!renderer) {
+      note!.textContent =
+        "WebGL2 is unavailable here, so this is a frame from the original C++ renderer.";
+    } else {
+      canvas.hidden = false;
+      fallback?.remove();
+      document.querySelector("[data-bh-hint]")?.removeAttribute("hidden");
+      document.querySelector("[data-bh-readouts]")?.removeAttribute("hidden");
+
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+      const apply = () => {
+        if (reduced.matches) {
+          renderer.stop();
+          renderer.drawOnce();
+          note!.textContent =
+            "Rendered in your browser by integrating null geodesics per pixel. Motion is paused; drag or use the arrow keys to look around.";
+        } else {
+          renderer.start();
+        }
+      };
+
+      apply();
+      reduced.addEventListener("change", apply);
+
+      // Stop burning GPU when the canvas is off screen.
+      new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting && !reduced.matches) renderer.start();
+          else renderer.stop();
+        }
+      }).observe(canvas);
+    }
+  }
+</script>

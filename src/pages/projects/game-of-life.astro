@@ -1,0 +1,166 @@
+---
+import { getEntry, render } from "astro:content";
+import ProjectShell from "../../components/project/ProjectShell.astro";
+import "../../worlds/game-of-life.css";
+
+const entry = await getEntry("projects", "game-of-life");
+if (!entry) throw new Error("missing content: projects/game-of-life");
+const { Content } = await render(entry);
+
+const MAX_GEN = 540;
+---
+
+<ProjectShell entry={entry} centerpieceLabel="Glider synthesis, scrubbable">
+  <div slot="centerpiece">
+    <div class="gol">
+      <canvas
+        class="gol-board"
+        data-life
+        width="656"
+        height="256"
+        role="img"
+        aria-label="Conway's Game of Life board running a glider synthesis that settles into text"></canvas>
+
+      <div class="gol-controls">
+        <button class="gol-play" type="button" data-life-play aria-pressed="true">
+          Pause
+        </button>
+        <input
+          type="range"
+          min="0"
+          max={MAX_GEN}
+          value="0"
+          step="1"
+          data-life-scrubber
+          aria-label="Generation"
+        />
+        <span class="gol-gen" data-life-gen aria-live="off">gen 0 / {MAX_GEN}</span>
+      </div>
+    </div>
+    <p class="gol-note">
+      Every position recomputes from the seed, so any generation is
+      reproducible. Nothing here is a recording.
+    </p>
+  </div>
+
+  <Content />
+</ProjectShell>
+
+<script>
+  /**
+   * Reuses the pure engine from the hero — same parsePlan and step, no second
+   * implementation. The scrubber recomputes from generation zero rather than
+   * stepping from wherever it happens to be, so dragging back and forth is
+   * always deterministic.
+   */
+  import { parsePlan, step, type Plan } from "../../lib/life.ts";
+
+  const canvas = document.querySelector<HTMLCanvasElement>("[data-life]");
+  const scrubber = document.querySelector<HTMLInputElement>("[data-life-scrubber]");
+  const genLabel = document.querySelector<HTMLElement>("[data-life-gen]");
+  const play = document.querySelector<HTMLButtonElement>("[data-life-play]");
+
+  if (canvas && scrubber && genLabel && play) {
+    const ctx = canvas.getContext("2d")!;
+    ctx.imageSmoothingEnabled = false;
+
+    const MAX = Number(scrubber.max);
+    let plan: Plan | null = null;
+    let image: ImageData | null = null;
+    let generation = 0;
+    let running = false;
+    let raf = 0;
+    let last = 0;
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const colour = () => {
+      const raw = getComputedStyle(document.documentElement)
+        .getPropertyValue("--life-cell")
+        .trim();
+      const m = raw.match(/^#([0-9a-f]{6})$/i);
+      if (!m) return [20, 22, 26];
+      const n = parseInt(m[1]!, 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    };
+
+    function drawCells(cells: Uint8Array) {
+      if (!plan || !image) return;
+      const data = image.data;
+      data.fill(0);
+      const [r, g, b] = colour();
+      for (let i = 0; i < cells.length; i++) {
+        if (cells[i] !== 1) continue;
+        const o = i * 4;
+        data[o] = r!;
+        data[o + 1] = g!;
+        data[o + 2] = b!;
+        data[o + 3] = 255;
+      }
+      ctx.clearRect(0, 0, plan.width, plan.height);
+      ctx.putImageData(image, 0, 0);
+    }
+
+    function renderGeneration(n: number) {
+      if (!plan) return;
+      let cells = plan.cells;
+      for (let i = 0; i < n; i++) cells = step(cells, plan.width, plan.height);
+      generation = n;
+      drawCells(cells);
+      genLabel!.textContent = `gen ${n} / ${MAX}`;
+      if (scrubber!.valueAsNumber !== n) scrubber!.value = String(n);
+    }
+
+    function setRunning(next: boolean) {
+      running = next;
+      play!.textContent = next ? "Pause" : "Play";
+      play!.setAttribute("aria-pressed", String(next));
+      if (next) {
+        last = 0;
+        raf = requestAnimationFrame(tick);
+      } else if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    }
+
+    function tick(now: number) {
+      if (!running) return;
+      if (!last) last = now;
+      if (now - last >= 1000 / 18) {
+        last = now;
+        renderGeneration(generation >= MAX ? 0 : generation + 1);
+      }
+      raf = requestAnimationFrame(tick);
+    }
+
+    scrubber.addEventListener("input", () => {
+      setRunning(false);
+      renderGeneration(scrubber.valueAsNumber);
+    });
+
+    play.addEventListener("click", () => setRunning(!running));
+
+    new MutationObserver(() => renderGeneration(generation)).observe(
+      document.documentElement,
+      { attributes: true, attributeFilter: ["data-theme"] },
+    );
+
+    void (async () => {
+      const res = await fetch("/game_of_life_plan.txt");
+      plan = parsePlan(await res.text());
+      canvas.width = plan.width;
+      canvas.height = plan.height;
+      image = ctx.createImageData(plan.width, plan.height);
+
+      if (reduced.matches) {
+        // Show the settled text rather than an empty seed board.
+        renderGeneration(MAX);
+        setRunning(false);
+      } else {
+        renderGeneration(0);
+        setRunning(true);
+      }
+    })();
+  }
+</script>
