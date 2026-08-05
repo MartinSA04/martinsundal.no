@@ -23,6 +23,16 @@ import SpecBlock from "../micro/SpecBlock.astro";
     <div class="life-frame" aria-hidden="true">
       <canvas id="life-canvas" width="356" height="192"></canvas>
     </div>
+
+    {
+      /* The board takes about eleven seconds to spell the name, and without
+      this the band is undifferentiated static for all of them, with nothing
+      saying a simulation is running. aria-hidden: the h1 above already states
+      the name, and a screen reader has no use for a generation counter. */
+    }
+    <p class="micro-label life-readout" data-life-readout aria-hidden="true">
+      GEN 000 · B3/S23 · 356×192
+    </p>
   </div>
 
   <div class="wrap hero-foot">
@@ -65,7 +75,7 @@ import SpecBlock from "../micro/SpecBlock.astro";
     width: 100%;
     aspect-ratio: 3.45;
     overflow: hidden;
-    margin-block: var(--space-2) var(--space-5);
+    margin-block: var(--space-2) var(--space-1);
     mask-image: linear-gradient(
       to bottom,
       transparent 0%,
@@ -76,19 +86,29 @@ import SpecBlock from "../micro/SpecBlock.astro";
   }
 
   /* The word's centre is at 49.9% x and 49.7% y of the board, so centring on
-     both axes lands it in the frame without a magic offset. */
+     both axes lands it in the frame without a magic offset.
+
+     The settled word is 206 of the board's 356 columns, so 166% puts it at
+     96% of the frame: 1.66 * 206/356 = 0.96. It used to be 173%, which put it
+     at 100.1% and cut the outer column off the M and the N. */
   #life-canvas {
     position: absolute;
     left: 50%;
     top: 50%;
     translate: -50% -50%;
-    width: 173%;
+    width: 166%;
     /* The kernel reset caps media at 100%, which would silently undo the
        overscale the crop depends on. */
     max-width: none;
     height: auto;
     aspect-ratio: var(--board-aspect);
     image-rendering: pixelated;
+  }
+
+  .life-readout {
+    display: block;
+    margin-bottom: var(--space-5);
+    font-variant-numeric: tabular-nums;
   }
 
   .hero-foot {
@@ -119,15 +139,24 @@ import SpecBlock from "../micro/SpecBlock.astro";
   import { createLifeScene } from "../../lib/life.ts";
 
   const canvas = document.getElementById("life-canvas");
+  const readout = document.querySelector("[data-life-readout]");
+
   if (canvas instanceof HTMLCanvasElement) {
     const scene = createLifeScene({
       canvas,
       planSrc: "/martin_plan.txt",
-      // 277 generations at the old 10/s took 28 seconds to spell the name,
+      // 276 generations at the old 10/s took 28 seconds to spell the name,
       // which meant in practice nobody ever saw it resolve. At 24/s it lands
       // in about 11, and the board is a still life from there on.
       speed: 24,
       pauseWhenOffscreen: true,
+      onGeneration(generation, settled) {
+        if (!readout) return;
+        const n = String(generation).padStart(3, "0");
+        readout.textContent = settled
+          ? `GEN ${n} · STILL LIFE`
+          : `GEN ${n} · B3/S23 · 356×192`;
+      },
     });
     scene?.start();
   }

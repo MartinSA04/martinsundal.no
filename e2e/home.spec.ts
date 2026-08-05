@@ -67,3 +67,32 @@ test("the old What I work on section is gone", async ({ page }) => {
     page.getByRole("heading", { name: /what i work on/i }),
   ).toHaveCount(0);
 });
+
+test("the hero reports the generation, and settles", async ({ page }) => {
+  await page.goto("/");
+  const readout = page.locator("[data-life-readout]");
+  await expect(readout).toBeVisible();
+  await expect(readout).toHaveText(/GEN \d{3} · B3\/S23 · 356×192/);
+
+  // ~11s at 24 generations/s, plus slack for a loaded machine.
+  await expect(readout).toHaveText(/GEN 276 · STILL LIFE/, { timeout: 25_000 });
+});
+
+test("the settled word is not clipped by the frame", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const box = await page.locator(".life-frame").evaluate((el) => {
+    const canvas = el.querySelector("canvas") as HTMLCanvasElement;
+    const f = el.getBoundingClientRect();
+    const c = canvas.getBoundingClientRect();
+    // Word bbox in board coords, asserted in test/life.test.ts: x 75..280.
+    return {
+      left: c.left + (75 / 356) * c.width - f.left,
+      right: c.left + (281 / 356) * c.width - f.left,
+      frame: f.width,
+    };
+  });
+  // A real inset on both sides, not a flush fit that cuts the outer column.
+  expect(box.left).toBeGreaterThan(4);
+  expect(box.right).toBeLessThan(box.frame - 4);
+});

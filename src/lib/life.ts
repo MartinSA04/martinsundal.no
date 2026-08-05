@@ -102,6 +102,24 @@ export function countLive(cells: Uint8Array): number {
   return n;
 }
 
+function sameBoard(a: Uint8Array, b: Uint8Array): boolean {
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+/**
+ * True when one step of the board reproduces it exactly. The hero uses this
+ * to stop stepping a 68,352-cell board forever once it has settled, and to
+ * decide when its readout says STILL LIFE.
+ */
+export function isStillLife(
+  cells: Uint8Array,
+  width: number,
+  height: number,
+): boolean {
+  return sameBoard(step(cells, width, height), cells);
+}
+
 /* --- the animated scene --------------------------------------------------- */
 
 export interface LifeSceneOptions {
@@ -115,6 +133,11 @@ export interface LifeSceneOptions {
   pauseWhenOffscreen?: boolean;
   /** CSS custom property the cell colour is read from. */
   colorVar?: string;
+  /**
+   * Called after every generation, and once more when the board settles.
+   * `settled` is true from the first generation that reproduces itself.
+   */
+  onGeneration?: (generation: number, settled: boolean) => void;
 }
 
 export interface LifeScene {
@@ -164,6 +187,7 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
     restartOnExtinction = false,
     pauseWhenOffscreen = false,
     colorVar = "--life-cell",
+    onGeneration,
   } = opts;
 
   const ctx = canvas?.getContext("2d");
@@ -174,6 +198,7 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
   let board: Uint8Array | null = null;
   let image: ImageData | null = null;
   let generation = 0;
+  let settled = false;
   let running = false;
   let visible = !pauseWhenOffscreen;
   let raf = 0;
@@ -219,7 +244,22 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
     const interval = 1000 / speed;
     let guard = 0;
     while (acc >= interval && guard < 8) {
-      board = step(board, plan.width, plan.height);
+      const next = step(board, plan.width, plan.height);
+
+      // A still life will never change again, so keep painting it but stop
+      // computing it. Only when nothing else wants the loop running.
+      //
+      // The generation is NOT advanced here. `next` reproduces `board`, so the
+      // board already on screen is the first one that is a still life, and
+      // that is the number the readout must show — 276, not 277.
+      if (!loopAfter && !restartOnExtinction && sameBoard(next, board)) {
+        settled = true;
+        onGeneration?.(generation, true);
+        stop();
+        return;
+      }
+
+      board = next;
       generation++;
       acc -= interval;
       guard++;
@@ -234,6 +274,7 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
     }
 
     draw();
+    onGeneration?.(generation, settled);
     raf = requestAnimationFrame(frame);
   }
 
@@ -261,7 +302,9 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
 
     // Under reduced motion, show the settled word rather than an empty board.
     if (reducedMotion) {
-      renderGeneration(loopAfter ?? 277);
+      renderGeneration(loopAfter ?? 276);
+      settled = true;
+      onGeneration?.(generation, true);
       return;
     }
 

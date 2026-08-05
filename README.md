@@ -79,8 +79,13 @@ the visible text because both come from the same record.
 ## Things that look incidental but are not
 
 - **The hero Game of Life converges to "MARTIN"** and becomes a still life at
-  generation 276. `test/life.test.ts` asserts the board is stable there and
-  that the settled cells sit in the centre band the layout expects.
+  generation 276, which is when the readout under the band switches to
+  `STILL LIFE` and the scene stops stepping. `test/life.test.ts` asserts all of
+  that, and asserts the settled word is 206 cells wide — the number
+  `Hero.astro`'s `166%` overscale is derived from, since `1.66 × 206/356 = 0.96`
+  puts the word at 96% of the measure. At the 173% it used to use, the word
+  landed at 100.1% and the outer column of the M and the N was cut off. Change
+  the plan file and that overscale changes with it.
 - **`--life-cell`** is read by `src/lib/life.ts` to colour live cells.
 - **`public/sprites/girl_sheet.png` has no references and is kept on purpose.**
   It is a Cipherbound character sheet, held for a future use on that page.

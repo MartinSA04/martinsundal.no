@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { parsePlan, step } from "../src/lib/life.ts";
+import { isStillLife, parsePlan, step } from "../src/lib/life.ts";
 
 test("a blinker oscillates with period two", () => {
   const w = 5,
@@ -83,4 +83,48 @@ test("the hero plan converges to a stable board and holds it", () => {
     centre / live > 0.9,
     `expected the word centred, got ${centre}/${live}`,
   );
+});
+
+test("isStillLife recognises a block and rejects a blinker", () => {
+  const block = new Uint8Array(16);
+  block[1 * 4 + 1] = block[1 * 4 + 2] = block[2 * 4 + 1] = block[2 * 4 + 2] = 1;
+  assert.equal(isStillLife(block, 4, 4), true);
+
+  const blinker = new Uint8Array(25);
+  blinker[1 * 5 + 2] = blinker[2 * 5 + 2] = blinker[3 * 5 + 2] = 1;
+  assert.equal(isStillLife(blinker, 5, 5), false);
+});
+
+test("the hero plan first becomes a still life at generation 276", () => {
+  const plan = parsePlan(readFileSync("public/martin_plan.txt", "utf8"));
+  let cells = plan.cells;
+  let first = null;
+  for (let i = 0; i < 300; i++) {
+    if (isStillLife(cells, plan.width, plan.height)) {
+      first = i;
+      break;
+    }
+    cells = step(cells, plan.width, plan.height);
+  }
+  // The readout under the band says STILL LIFE at this number.
+  assert.equal(first, 276);
+});
+
+test("the settled word is 206 cells wide, which sets the hero overscale", () => {
+  const plan = parsePlan(readFileSync("public/martin_plan.txt", "utf8"));
+  let cells = plan.cells;
+  for (let i = 0; i < 276; i++) cells = step(cells, plan.width, plan.height);
+
+  let minX = plan.width;
+  let maxX = -1;
+  for (let y = 0; y < plan.height; y++) {
+    for (let x = 0; x < plan.width; x++) {
+      if (!cells[y * plan.width + x]) continue;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+    }
+  }
+  // Hero.astro scales the canvas to 166% so the word lands at 96% of the
+  // measure: 1.66 * 206/356 = 0.96. If this width changes, that changes.
+  assert.equal(maxX - minX + 1, 206);
 });
