@@ -33,7 +33,7 @@ readouts — not paragraphs of prose. No section exists to fill space.
 Astro 5, `output: 'static'`, no SSR, no runtime server. Deployed by GitHub
 Actions to GitHub Pages.
 
-```
+```text
 src/
   layouts/Base.astro            head, skip link, chrome, theme boot, footer
   components/
@@ -173,7 +173,7 @@ This is Aker Solutions' work, not Martin's repository. The page is built
 **only** from material Aker has already published. Specifically excluded, and
 not to be read or referenced during implementation:
 
-```
+```text
 ~/weldstack  ~/weldstack_new  ~/autoweld  ~/.autoweld
 ~/aw_archive/*.npy            (real VPL scan data)
 ~/repos/vpl_mqtt  vpl_fabunit  scanAutoWeld  weldlogger  post_weld_gui
