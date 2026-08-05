@@ -15,7 +15,7 @@
 - **Derived tokens must be re-derived inside a world.** Custom properties are substituted where they are _declared_; a `--muted` declared at `:root` resolves against the root theme and inherits down as a fixed colour. See `src/styles/project.css`.
 - **Prettier is the formatter.** `pnpm lint` is `prettier --check` over `{src,test,e2e,scripts}/**/*.{ts,astro,mjs}` and `*.{ts,mjs,json,md}`. Run `npx prettier --write` on touched files before committing.
 - **Playwright runs one worker locally.** Never pass `--workers` above 1 on this machine; it is the user's workstation. `playwright.config.ts` already sets it.
-- **`public/sprites/player_sheet.png` must survive.** `src/worlds/cipherbound.css:218` uses it for the sprite that walks the Cipherbound page's margin, which is a separate feature from the RPG and stays.
+- **Both sprite sheets in `public/sprites/` must survive.** `player_sheet.png` is used by `src/worlds/cipherbound.css:218` for the sprite that walks the Cipherbound page's margin, a separate feature from the RPG. `girl_sheet.png` is kept unreferenced at the user's request, for a future use on that page; the README says so, so it is not swept up later as an orphan.
 - **Board facts, measured, not guessed.** The hero board is 356×192. The settled word's bounding box is x 75–280 (206 cells wide), y 77–114 (38 cells tall). It first becomes a still life at generation 276. `206 / 356 = 57.87%`.
 
 ---
@@ -26,7 +26,7 @@ Nothing else depends on this task, and everything after it touches fewer files o
 
 **Files:**
 
-- Delete: `src/scripts/rpg.js`, `src/scripts/konami.ts`, `e2e/rpg.spec.ts`, `public/sprites/girl_sheet.png`
+- Delete: `src/scripts/rpg.js`, `src/scripts/konami.ts`, `e2e/rpg.spec.ts`
 - Modify: `src/pages/index.astro:52-61`, `src/components/home/Hero.astro:6-10`, `src/components/home/ProjectIndex.astro:27-31,47-55`, `src/pages/projects/black-hole.astro:23`, `e2e/home.spec.ts:47-52`, `e2e/theme.spec.ts:56-59`, `README.md:80-89`
 
 **Interfaces:**
@@ -42,7 +42,7 @@ Expected: PASS. (`pnpm test:e2e` is run at the end of this task, not now — it 
 - [ ] **Step 2: Delete the files**
 
 ```bash
-git rm src/scripts/rpg.js src/scripts/konami.ts e2e/rpg.spec.ts public/sprites/girl_sheet.png
+git rm src/scripts/rpg.js src/scripts/konami.ts e2e/rpg.spec.ts
 ```
 
 - [ ] **Step 3: Remove the RPG boot from the home page**
@@ -119,8 +119,8 @@ test("keeps .site-header for the RPG", async ({ page }) => {
 
 - [ ] **Step 8: Prove nothing references the RPG any more**
 
-Run: `grep -rn -i 'rpg\|konami\|MSA_RPG\|girl_sheet' src/ e2e/ test/ scripts/ README.md`
-Expected: only three hits, all legitimate prose about the Cipherbound game itself — `src/content/projects/cipherbound.md` lines 5 and 46, which describe the project as a tile-based RPG. If `README.md` still appears, Step 9 has not been done yet.
+Run: `grep -rn -i 'rpg\|konami\|MSA_RPG' src/ e2e/ test/ scripts/ README.md`
+Expected: only the two prose hits about the Cipherbound game itself — `src/content/projects/cipherbound.md` lines 5 and 46, which describe the project as a tile-based RPG. Also check `src/components/home/ProjectIndex.astro`'s narrow-screen plate comment, which mentions `rpg.js` and must be reworded.
 
 - [ ] **Step 9: Rewrite the README's incidental-dependencies section**
 
@@ -133,6 +133,10 @@ Replace the whole `## Things that look incidental but are not` section in `READM
   generation 276. `test/life.test.ts` asserts the board is stable there and
   that the settled cells sit in the centre band the layout expects.
 - **`--life-cell`** is read by `src/lib/life.ts` to colour live cells.
+- **`public/sprites/girl_sheet.png` has no references and is kept on purpose.**
+  It is a Cipherbound character sheet, held for a future use on that page.
+  `player_sheet.png` beside it _is_ referenced, by `src/worlds/cipherbound.css`
+  for the sprite that walks the page's margin.
 ```
 
 Task 5 adds the overscale note to the first bullet.
@@ -153,8 +157,10 @@ why Hero.astro carried an id that meant nothing to the hero, ProjectIndex
 tagged a row with data-rpg-spawn, black-hole.astro forbade a rename, and
 two specs asserted selectors for a feature they never mention.
 
-player_sheet.png stays: the Cipherbound page's margin sprite is a separate
-feature and is unaffected."
+Both sprite sheets stay. player_sheet.png draws the Cipherbound page's
+margin sprite, a separate feature; girl_sheet.png is held unreferenced for
+a future use on that page, which the README now records so it does not
+read as an orphan."
 ```
 
 ---
@@ -1318,7 +1324,7 @@ Expected: no output. `src/lib/lensing.ts` is excluded because its `3√3/2` and 
 - [ ] **Step 4: Confirm the RPG left nothing behind**
 
 ```bash
-grep -rn -i 'rpg\|konami\|MSA_RPG\|girl_sheet' src/ e2e/ test/ scripts/ README.md
+grep -rn -i 'rpg\|konami\|MSA_RPG' src/ e2e/ test/ scripts/ README.md
 ```
 
 Expected: only `src/content/projects/cipherbound.md` lines 5 and 46, both prose describing the Cipherbound game.

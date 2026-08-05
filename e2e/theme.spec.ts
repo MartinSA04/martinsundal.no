@@ -53,11 +53,6 @@ test("the toggle reports its state to assistive tech", async ({ page }) => {
   expect(await toggle.getAttribute("aria-label")).not.toBe(before);
 });
 
-test("keeps .site-header for the RPG", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.locator(".site-header")).toHaveCount(1);
-});
-
 test("skip link is the first focusable element and targets main", async ({
   page,
 }) => {

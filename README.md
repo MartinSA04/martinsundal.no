@@ -78,16 +78,14 @@ the visible text because both come from the same record.
 
 ## Things that look incidental but are not
 
-- **The hero Game of Life converges to "MARTIN"** around generation 277.
-  `test/life.test.ts` asserts the board is stable there and that the settled
-  cells sit in the centre band the layout mask expects.
-- **The Konami code starts an RPG** (`src/scripts/rpg.js`, home page only). It
-  hardcodes `.site-header`, `.card`, `.project-card`, `[data-rpg-spawn] img`
-  and `img[src*="render.png"]`, and it needs `#home` on the hero — without it
-  the hero's own cards become collision walls. Both easter-egg images must be
-  laid out at real size; a zero-sized image makes them silently do nothing.
-  **Do not rename `render.png`.**
+- **The hero Game of Life converges to "MARTIN"** and becomes a still life at
+  generation 276. `test/life.test.ts` asserts the board is stable there and
+  that the settled cells sit in the centre band the layout expects.
 - **`--life-cell`** is read by `src/lib/life.ts` to colour live cells.
+- **`public/sprites/girl_sheet.png` has no references and is kept on purpose.**
+  It is a Cipherbound character sheet, held for a future use on that page.
+  `player_sheet.png` beside it _is_ referenced, by `src/worlds/cipherbound.css`
+  for the sprite that walks the page's margin.
 
 ## Two manual steps
 

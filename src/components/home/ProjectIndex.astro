@@ -24,11 +24,7 @@ const { projects } = Astro.props;
             `--w-sig:${p.world.sig}`,
           ].join(";");
           return (
-            <li
-              class="project-card card"
-              style={style}
-              data-rpg-spawn={entry.id === "cipherbound" ? "" : undefined}
-            >
+            <li class="project-card card" style={style}>
               <a class="row" href={`/projects/${entry.id}/`}>
                 <span class="n" aria-hidden="true">
                   {String(p.index).padStart(2, "0")}
@@ -47,12 +43,7 @@ const { projects } = Astro.props;
                 {/* Every row gets a plate, drawn in that world's own four
                     tokens, so five rows read as five identities rather than
                     five strips. Two projects have a real image and it fills
-                    the plate; the rest get the world's texture.
-
-                    Both images are load-bearing beyond decoration: rpg.js
-                    spawns the player from `[data-rpg-spawn] img` and runs the
-                    black-hole easter egg off `img[src*="render.png"]`, and
-                    both bail out if the image has zero size. */}
+                    the plate; the rest get the world's texture. */}
                 <span class="plate" data-motif={entry.id} aria-hidden="true">
                   {p.image ? (
                     <img
@@ -332,8 +323,8 @@ const { projects } = Astro.props;
     .row {
       grid-template-columns: auto minmax(0, 1fr);
     }
-    /* The plate keeps its box so rpg.js still measures a real image, but it
-       stops competing with the name on a narrow screen. */
+    /* The plate keeps its box, but stops competing with the name on a narrow
+       screen. */
     .plate {
       grid-column: 2;
       width: 100%;

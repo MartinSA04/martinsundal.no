@@ -45,13 +45,6 @@ test("project index links to all five project pages", async ({ page }) => {
   }
 });
 
-test("keeps the RPG hook selectors", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.locator(".card").first()).toBeVisible();
-  await expect(page.locator(".project-card").first()).toBeVisible();
-  await expect(page.locator("[data-rpg-spawn] img")).toHaveCount(1);
-});
-
 test("work band links to /work/", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("a[href='/work/']").first()).toBeVisible();
