@@ -36,10 +36,23 @@ interface Props {
   size?: number;
   /** Paints the figure in --sig instead of inheriting the text colour. */
   signal?: boolean;
+  /**
+   * Converts the solid masses to strokes. A fill that reads as weight at
+   * 48px reads as a grey blob at 200px, and the references draw their large
+   * marks hollow for exactly that reason — so a figure can be solid where it
+   * is small and open where it is structural.
+   */
+  outline?: boolean;
   class?: string;
 }
 
-const { name, size = 56, signal = false, class: className } = Astro.props;
+const {
+  name,
+  size = 56,
+  signal = false,
+  outline = false,
+  class: className,
+} = Astro.props;
 
 const C = 24; /* centre of the 48-unit grid */
 
@@ -91,6 +104,7 @@ const gridDots = [0, 1, 2, 3].flatMap((row) =>
   data-micro="figure"
   data-figure={name}
   data-signal={signal ? "" : undefined}
+  data-outline={outline ? "" : undefined}
   width={size}
   height={size}
   viewBox="0 0 48 48"
@@ -281,5 +295,14 @@ const gridDots = [0, 1, 2, 3].flatMap((row) =>
 
   .micro-figure[data-signal] {
     color: var(--sig);
+  }
+
+  /* Targets only the solid masses. A presentation attribute loses to any CSS
+     rule, so this converts fill="currentColor" to a stroke without touching
+     the fill="var(--sub)" punches that keep a figure's counters open. */
+  .micro-figure[data-outline] [fill="currentColor"] {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
   }
 </style>

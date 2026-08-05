@@ -49,9 +49,8 @@ const description =
       }
       <Plate variant="corners" edgeLeft="Notes 2026_MSA_04">
         <div class="cols">
-          <div class="wall" aria-hidden="true">
-            <Figure name="lozenges" size={68} />
-            <Figure name="lozenges" size={44} />
+          <div class="anchor" aria-hidden="true">
+            <Figure name="concentric" size={200} outline />
           </div>
 
           <p class="statement">
@@ -71,11 +70,6 @@ const description =
               { label: "Renderer", value: "Geometry, taught by bending light" },
             ]}
           />
-
-          <div class="wall" data-mirror aria-hidden="true">
-            <Figure name="lozenges" size={44} />
-            <Figure name="lozenges" size={68} />
-          </div>
         </div>
       </Plate>
     </div>
@@ -91,25 +85,23 @@ const description =
     padding-block: var(--space-4);
   }
 
+  /* The block is laid out around the figure rather than the figure being
+     dropped into a layout: the 200px ring is the first column and sets the
+     block's height, and both text columns are top-aligned to its cap line —
+     the composition the reference sheets build around their large quadrant
+     circles. */
   .cols {
     display: grid;
-    grid-template-columns: auto minmax(0, 1.35fr) minmax(0, 1fr) auto;
+    grid-template-columns: 200px minmax(0, 1.3fr) minmax(0, 1fr);
     gap: var(--space-4);
-    align-items: center;
+    align-items: start;
   }
 
-  /* The walls run vertically, so the lozenges are turned onto their side and
-     stacked — the same figure the section mark uses, rotated into a bracket. */
-  .wall {
-    display: grid;
-    justify-items: center;
-    gap: 0.4rem;
-    rotate: 90deg;
+  .anchor {
     color: var(--hair);
-  }
-
-  .wall[data-mirror] {
-    rotate: -90deg;
+    /* Optically seated against the statement's first line rather than its
+       box top, which sits above the cap. */
+    margin-block-start: -0.35rem;
   }
 
   /* Reading scale, not display scale. The sentence carries weight from being
@@ -127,8 +119,8 @@ const description =
       grid-template-columns: 1fr;
       gap: var(--space-3);
     }
-    /* The walls need horizontal room the phone layout does not have. */
-    .wall {
+    /* The anchor needs a column the phone layout does not have. */
+    .anchor {
       display: none;
     }
   }

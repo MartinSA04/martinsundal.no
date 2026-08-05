@@ -60,7 +60,7 @@ const FIGURES = {
                   <span class="motif">
                     <Figure
                       name={FIGURES[entry.id as keyof typeof FIGURES]}
-                      size={40}
+                      size={96}
                     />
                   </span>
                   <span class="dots">
@@ -167,11 +167,21 @@ const FIGURES = {
      align-self: start keeps its box top on the row's first line, which is
      exactly where the bare numeral used to start — so the cap correction
      below still measures against the same origin. */
+  /* A real structural column, not a margin ornament: the figure is 96px and
+     the column is sized to it, so the five marks form a load-bearing band
+     down the left of the sheet and the row's height is set by the figure
+     rather than by the copy.
+
+     justify-items centres the numeral and the dots on the figure's own axis.
+     The numeral keeps its box and its cap correction, so the alignment
+     e2e/home.spec.ts asserts is untouched — that test measures cap tops
+     vertically and is indifferent to the horizontal centring. */
   .gutter {
     display: grid;
-    justify-items: start;
-    gap: 0.45rem;
+    justify-items: center;
+    gap: 0.5rem;
     align-self: start;
+    inline-size: 96px;
   }
 
   /* The index numeral replaces the coloured edge stripe this row used to
@@ -201,9 +211,14 @@ const FIGURES = {
     color: var(--w-sig);
   }
 
+  /* Top-aligned, not centred. The 96px figure makes the gutter the tallest
+     thing in the row, so a centred body sinks and the numeral stops sitting
+     beside the name it numbers — which e2e/home.spec.ts measures directly and
+     caught. */
   .body {
     display: grid;
     gap: 0.3rem;
+    align-self: start;
   }
 
   .name {

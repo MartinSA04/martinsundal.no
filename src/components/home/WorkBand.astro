@@ -14,6 +14,8 @@ import Fan from "../micro/Fan.astro";
 import Tag from "../micro/Tag.astro";
 import Readout from "../micro/Readout.astro";
 import Rule from "../micro/Rule.astro";
+import Marginalia from "../micro/Marginalia.astro";
+import Figure from "../micro/Figure.astro";
 import Icon from "../micro/Icon.astro";
 
 /* The five stages Aker lists for the line, in order. Drawn as a node chain
@@ -28,6 +30,17 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
     <Rule variant="hazard" />
 
     <div class="grid">
+      {
+        /* The arc is the band's left boundary. Everything in the text column
+          starts where the half-disc ends, and the rotated label runs along
+          its flat edge — the composition the reference sheets build around
+          their large semicircles, rather than a shape parked in a margin. */
+      }
+      <div class="arc" aria-hidden="true">
+        <Figure name="halfdisc" size={176} outline />
+        <Marginalia text="Verdal · robotised line" side="left" />
+      </div>
+
       <div class="text">
         <h2>Aker Solutions, Verdal</h2>
         <p>
@@ -123,10 +136,20 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
 
   .grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-    gap: var(--space-4);
+    grid-template-columns: auto minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: var(--space-3) var(--space-4);
     align-items: start;
     margin-top: var(--space-3);
+  }
+
+  /* Flat edge to the outside, arc facing the copy: the shape opens the band
+     and the label reads up its straight side. */
+  .arc {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-1);
+    color: var(--hair);
+    rotate: 180deg;
   }
 
   h2 {
@@ -255,6 +278,17 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
 
   .cta:hover {
     color: var(--sig);
+  }
+
+  @media (max-width: 76rem) {
+    /* The arc is a column, and below this width there is not one to give it
+       without squeezing the copy to nothing. */
+    .grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    }
+    .arc {
+      display: none;
+    }
   }
 
   @media (max-width: 46rem) {
