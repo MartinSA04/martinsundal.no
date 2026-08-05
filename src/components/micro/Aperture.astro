@@ -18,12 +18,16 @@
  * every measure instead of being solved once for one viewport.
  */
 interface Props {
-  /** `lens` is a vesica; `chamfer` cuts the four corners at 45°. */
-  variant?: "lens" | "chamfer";
+  /**
+   * `lens` is a vesica. `arc` bites a single semicircle out of the left, so
+   * the block is asymmetric — the measure opens and closes down one edge
+   * while the other stays flush.
+   */
+  variant?: "lens" | "arc";
   /** Block height as a fraction of its width. */
   aspect?: number;
-  /** Corner size as a fraction of width. `chamfer` only. */
-  cut?: number;
+  /** Depth of the bite, as a fraction of width. `arc` only. */
+  bite?: number;
   /**
    * Narrowest the measure may get, as a fraction of the full width. Both a
    * vesica and a 45° chamfer taper to a point, which leaves a one-word line
@@ -39,7 +43,7 @@ interface Props {
 const {
   variant = "lens",
   aspect = 0.34,
-  cut = 0.08,
+  bite = 0.26,
   minHalf = 0.42,
   showConstruction = true,
   class: className,
@@ -53,14 +57,11 @@ const STEPS = 40;
  * is wide and short, which is the orientation a paragraph needs.
  */
 function halfWidthAt(t: number): number {
-  if (variant === "chamfer") {
-    /* A 45 degree cut: the vertical run and the horizontal drop are the same
-       absolute length, expressed here in each axis's own half-units. */
-    const c = (cut * 2) / aspect; /* vertical run, in half-heights */
-    const drop = cut * 2; /* horizontal drop, in half-widths */
-    const d = Math.abs(t - 0.5) * 2; /* 0 at centre, 1 at the edges */
-    const over = d - (1 - c);
-    return over <= 0 ? 1 : 1 - (drop * over) / c;
+  if (variant === "arc") {
+    /* A semicircular profile: no bite at the ends, deepest at the middle.
+       Returned as the fraction of full width still available. */
+    const d = (t - 0.5) * 2;
+    return 1 - bite * Math.sqrt(Math.max(0, 1 - d * d));
   }
   /* Lens. hw = 1, hh = aspect/2 in the same units; solve R and d from them. */
   const hh = aspect / 2;
@@ -81,12 +82,22 @@ const rows = Array.from({ length: STEPS + 1 }, (_, i) => {
    (1 - half) of the float's width. */
 const pct = (n: number) => `${(n * 100).toFixed(2)}%`;
 
-const leftShape = [
-  "from 0 0",
-  ...rows.map((r) => `line to ${pct(1 - r.half)} ${pct(r.t)}`),
-  "line to 0 100%",
-  "close",
-].join(", ");
+/* `arc` measures its boundary against the whole block; `lens` against half of
+   it, because there each float owns one side. */
+const leftShape =
+  variant === "arc"
+    ? [
+        "from 0 0",
+        ...rows.map((r) => `line to ${pct(1 - r.half)} ${pct(r.t)}`),
+        "line to 0 100%",
+        "close",
+      ].join(", ")
+    : [
+        "from 0 0",
+        ...rows.map((r) => `line to ${pct(1 - r.half)} ${pct(r.t)}`),
+        "line to 0 100%",
+        "close",
+      ].join(", ");
 
 const rightShape = [
   "from 100% 0",
@@ -96,12 +107,17 @@ const rightShape = [
 ].join(", ");
 
 /* The outline, in the block's own 0..1 box, from the same array. */
-const outline = [
-  ...rows.map((r) => `${(0.5 + r.half / 2).toFixed(4)},${r.t.toFixed(4)}`),
-  ...[...rows]
-    .reverse()
-    .map((r) => `${(0.5 - r.half / 2).toFixed(4)},${r.t.toFixed(4)}`),
-].join(" ");
+const outline =
+  variant === "arc"
+    ? rows.map((r) => `${(1 - r.half).toFixed(4)},${r.t.toFixed(4)}`).join(" ")
+    : [
+        ...rows.map(
+          (r) => `${(0.5 + r.half / 2).toFixed(4)},${r.t.toFixed(4)}`,
+        ),
+        ...[...rows]
+          .reverse()
+          .map((r) => `${(0.5 - r.half / 2).toFixed(4)},${r.t.toFixed(4)}`),
+      ].join(" ");
 ---
 
 <div
@@ -110,45 +126,79 @@ const outline = [
   data-variant={variant}
   style={`--ap-aspect:${aspect}`}
 >
-  {
-    showConstruction && (
-      <svg
-        class="micro-aperture-draw"
-        viewBox="0 0 1 1"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        <polygon points={outline} vector-effect="non-scaling-stroke" />
-      </svg>
-    )
-  }
+  <div class="micro-aperture-body">
+    {
+      showConstruction && (
+        <svg
+          class="micro-aperture-draw"
+          viewBox="0 0 1 1"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          {variant === "arc" ? (
+            <polyline points={outline} vector-effect="non-scaling-stroke" />
+          ) : (
+            <polygon points={outline} vector-effect="non-scaling-stroke" />
+          )}
+        </svg>
+      )
+    }
 
-  <span
-    class="micro-aperture-l"
-    aria-hidden="true"
-    style={`shape-outside: shape(${leftShape})`}></span>
-  <span
-    class="micro-aperture-r"
-    aria-hidden="true"
-    style={`shape-outside: shape(${rightShape})`}></span>
+    <span
+      class="micro-aperture-l"
+      aria-hidden="true"
+      style={`shape-outside: shape(${leftShape})`}></span>
 
-  <slot />
+    {
+      variant !== "arc" && (
+        <span
+          class="micro-aperture-r"
+          aria-hidden="true"
+          style={`shape-outside: shape(${rightShape})`}
+        />
+      )
+    }
+
+    <slot />
+  </div>
 </div>
 
 <style>
   .micro-aperture {
-    position: relative;
     /* The floats are sized in container units so the block keeps its
        proportion at any measure without a script. */
     container-type: inline-size;
   }
 
+  /* The height reservation lives on an inner element on purpose. Put it on
+     the container itself and the container query unit becomes
+     self-referential, resolves to zero, and every float inside collapses to
+     no height — which silently switches the whole wrap off. */
+  .micro-aperture-body {
+    position: relative;
+    min-block-size: calc(var(--ap-aspect) * 100cqw);
+  }
+
+  @media (max-width: 46rem) {
+    .micro-aperture-body {
+      min-block-size: 0;
+    }
+  }
+
+  /* Each float owns one side, so it is half the block — and it must carry the
+     shape's full height or the wrap has nothing to act over. */
   .micro-aperture-l,
   .micro-aperture-r {
     display: block;
     inline-size: 50%;
     block-size: calc(var(--ap-aspect) * 100cqw);
     shape-margin: 0;
+  }
+
+  /* `arc` has one float, and its boundary is measured against the whole
+     block rather than a half of it. */
+  .micro-aperture[data-variant="arc"] .micro-aperture-l {
+    inline-size: 100%;
   }
 
   .micro-aperture-l {
@@ -167,7 +217,8 @@ const outline = [
     pointer-events: none;
   }
 
-  .micro-aperture-draw polygon {
+  .micro-aperture-draw polygon,
+  .micro-aperture-draw polyline {
     fill: none;
     stroke: var(--hair);
     stroke-width: 1;

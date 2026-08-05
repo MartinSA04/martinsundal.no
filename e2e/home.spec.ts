@@ -68,20 +68,31 @@ test("the old What I work on section is gone", async ({ page }) => {
   ).toHaveCount(0);
 });
 
-test("the hero instruments report the run, and settle", async ({ page }) => {
+test("the settle marker is present throughout and changes state", async ({
+  page,
+}) => {
   await page.goto("/");
 
   const value = page.locator('[data-dial="generation"] [data-dial-value]');
-  const state = page.locator("[data-life-state]");
+  const track = page.locator("[data-life-state] [data-micro='racetrack']");
+  const label = page.locator("[data-life-state] [data-track-label]");
+  const top = page.locator("[data-life-state] [data-track-top]");
   const pop = page.locator('[data-trace="population"] [data-trace-value]');
 
-  await expect(value).toHaveText(/^\d{3}$/);
-  // The annunciator is only shown once the board reproduces itself.
-  await expect(state).toBeHidden();
+  // On the plate from the first frame — it changes state rather than
+  // appearing, so there is never a gap where the board has no reported state.
+  await expect(track).toBeVisible();
+  await expect(label).toHaveText("Running");
+  await expect(track).not.toHaveAttribute("data-signal", "");
+
+  // The generation on the leader counts up with the run.
+  await expect(top).toHaveText(/^Gen \d+$/);
 
   // ~11s at 24 generations/s, plus slack for a loaded machine.
   await expect(value).toHaveText("276", { timeout: 25_000 });
-  await expect(state).toBeVisible();
+  await expect(label).toHaveText("Settled");
+  await expect(track).toHaveAttribute("data-signal", "");
+  await expect(top).toHaveText("Gen 276");
   await expect(pop).toHaveText("388");
 
   // The dial is an arc, so the number is only half the readout: a settled
@@ -110,6 +121,10 @@ test("the hero instruments ship their settled values without script", async ({
   await expect(
     page.locator('[data-trace="population"] [data-trace-value]'),
   ).toHaveText("388");
+  // With no script the board is settled, so the marker must say so.
+  await expect(page.locator("[data-life-state] [data-track-label]")).toHaveText(
+    "Settled",
+  );
 
   // A single point projects to a polyline that draws nothing; the static
   // trace must carry the whole rolling window.

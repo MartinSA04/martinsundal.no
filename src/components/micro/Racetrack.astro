@@ -33,7 +33,9 @@ const { label, top, bottom, signal = false, class: className } = Astro.props;
   {
     top && (
       <span class="micro-track-lead" data-at="top">
-        <span class="micro-track-text micro-label">{top}</span>
+        <span class="micro-track-text micro-label" data-track-top>
+          {top}
+        </span>
         <span class="micro-track-rule" />
       </span>
     )
@@ -41,7 +43,7 @@ const { label, top, bottom, signal = false, class: className } = Astro.props;
 
   <span class="micro-track-body">
     <span class="micro-track-cap" data-at="start" aria-hidden="true"></span>
-    <span class="micro-track-label">{label}</span>
+    <span class="micro-track-label" data-track-label>{label}</span>
     <span class="micro-track-cap" data-at="end" aria-hidden="true"></span>
   </span>
 

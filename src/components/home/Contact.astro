@@ -111,12 +111,14 @@ const links = [
     gap: var(--space-5) var(--space-6);
   }
 
+  /* Full width of the cell, not shrink-wrapped to the handle: four tracks of
+     four different widths left-aligned in four equal columns read as badly
+     set, because the eye follows the right edge as much as the left. */
   a {
     display: grid;
     gap: 0.5rem;
     text-decoration: none;
-    inline-size: max-content;
-    max-inline-size: 100%;
+    inline-size: 100%;
   }
 
   /* A leader leaving the track, exactly as the hero's does. */
@@ -134,12 +136,19 @@ const links = [
     min-inline-size: 1.5rem;
   }
 
+  /* The channel word closes the leader on the right, so the top line spans
+     the same measure the track below it does. */
+  .lead-tail {
+    flex: none;
+  }
+
   /* The track is cut from the handle: padding in em and a pill radius, so it
      is the value's own container at any type size. */
   .track {
     position: relative;
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 0.5em 1.1em;
     border: var(--rule) solid var(--hair);
     border-radius: 999px;
@@ -151,9 +160,12 @@ const links = [
 
   .value {
     font-size: var(--step-1);
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     letter-spacing: -0.015em;
     line-height: 1;
-    overflow-wrap: anywhere;
     transition: color 0.25s ease;
   }
 
@@ -242,9 +254,6 @@ const links = [
     ul {
       grid-template-columns: 1fr;
       gap: var(--space-4);
-    }
-    a {
-      inline-size: 100%;
     }
     /* One column, so there is no intersection to mark. */
     .lattice-mark {

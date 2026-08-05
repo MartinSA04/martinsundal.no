@@ -143,15 +143,18 @@ const BOARD = `${plan.width}×${plan.height}`;
       paragraph is the shape rather than sitting inside one. */
   }
   <div class="wrap lead-band">
-    <Aperture variant="chamfer" aspect={0.2} cut={0.15} minHalf={0.46}>
+    <Aperture variant="arc" aspect={0.235} bite={0.32} minHalf={0.55}>
       <p class="lead">
-        I write software for things that move or compute. At Aker Solutions that
-        means the robotics and industrial software behind a production line —
-        robot control, scanning, and the data that has to keep flowing while
-        steel is being welded. Away from it I study applied physics and
-        mathematics at NTNU, and I write the kind of side project that only pays
-        off if you finish it: a game engine, a renderer that bends light, an
-        automaton that spells its own name.
+        At Aker Solutions I work on the software behind a robotised production
+        line: robot control, scanning, and the plumbing that moves data between
+        them. The line welds, blasts and paints steel, so most of the work is
+        making machines agree about where things are.
+      </p>
+      <p class="lead">
+        I study applied physics and mathematics at NTNU. The projects below are
+        what I do to learn a thing properly — writing a game engine taught me
+        more about architecture than reading about it, and a renderer that bends
+        light forces you to get the geometry right.
       </p>
     </Aperture>
   </div>
@@ -286,15 +289,13 @@ const BOARD = `${plan.width}×${plan.height}`;
     margin-inline-start: auto;
   }
 
-  /* Any `display` beats the UA's `[hidden] { display: none }`, so this has to
-     restate it or the board claims SETTLED from generation zero. */
-  .instruments-state[hidden] {
-    display: none;
-  }
-
   /* --- lead ---------------------------------------------------------------- */
   .lead-band {
     margin-top: var(--space-5);
+  }
+
+  .lead + .lead {
+    margin-top: 0.9rem;
   }
 
   .lead {
@@ -385,7 +386,16 @@ const BOARD = `${plan.width}×${plan.height}`;
     const width = Number(trace?.dataset.width ?? 148);
     const height = Number(trace?.dataset.height ?? 28);
 
-    if (state) state.hidden = true;
+    const trackLabel = state?.querySelector<HTMLElement>("[data-track-label]");
+    const trackTop = state?.querySelector<HTMLElement>("[data-track-top]");
+    const track = state?.querySelector<HTMLElement>('[data-micro="racetrack"]');
+
+    /* The marker is on the plate from the first frame. It ships settled —
+       correct for a visitor with no script — and script demotes it to running
+       before the board starts over, so the state is never claimed early and
+       never absent. */
+    if (trackLabel) trackLabel.textContent = "Running";
+    if (track) track.removeAttribute("data-signal");
 
     const scene = createLifeScene({
       canvas,
@@ -403,12 +413,17 @@ const BOARD = `${plan.width}×${plan.height}`;
           dialArc.setAttribute("stroke-dashoffset", String(100 - pct));
         }
 
+        if (trackTop) trackTop.textContent = `Gen ${generation}`;
+        if (trackLabel)
+          trackLabel.textContent = settled ? "Settled" : "Running";
+        if (track) {
+          if (settled) track.setAttribute("data-signal", "");
+          else track.removeAttribute("data-signal");
+        }
+
         // A first report that is already settled is the reduced-motion path:
         // leave the rendered history alone.
-        if (series.length === 0 && settled) {
-          if (state) state.hidden = false;
-          return;
-        }
+        if (series.length === 0 && settled) return;
 
         series.push(pop);
         if (series.length > WINDOW) series.shift();
@@ -418,8 +433,6 @@ const BOARD = `${plan.width}×${plan.height}`;
           traceLine.setAttribute("points", project(series, width, height));
         }
         if (traceValue) traceValue.textContent = String(pop);
-
-        if (state) state.hidden = !settled;
       },
     });
     scene?.start();
