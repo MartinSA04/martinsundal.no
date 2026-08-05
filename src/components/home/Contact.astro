@@ -1,8 +1,15 @@
 ---
+/**
+ * Plate 05 — Contact.
+ *
+ * The 2×2 grid of ruled boxes is gone. Each channel is a track cut to its own
+ * handle, with the channel name on a leader leaving the outline — the same
+ * coupling the hero uses for the settle state, so a reader meets the device
+ * twice and reads it the second time without thinking.
+ */
 import Mark from "../micro/Mark.astro";
-import Icon from "../micro/Icon.astro";
-import Tag from "../micro/Tag.astro";
 import Figure from "../micro/Figure.astro";
+import Icon from "../micro/Icon.astro";
 
 const links = [
   {
@@ -12,16 +19,16 @@ const links = [
     channel: "Direct",
   },
   {
-    label: "LinkedIn",
-    value: "martinsa04",
-    href: "https://linkedin.com/in/martinsa04",
-    channel: "Profile",
-  },
-  {
     label: "GitHub",
     value: "MartinSA04",
     href: "https://github.com/MartinSA04",
     channel: "Source",
+  },
+  {
+    label: "LinkedIn",
+    value: "martinsa04",
+    href: "https://linkedin.com/in/martinsa04",
+    channel: "Profile",
   },
   {
     label: "npm",
@@ -41,11 +48,6 @@ const links = [
       note={`${links.length} channels`}
     />
 
-    {
-      /* The grid is a real hairline lattice — a --rule gap over a --hair
-        background — and its centre is the one intersection the page makes on
-        purpose. */
-    }
     <div class="lattice">
       <ul>
         {
@@ -55,25 +57,33 @@ const links = [
                 href={l.href}
                 rel={l.href.startsWith("http") ? "me noopener" : undefined}
               >
-                <span class="head">
-                  <span class="micro-label">{l.label}</span>
-                  <Tag variant="angle">{l.channel}</Tag>
+                <span class="lead" aria-hidden="true">
+                  <span class="lead-label micro-label">{l.label}</span>
+                  <span class="lead-rule" />
                 </span>
-                <span class="value">{l.value}</span>
-                <span class="arrow" aria-hidden="true">
-                  <Icon name="arrow-right" />
+
+                <span class="track">
+                  <span class="track-cap" data-at="start" aria-hidden="true" />
+                  <span class="value">{l.value}</span>
+                  <span class="track-cap" data-at="end" aria-hidden="true" />
+                </span>
+
+                <span class="foot">
+                  <span class="micro-label">{l.channel}</span>
+                  <span class="arrow" aria-hidden="true">
+                    <Icon name="arrow-right" size={14} />
+                  </span>
                 </span>
               </a>
             </li>
           ))
         }
       </ul>
+
       {
-        /* A registration target sized to the lattice, not a mark laid on top
-          of it. Its crosshair arms run out past the ring and land exactly on
-          the two hairline gaps, so the grid reads as continuing through the
-          figure — the graphic is the intersection rather than a sticker over
-          it. */
+        /* The crosshair arms run out past the ring and land on the axes the
+          columns already make, so the grid reads as continuing through the
+          figure rather than being interrupted by it. */
       }
       <span class="lattice-mark" data-lattice-mark
         ><Figure name="target" size={64} /></span
@@ -89,83 +99,91 @@ const links = [
 
   .lattice {
     position: relative;
+    margin-top: var(--space-4);
   }
 
-  /* A wrapper rather than a class on <Figure>: scoped styles are keyed to
-     elements this template declares, and a child component's root is not
-     one. */
-  .lattice-mark {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    translate: -50% -50%;
-    display: block;
-    line-height: 0;
-    /* The substrate disc is load-bearing. The figure and the lattice both
-       draw in hairline weight, so laid flat over the intersection the ring
-       would vanish into the lines it crosses. Punching a round hole and
-       setting the target inside it is what makes the arms read as continuing
-       the grid instead of colliding with it. */
-    padding: 0.5rem;
-    background: var(--sub);
-    border-radius: 50%;
-    color: var(--ink);
-    pointer-events: none;
-  }
-
-  /* Two by two rather than a fifth stack of full-width rows. The page has just
-     run five project rows and four more of the same shape read as filler. */
   ul {
     list-style: none;
-    margin: var(--space-3) 0 0;
+    margin: 0;
     padding: 0;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--rule);
-    background: var(--hair);
-  }
-
-  li {
-    background: var(--sub);
+    gap: var(--space-5) var(--space-6);
   }
 
   a {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
-    gap: var(--space-2);
-    /* Generous, and load-bearing: the registration target sits on the shared
-       corner of all four cells, so the content has to clear its radius or the
-       figure lands on top of a handle. */
-    padding: var(--space-3) var(--space-4) var(--space-4);
+    gap: 0.5rem;
     text-decoration: none;
-    transition: background 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    inline-size: max-content;
+    max-inline-size: 100%;
   }
 
-  a:hover {
-    background: color-mix(in oklab, var(--sig) 8%, var(--sub));
-  }
-
-  /* The channel tag sits opposite the label so each cell opens with a paired
-     readout rather than a single word. */
-  .head {
-    grid-column: 1 / -1;
+  /* A leader leaving the track, exactly as the hero's does. */
+  .lead {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--space-2);
-    margin-bottom: 0.4rem;
+    align-items: center;
+    gap: 0.6rem;
+    padding-inline-start: 1.2em;
+  }
+
+  .lead-rule {
+    flex: 1;
+    block-size: var(--rule);
+    background: var(--hair);
+    min-inline-size: 1.5rem;
+  }
+
+  /* The track is cut from the handle: padding in em and a pill radius, so it
+     is the value's own container at any type size. */
+  .track {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5em 1.1em;
+    border: var(--rule) solid var(--hair);
+    border-radius: 999px;
+    line-height: 1;
+    transition:
+      border-color 0.25s ease,
+      background 0.25s ease;
   }
 
   .value {
     font-size: var(--step-1);
     letter-spacing: -0.015em;
+    line-height: 1;
     overflow-wrap: anywhere;
     transition: color 0.25s ease;
   }
 
-  a:hover .value {
-    color: var(--sig);
+  .track-cap {
+    position: absolute;
+    inline-size: 5px;
+    block-size: 5px;
+    border-radius: 50%;
+    top: 50%;
+    translate: 0 -50%;
+    border: var(--rule) solid var(--hair);
+    background: var(--sub);
+    transition: border-color 0.25s ease;
+  }
+
+  .track-cap[data-at="start"] {
+    left: -3px;
+  }
+
+  .track-cap[data-at="end"] {
+    right: -3px;
+    background: var(--hair);
+  }
+
+  .foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding-inline-start: 1.2em;
   }
 
   .arrow {
@@ -177,14 +195,56 @@ const links = [
       color 0.25s ease;
   }
 
-  a:hover .arrow {
+  a:hover .track,
+  a:focus-visible .track {
+    border-color: var(--sig);
+  }
+
+  a:hover .track-cap,
+  a:focus-visible .track-cap {
+    border-color: var(--sig);
+  }
+
+  a:hover .track-cap[data-at="end"],
+  a:focus-visible .track-cap[data-at="end"] {
+    background: var(--sig);
+  }
+
+  a:hover .value,
+  a:focus-visible .value {
+    color: var(--sig);
+  }
+
+  a:hover .arrow,
+  a:focus-visible .arrow {
     transform: translateX(4px);
     color: var(--sig);
   }
 
-  @media (max-width: 40rem) {
+  /* Sits on the intersection the two column gaps already make. The substrate
+     disc is load-bearing: the figure and the page draw at the same weight, so
+     laid flat the ring would vanish into what it crosses. */
+  .lattice-mark {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    display: block;
+    line-height: 0;
+    padding: 0.5rem;
+    background: var(--sub);
+    border-radius: 50%;
+    color: var(--ink);
+    pointer-events: none;
+  }
+
+  @media (max-width: 46rem) {
     ul {
       grid-template-columns: 1fr;
+      gap: var(--space-4);
+    }
+    a {
+      inline-size: 100%;
     }
     /* One column, so there is no intersection to mark. */
     .lattice-mark {

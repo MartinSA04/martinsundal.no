@@ -1,4 +1,11 @@
 ---
+/**
+ * Plate 03 — Index.
+ *
+ * Each row is a coupling rather than a card: a figure column that sets the
+ * row's height, and a name whose rule and readout are cut to its own width by
+ * a max-content wrapper. No box is drawn round anything.
+ */
 import type { CollectionEntry } from "astro:content";
 import Mark from "../micro/Mark.astro";
 import Tag from "../micro/Tag.astro";
@@ -11,12 +18,10 @@ interface Props {
 
 const { projects } = Astro.props;
 
-/* One figure per project, chosen to describe the thing rather than to
-   decorate it: layered rings for a course authored as data, a hub fanning
-   out to clients for the API, a tiled quadrant for the game, the accretion
-   mark for the renderer, and a live glider on its own grid for the
-   automaton. Five distinct silhouettes read down the gutter as five
-   identities. */
+/* One figure per project, chosen to describe the thing rather than decorate
+   it: layered rings for a course authored as data, a hub fanning out to
+   clients for the API, a tiled quadrant for the game, the accretion mark for
+   the renderer, and a live glider on its own grid for the automaton. */
 const FIGURES = {
   "study-companion": "concentric",
   "ntnu-api": "spoke",
@@ -48,42 +53,35 @@ const FIGURES = {
           return (
             <li class="project-card card" style={style}>
               <a class="row" href={`/projects/${entry.id}/`}>
-                {/* The instrument gutter. Read down the page these stack into
-                    one continuous column of marks, which is what makes five
-                    rows a specimen sheet rather than five isolated blocks.
-
-                    `.n` keeps its own box and its own cap correction — the
-                    wrapper starts on the same line, so the numeral's box top
-                    is unchanged and e2e/home.spec.ts still holds. */}
                 <span class="gutter" aria-hidden="true">
                   <span class="n">{String(p.index).padStart(2, "0")}</span>
                   <span class="motif">
                     <Figure
                       name={FIGURES[entry.id as keyof typeof FIGURES]}
-                      size={96}
+                      size={92}
                     />
-                  </span>
-                  <span class="dots">
-                    {Array.from({ length: 5 }, (_, i) => (
-                      <i data-on={i < p.index ? "" : undefined} />
-                    ))}
                   </span>
                 </span>
 
                 <span class="body">
-                  <span class="name">{p.name}</span>
+                  {/* The name, its rule and its stack are one object. The
+                      wrapper is max-content, so the rule can only ever be the
+                      name's width. */}
+                  <span class="nameplate">
+                    <span class="name">{p.name}</span>
+                    <span class="name-rule" aria-hidden="true" />
+                  </span>
                   <span class="tagline">{p.tagline}</span>
-                  <span class="tags">
+                  <span class="name-tags">
                     {p.tags.slice(0, 4).map((t) => (
                       <Tag>{t}</Tag>
                     ))}
                   </span>
                 </span>
 
-                {/* Every row gets a plate, drawn in that world's own four
-                    tokens, so five rows read as five identities rather than
-                    five strips. Two projects have a real image and it fills
-                    the plate; the rest get the world's texture. */}
+                {/* Every row gets a plate in that world's own four tokens, so
+                    five rows read as five identities. Two projects have a real
+                    image; the rest get the world's texture. */}
                 <span class="shot" aria-hidden="true">
                   <span class="plate" data-motif={entry.id}>
                     {p.image ? (
@@ -99,11 +97,9 @@ const FIGURES = {
                   </span>
                 </span>
 
-                {/* Wrapped, not classed. A class handed to a component lands
-                    on that component's own root, which carries its own scope
-                    attribute — so `.go` scoped to this file never matched it.
-                    The arrow was consequently never hidden on a phone, never
-                    took --muted, and never animated on hover. */}
+                {/* Wrapped, not classed: a class handed to a component lands on
+                    that component's own root, which carries its own scope
+                    attribute and never matches this file's styles. */}
                 <span class="go" aria-hidden="true">
                   <Icon name="arrow-right" size={20} />
                 </span>
@@ -125,11 +121,6 @@ const FIGURES = {
     list-style: none;
     margin: var(--space-2) 0 0;
     padding: 0;
-    border-top: var(--rule) solid var(--hair);
-  }
-
-  .project-card {
-    border-bottom: var(--rule) solid var(--hair);
   }
 
   .row {
@@ -137,10 +128,20 @@ const FIGURES = {
     grid-template-columns: auto minmax(0, 1fr) auto auto;
     align-items: center;
     gap: var(--space-3);
-    padding-block: var(--space-2);
+    padding-block: var(--space-3);
     text-decoration: none;
     color: inherit;
     position: relative;
+  }
+
+  /* A hairline between rows, not a box round each. */
+  .project-card + .project-card .row::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    block-size: var(--rule);
+    background: var(--hair);
   }
 
   /* The world's own substrate washes in on hover, so the row previews the page
@@ -165,30 +166,21 @@ const FIGURES = {
     color: var(--w-ink);
   }
 
-  /* The gutter stacks the numeral, the slug's barcode and the index dots.
-     align-self: start keeps its box top on the row's first line, which is
-     exactly where the bare numeral used to start — so the cap correction
-     below still measures against the same origin. */
-  /* A real structural column, not a margin ornament: the figure is 96px and
-     the column is sized to it, so the five marks form a load-bearing band
-     down the left of the sheet and the row's height is set by the figure
-     rather than by the copy.
-
-     justify-items centres the numeral and the dots on the figure's own axis.
-     The numeral keeps its box and its cap correction, so the alignment
-     e2e/home.spec.ts asserts is untouched — that test measures cap tops
-     vertically and is indifferent to the horizontal centring. */
+  /* A structural column: the figure is 92px and the column is sized to it, so
+     the five marks form a load-bearing band down the left of the sheet. */
   .gutter {
     display: grid;
     justify-items: center;
     gap: 0.5rem;
     align-self: start;
-    inline-size: 96px;
+    inline-size: 92px;
   }
 
-  /* The index numeral replaces the coloured edge stripe this row used to
-     carry. It stays on --muted until the world's substrate is behind it,
-     because several worlds' signals are unreadable on bone. */
+  /* The numeral keeps its own box and its own cap correction. Cap tops, not
+     box tops: the cap sits (ascent - cap-height) below each box top, which is
+     a fixed fraction of that element's own font size — measured at 0.157 for
+     Archivo at line-height 1.05 and 0.168 for Plex Mono at line-height 1.
+     e2e/home.spec.ts asserts the result at eight widths. */
   .n {
     font-family: var(--font-mono);
     font-size: var(--step-3);
@@ -197,13 +189,6 @@ const FIGURES = {
     line-height: 1;
     color: var(--muted);
     align-self: start;
-    /* Cap tops, not box tops. Both boxes already start on the same line; the
-       cap sits (ascent - cap-height) below each box top, which is a fixed
-       fraction of that element's own font size — measured at 0.157 for
-       Archivo at line-height 1.05 and 0.168 for Plex Mono at line-height 1.
-       Cancelling the difference tracks both type steps, where the 0.35rem
-       this replaces was tuned at one width and drifted 6px to 9.6px across
-       the range. e2e/home.spec.ts asserts the result at four widths. */
     translate: 0 calc(var(--step-2) * 0.157 - var(--step-3) * 0.168);
     transition: color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
@@ -213,14 +198,34 @@ const FIGURES = {
     color: var(--w-sig);
   }
 
-  /* Top-aligned, not centred. The 96px figure makes the gutter the tallest
-     thing in the row, so a centred body sinks and the numeral stops sitting
-     beside the name it numbers — which e2e/home.spec.ts measures directly and
-     caught. */
+  .motif {
+    display: block;
+    color: var(--muted);
+    transition: color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .row:hover .motif,
+  .row:focus-visible .motif {
+    color: var(--w-sig);
+  }
+
+  /* Top-aligned: the 92px figure makes the gutter the tallest thing in the
+     row, so a centred body would sink and the numeral would stop sitting
+     beside the name it numbers. */
   .body {
     display: grid;
-    gap: 0.3rem;
+    gap: 0.4rem;
     align-self: start;
+    /* A grid item's automatic minimum is its content, so without this the
+       max-content nameplate widens the whole track and the row overflows. */
+    min-inline-size: 0;
+  }
+
+  .nameplate {
+    display: grid;
+    inline-size: max-content;
+    max-inline-size: 100%;
+    gap: 0.4rem;
   }
 
   .name {
@@ -228,6 +233,22 @@ const FIGURES = {
     font-weight: 600;
     letter-spacing: -0.025em;
     line-height: 1.05;
+  }
+
+  .name-rule {
+    block-size: var(--rule);
+    background: var(--hair);
+  }
+
+  .row:hover .name-rule,
+  .row:focus-visible .name-rule {
+    background: var(--w-hair);
+  }
+
+  .name-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.1rem 0.9rem;
   }
 
   .tagline {
@@ -241,73 +262,17 @@ const FIGURES = {
     color: color-mix(in oklab, var(--w-ink) 70%, var(--w-sub));
   }
 
-  .tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.2rem 0.9rem;
-    margin-top: 0.3rem;
-  }
-
-  /* The figure inherits currentColor, so it takes the world's signal on hover
-     with no second rule. It sits at --muted at rest, a step back from the
-     numeral, so the numeral still leads the row. */
-  .motif {
-    display: block;
-    color: var(--muted);
-    transition: color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .row:hover .motif,
-  .row:focus-visible .motif {
-    color: var(--w-sig);
-  }
-
-  /* Index dots: filled up to this project's own number, so the column reads
-     as a position indicator running down the sheet. */
-  .dots {
-    display: flex;
-    gap: 3px;
-  }
-
-  .dots > i {
-    inline-size: 4px;
-    block-size: 4px;
-    border-radius: 50%;
-    border: var(--rule) solid var(--hair);
-  }
-
-  .dots > i[data-on] {
-    background: var(--muted);
-    border-color: var(--muted);
-  }
-
-  .row:hover .dots > i[data-on],
-  .row:focus-visible .dots > i[data-on] {
-    background: var(--w-sig);
-    border-color: var(--w-sig);
-  }
-
   /* --- the world plate --------------------------------------------------- */
 
-  .plate {
-    position: relative;
-    display: block;
-    width: clamp(7rem, 13vw, 12rem);
-    aspect-ratio: 16 / 10;
-    overflow: hidden;
-    background: var(--w-sub);
-  }
-
-  /* Corner registration lives on a wrapper, because .plate's own ::before is
-     the world motif and its overflow:hidden is what keeps the glider on its
-     grid. Two marks, not four, so the thumbnail is registered rather than
-     boxed. */
   .shot {
     position: relative;
     display: block;
     flex: none;
   }
 
+  /* Corner registration lives on this wrapper, because .plate's own ::before
+     is the world motif and its overflow:hidden is what keeps the glider on
+     its grid. */
   .shot::before,
   .shot::after {
     content: "";
@@ -337,6 +302,15 @@ const FIGURES = {
   .row:focus-visible .shot::before,
   .row:focus-visible .shot::after {
     border-color: var(--w-sig);
+  }
+
+  .plate {
+    position: relative;
+    display: block;
+    width: clamp(7rem, 13vw, 12rem);
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: var(--w-sub);
   }
 
   .plate img {
@@ -452,11 +426,19 @@ const FIGURES = {
     .go {
       display: none;
     }
-    /* Both are --step-2 from here down, so the cap correction collapses to
-       the difference between the two fonts' own constants. */
+    /* Both are --step-2 from here down, so the cap correction collapses to the
+       difference between the two fonts' own constants. */
     .n {
       font-size: var(--step-2);
       translate: 0 calc(var(--step-2) * -0.011);
+    }
+    .gutter {
+      inline-size: 64px;
+    }
+    /* Below this the name is most of the measure, so cutting the rule to it
+       gains nothing and costs a horizontal scrollbar. */
+    .nameplate {
+      inline-size: 100%;
     }
   }
 
@@ -464,8 +446,6 @@ const FIGURES = {
     .row {
       grid-template-columns: auto minmax(0, 1fr);
     }
-    /* The plate keeps its box, but stops competing with the name on a narrow
-       screen. */
     .shot {
       grid-column: 2;
       width: 100%;

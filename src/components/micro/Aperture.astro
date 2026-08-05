@@ -1,0 +1,185 @@
+---
+/**
+ * A text block bounded by a shape.
+ *
+ * The one device that made the studies work: the paragraph has no rectangle
+ * of its own, so the measure is whatever the curve allows at that line. Two
+ * floats carry the boundary and `shape-margin` is zero, which is the whole
+ * difference between hugging an edge and floating near one.
+ *
+ * The boundary is computed here, at build time, and emitted as percentages of
+ * the float box. That means one array of numbers produces both wrap shapes
+ * and the drawn outline, they cannot drift apart, and none of it needs a
+ * measuring pass in the browser — the block is correct on first paint and
+ * with scripting off entirely.
+ *
+ * Because the points are percentages, the aperture is responsive: its height
+ * follows its width through `aspect`, so the shape keeps its proportion at
+ * every measure instead of being solved once for one viewport.
+ */
+interface Props {
+  /** `lens` is a vesica; `chamfer` cuts the four corners at 45°. */
+  variant?: "lens" | "chamfer";
+  /** Block height as a fraction of its width. */
+  aspect?: number;
+  /** Corner size as a fraction of width. `chamfer` only. */
+  cut?: number;
+  /**
+   * Narrowest the measure may get, as a fraction of the full width. Both a
+   * vesica and a 45° chamfer taper to a point, which leaves a one-word line
+   * at each end; flooring the boundary truncates the tips into short flat
+   * edges and keeps every line readable.
+   */
+  minHalf?: number;
+  /** Draws the construction — the two circles, or the cut corners. */
+  showConstruction?: boolean;
+  class?: string;
+}
+
+const {
+  variant = "lens",
+  aspect = 0.34,
+  cut = 0.08,
+  minHalf = 0.42,
+  showConstruction = true,
+  class: className,
+} = Astro.props;
+
+const STEPS = 40;
+
+/**
+ * Half-width of the aperture at height t (0..1), in units of half the block
+ * width. A vesica is the intersection of two circles; stacked vertically it
+ * is wide and short, which is the orientation a paragraph needs.
+ */
+function halfWidthAt(t: number): number {
+  if (variant === "chamfer") {
+    /* A 45 degree cut: the vertical run and the horizontal drop are the same
+       absolute length, expressed here in each axis's own half-units. */
+    const c = (cut * 2) / aspect; /* vertical run, in half-heights */
+    const drop = cut * 2; /* horizontal drop, in half-widths */
+    const d = Math.abs(t - 0.5) * 2; /* 0 at centre, 1 at the edges */
+    const over = d - (1 - c);
+    return over <= 0 ? 1 : 1 - (drop * over) / c;
+  }
+  /* Lens. hw = 1, hh = aspect/2 in the same units; solve R and d from them. */
+  const hh = aspect / 2;
+  const R = (1 + hh * hh) / (2 * hh);
+  const dd = R - hh;
+  const y = Math.abs(t - 0.5) * aspect + dd;
+  const v = R * R - y * y;
+  return v > 0 ? Math.sqrt(v) : 0;
+}
+
+const rows = Array.from({ length: STEPS + 1 }, (_, i) => {
+  const t = i / STEPS;
+  return { t, half: Math.min(1, Math.max(minHalf, halfWidthAt(t))) };
+});
+
+/* Each float is half the block. In its own coordinates the blocked region
+   runs from the outer edge in to the boundary, so the inner edge is
+   (1 - half) of the float's width. */
+const pct = (n: number) => `${(n * 100).toFixed(2)}%`;
+
+const leftShape = [
+  "from 0 0",
+  ...rows.map((r) => `line to ${pct(1 - r.half)} ${pct(r.t)}`),
+  "line to 0 100%",
+  "close",
+].join(", ");
+
+const rightShape = [
+  "from 100% 0",
+  ...rows.map((r) => `line to ${pct(r.half)} ${pct(r.t)}`),
+  "line to 100% 100%",
+  "close",
+].join(", ");
+
+/* The outline, in the block's own 0..1 box, from the same array. */
+const outline = [
+  ...rows.map((r) => `${(0.5 + r.half / 2).toFixed(4)},${r.t.toFixed(4)}`),
+  ...[...rows]
+    .reverse()
+    .map((r) => `${(0.5 - r.half / 2).toFixed(4)},${r.t.toFixed(4)}`),
+].join(" ");
+---
+
+<div
+  class:list={["micro-aperture", className]}
+  data-micro="aperture"
+  data-variant={variant}
+  style={`--ap-aspect:${aspect}`}
+>
+  {
+    showConstruction && (
+      <svg
+        class="micro-aperture-draw"
+        viewBox="0 0 1 1"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <polygon points={outline} vector-effect="non-scaling-stroke" />
+      </svg>
+    )
+  }
+
+  <span
+    class="micro-aperture-l"
+    aria-hidden="true"
+    style={`shape-outside: shape(${leftShape})`}></span>
+  <span
+    class="micro-aperture-r"
+    aria-hidden="true"
+    style={`shape-outside: shape(${rightShape})`}></span>
+
+  <slot />
+</div>
+
+<style>
+  .micro-aperture {
+    position: relative;
+    /* The floats are sized in container units so the block keeps its
+       proportion at any measure without a script. */
+    container-type: inline-size;
+  }
+
+  .micro-aperture-l,
+  .micro-aperture-r {
+    display: block;
+    inline-size: 50%;
+    block-size: calc(var(--ap-aspect) * 100cqw);
+    shape-margin: 0;
+  }
+
+  .micro-aperture-l {
+    float: left;
+  }
+
+  .micro-aperture-r {
+    float: right;
+  }
+
+  .micro-aperture-draw {
+    position: absolute;
+    inset: 0;
+    block-size: calc(var(--ap-aspect) * 100cqw);
+    inline-size: 100%;
+    pointer-events: none;
+  }
+
+  .micro-aperture-draw polygon {
+    fill: none;
+    stroke: var(--hair);
+    stroke-width: 1;
+  }
+
+  /* The aperture is a measure, so it needs a measure's worth of room. Below
+     this the shape would cut lines to two or three words. */
+  @media (max-width: 46rem) {
+    .micro-aperture-l,
+    .micro-aperture-r,
+    .micro-aperture-draw {
+      display: none;
+    }
+  }
+</style>

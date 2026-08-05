@@ -7,52 +7,48 @@
  * into their own highlights video. No internal figures, no process detail,
  * no Aker mark. See the confidentiality constraint in the site-rewrite spec.
  */
-import Plate from "../micro/Plate.astro";
 import Mark from "../micro/Mark.astro";
 import Chain from "../micro/Chain.astro";
-import Fan from "../micro/Fan.astro";
+import Pill from "../micro/Pill.astro";
 import Tag from "../micro/Tag.astro";
 import Readout from "../micro/Readout.astro";
-import Rule from "../micro/Rule.astro";
-import Marginalia from "../micro/Marginalia.astro";
-import Figure from "../micro/Figure.astro";
 import Icon from "../micro/Icon.astro";
 
-/* The five stages Aker lists for the line, in order. Drawn as a node chain
-   rather than named in a sentence, so the band carries the shape of the
-   process instead of a description of it. */
+/* The five stages Aker lists for the line, in order. */
 const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
 ---
 
 <section class="band card">
   <div class="wrap">
     <Mark n={2} label="Engagement" figure="halfdisc" note="Day job" />
-    <Rule variant="hazard" />
 
     <div class="grid">
-      {
-        /* The arc is the band's left boundary. Everything in the text column
-          starts where the half-disc ends, and the rotated label runs along
-          its flat edge — the composition the reference sheets build around
-          their large semicircles, rather than a shape parked in a margin. */
-      }
-      <div class="arc" aria-hidden="true">
-        <Figure name="halfdisc" size={176} outline />
-        <Marginalia text="Verdal · robotised line" side="left" />
-      </div>
-
       <div class="text">
-        <h2>Aker Solutions, Verdal</h2>
-        <p>
-          I work on the robotics and industrial software behind the Verdal
-          Production Line, a robotised line that welds, blasts and paints steel
-          structures at Aker Solutions.
-        </p>
+        {
+          /* The heading and its rule are one object — the wrapper is sized by
+            the heading, so the rule beneath is exactly its width. */
+        }
+        <div class="headline">
+          <h2>Aker Solutions, Verdal</h2>
+          <span class="headline-rule" aria-hidden="true"></span>
+          <span class="headline-foot micro-label" aria-hidden="true">
+            Robotics · welding automation
+          </span>
+        </div>
 
         {
-          /* Published by Aker on their own Verdal page and in the captions of
-            their own highlights video. Nothing here is internal. */
+          /* The pills sit in the lowercase band on the sentence's own
+            baseline, so the statuses are set into the copy rather than
+            captioned beside it. */
         }
+        <p class="body">
+          I work on the robotics and industrial software behind the Verdal
+          Production Line — a <Pill>robotised</Pill> line that welds, blasts and paints
+          steel structures, and scans components into <Pill signal
+            >3D models</Pill
+          > before they are built.
+        </p>
+
         <Readout
           layout="stack"
           pairs={[
@@ -61,8 +57,7 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
               value: "Up to one closed cage floater / week",
             },
             { label: "Automates", value: "Welding · sandblasting · painting" },
-            { label: "Scanning", value: "3D models of components pre-build" },
-            { label: "Domain", value: "Robotics · robot control · data" },
+            { label: "Covers", value: "Cut · weld · treat · coat · complete" },
           ]}
         />
 
@@ -72,13 +67,13 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
         </a>
       </div>
 
-      {
-        /* The still the /work video opens on. It is the only photograph on the
-          home page, so it does the job the project thumbnails cannot: showing
-          that the day job is a physical line, not a codebase. */
-      }
       <div class="figure">
-        <Plate variant="corners">
+        {
+          /* The only photograph on the home page: it does the job the project
+            thumbnails cannot, showing that the day job is a physical line and
+            not a codebase. Registered at two corners, not framed. */
+        }
+        <div class="shot">
           <a class="poster" href="/work/" tabindex="-1" aria-hidden="true">
             <img
               src="/vpl/poster.avif"
@@ -88,28 +83,14 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
               loading="lazy"
               decoding="async"
             />
-            <span class="poster-tag">
-              <Tag>Verdal Production Line</Tag>
-            </span>
           </a>
-        </Plate>
-
-        {
-          /* The same composition the reference sheets build around CONFIG: an
-            axis rule with the fan's hub sitting on it, rays spreading down
-            onto the stations below. The rule runs out both sides and closes
-            on end caps, so the poster, the fan and the stage chain are one
-            interlocked unit rather than three stacked blocks. */
-        }
-        <div class="spray" aria-hidden="true">
-          <span class="spray-axis">
-            <span class="spray-cap"></span>
-            <span class="spray-rule"></span>
-            <span class="spray-cap"></span>
-          </span>
-          <Fan rays={19} spread={132} accentEvery={9} size={132} />
+          <span class="poster-tag"><Tag>Verdal Production Line</Tag></span>
         </div>
 
+        {
+          /* The stations are not labels on a rule; the rule is broken to make
+            room for them, so the copy sets the rhythm. */
+        }
         <Chain items={stages} active={1} />
       </div>
     </div>
@@ -123,38 +104,75 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
 
   .grid {
     display: grid;
-    grid-template-columns: auto minmax(0, 1.15fr) minmax(0, 1fr);
-    gap: var(--space-3) var(--space-4);
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: var(--space-5);
     align-items: start;
-    margin-top: var(--space-3);
   }
 
-  /* Flat edge to the outside, arc facing the copy: the shape opens the band
-     and the label reads up its straight side. */
-  .arc {
-    display: flex;
-    align-items: stretch;
-    gap: var(--space-1);
-    color: var(--hair);
-    rotate: 180deg;
+  .headline {
+    display: grid;
+    inline-size: max-content;
+    max-inline-size: 100%;
+    gap: 0.45rem;
+    margin-bottom: var(--space-3);
   }
 
   h2 {
     font-size: var(--step-3);
-    margin-bottom: var(--space-2);
+    margin: 0;
+    line-height: 1;
   }
 
-  .text p {
-    max-width: 44ch;
-    color: var(--muted);
-    margin-bottom: var(--space-3);
+  .headline-rule {
+    block-size: var(--rule);
+    background: var(--ink);
+  }
+
+  .headline-foot {
+    font-size: var(--step--2);
+  }
+
+  .body {
+    max-width: 46ch;
+    margin: 0 0 var(--space-3);
+    font-size: var(--step-0);
+    line-height: 1.55;
+  }
+
+  .shot {
+    position: relative;
+    display: block;
+    margin-bottom: var(--space-4);
+  }
+
+  /* Registration, not a frame. */
+  .shot::before,
+  .shot::after {
+    content: "";
+    position: absolute;
+    inline-size: 14px;
+    block-size: 14px;
+    border: 0 solid var(--hair);
+  }
+
+  .shot::before {
+    top: -5px;
+    left: -5px;
+    border-top-width: var(--rule);
+    border-left-width: var(--rule);
+  }
+
+  .shot::after {
+    bottom: -5px;
+    right: -5px;
+    border-bottom-width: var(--rule);
+    border-right-width: var(--rule);
   }
 
   .poster {
     display: block;
-    position: relative;
-    /* The poster is the one warm, saturated thing in an otherwise hairline
-       page. Held back until hover so it reads as a plate in a document. */
+    /* The one warm, saturated thing on an otherwise hairline page. Held back
+       until hover so it reads as a plate in a document. */
     filter: grayscale(1) contrast(1.04);
     transition: filter 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
@@ -174,10 +192,8 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
     position: absolute;
     left: 0;
     bottom: 0;
-    padding: 0.35rem 0.6rem;
+    padding: 0.4rem 0.6rem;
     background: var(--sub);
-    border-top: var(--rule) solid var(--hair);
-    border-right: var(--rule) solid var(--hair);
     line-height: 1;
   }
 
@@ -199,21 +215,13 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
     color: var(--sig);
   }
 
-  @media (max-width: 76rem) {
-    /* The arc is a column, and below this width there is not one to give it
-       without squeezing the copy to nothing. */
-    .grid {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-    }
-    .arc {
-      display: none;
-    }
-  }
-
-  @media (max-width: 46rem) {
+  @media (max-width: 52rem) {
     .grid {
       grid-template-columns: 1fr;
       gap: var(--space-4);
+    }
+    .headline {
+      inline-size: 100%;
     }
   }
 </style>

@@ -2,36 +2,33 @@
 /**
  * Plate 01 — Subject.
  *
- * The Game of Life band is a real cellular automaton carrying real state, so
- * it gets instrumented rather than captioned: a generation dial, a live
- * population trace, a settle annunciator, and the board's own coordinate
- * frame printed along two edges.
+ * Rebuilt so the large elements are couplings rather than boxes with marks in
+ * them. The name carries a rule cut to its own width; the lead runs inside a
+ * chamfered aperture that bounds it; the settle state is a track that routes
+ * the run's own readouts.
  *
- * Every number below is computed at build time from the same plan file and
- * the same pure functions the browser runs, so the page is correct before any
- * script executes and the static values cannot drift from the simulation.
- * Stepping all 276 generations of the 356x192 board costs about 110ms.
+ * Every number is computed at build time from the same plan file and the same
+ * pure functions the browser runs, so the page is correct before any script
+ * executes and the static values cannot drift. Stepping all 276 generations of
+ * the 356x192 board costs about 110ms.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { parsePlan, step, countLive } from "../../lib/life.ts";
-import Plate from "../micro/Plate.astro";
+import Figure from "../micro/Figure.astro";
 import Dial from "../micro/Dial.astro";
 import Trace from "../micro/Trace.astro";
 import Readout from "../micro/Readout.astro";
 import Ruler from "../micro/Ruler.astro";
-import Node from "../micro/Node.astro";
 import Racetrack from "../micro/Racetrack.astro";
-import SpecBlock from "../micro/SpecBlock.astro";
+import Aperture from "../micro/Aperture.astro";
+import Pill from "../micro/Pill.astro";
 
 const planPath = fileURLToPath(
   new URL("../../../public/martin_plan.txt", import.meta.url),
 );
 const plan = parsePlan(readFileSync(planPath, "utf8"));
 
-/* Step until the board reproduces itself, recording the population of every
-   generation on the way. The settled generation is the last one *before* the
-   repeat, which is the number the readout has always shown: 276, not 277. */
 const population: number[] = [countLive(plan.cells)];
 let cells = plan.cells;
 let settledGen = 0;
@@ -54,156 +51,169 @@ for (let g = 1; g <= 1000; g++) {
 }
 
 const settledPop = population[population.length - 1]!;
-
-/* The runtime trace keeps a rolling window of the last 120 generations, so
-   the statically rendered one shows exactly the same window at its end
-   state — what a visitor without script would have seen had they watched. */
 const TRACE_WINDOW = 120;
 const traceSeries = population.slice(-TRACE_WINDOW);
-
 const BOARD = `${plan.width}×${plan.height}`;
 ---
 
 <section class="hero">
   <div class="wrap">
-    <Plate
-      id="Plate 01"
-      title="Subject"
-      figure="starburst"
-      figureSize={72}
-      edgeLeft={`Asset_id 2026_MSA_01`}
-      edgeRight="Trondheim · 63.43°N 10.40°E"
-      foot={`Seed martin_plan.txt · settles gen ${settledGen}`}
-    >
-      <div class="hero-head">
-        <h1 class="name">Martin Sundal Aspås</h1>
-        {
-          /* Wrapped rather than styled through a class prop: Astro scopes
-            these styles to elements declared in this file, so a class handed
-            to a child component's own root element never matches. */
-        }
-        <div class="hero-monogram"><Node glyph="M" label="26" /></div>
+    <div class="plate-head">
+      <Figure name="starburst" size={64} />
+      <span class="micro-label">Subject</span>
+      <span class="head-rule" aria-hidden="true"></span>
+      <span class="micro-label plate-id">Plate 01</span>
+    </div>
+
+    {
+      /* The name and the rule beneath it are one object: the wrapper is
+        max-content, so the rule and the coordinates are exactly as wide as the
+        name that produced them. No measuring pass, no magic number. */
+    }
+    <div class="nameplate">
+      <h1 class="name">Martin Sundal Aspås</h1>
+      <span class="name-rule" aria-hidden="true"></span>
+      <div class="name-foot" aria-hidden="true">
+        <span>63.43°N</span>
+        <span>Trondheim · NO</span>
+        <span>10.40°E</span>
+      </div>
+    </div>
+
+    {
+      /* The board settles into the word MARTIN at generation 276 and is a
+      still life from there on. Board coordinates are fixed by
+      martin_plan.txt: the settled word occupies x 21-79% of a 356x192 board.
+      Overscaling the canvas to 166% and cropping puts the word's own width on
+      the heading's measure, so the two line up as one block. */
+    }
+    <div class="figure">
+      <div class="figure-rows">
+        <Ruler axis="y" from={0} to={plan.height} majors={3} minors={2} />
       </div>
 
-      {
-        /* The board settles into the word MARTIN at generation 276 and is a
-        still life from there on. It used to carry the name alone, with the
-        real text visually-hidden — which meant the name did not exist for the
-        first five seconds, or in any screenshot. The heading above says it
-        immediately and the simulation signs it.
-
-        Board coordinates are fixed by martin_plan.txt: the settled word
-        occupies x 21-79% and y 40-59% of a 356x192 board. Overscaling the
-        canvas to 166% and cropping puts the word's own width exactly on the
-        heading's measure, so the two line up as one block. The band therefore
-        keeps the full plate width — the instrument strip runs beneath it
-        rather than beside it, which would have narrowed the band and broken
-        that alignment. */
-      }
-      <div class="figure">
-        <div class="figure-rows">
-          <Ruler axis="y" from={0} to={plan.height} majors={3} minors={2} />
-        </div>
-
-        <div class="life-frame" aria-hidden="true">
-          <canvas id="life-canvas" width={plan.width} height={plan.height}
-          ></canvas>
-        </div>
-
-        <div class="figure-cols">
-          <Ruler axis="x" from={0} to={plan.width} majors={5} />
-        </div>
+      <div class="life-frame" aria-hidden="true">
+        <canvas id="life-canvas" width={plan.width} height={plan.height}
+        ></canvas>
       </div>
 
-      <div class="instruments" aria-hidden="true">
-        <Dial
-          value={settledGen}
-          max={settledGen}
-          label="Gen"
-          key="generation"
-          size={116}
+      <div class="figure-cols">
+        <Ruler axis="x" from={0} to={plan.width} majors={5} />
+      </div>
+    </div>
+
+    <div class="instruments" aria-hidden="true">
+      <Dial
+        value={settledGen}
+        max={settledGen}
+        label="Gen"
+        key="generation"
+        size={112}
+      />
+
+      <div class="instruments-stack">
+        <Trace
+          points={traceSeries}
+          label="Pop"
+          value={String(settledPop)}
+          key="population"
+          width={148}
         />
-
-        <div class="instruments-stack">
-          <Trace
-            points={traceSeries}
-            label="Pop"
-            value={String(settledPop)}
-            key="population"
-            width={148}
-          />
-          <Readout
-            pairs={[
-              { label: "Rule", value: "B3/S23" },
-              { label: "Board", value: BOARD },
-            ]}
-          />
-        </div>
-
-        {
-          /* The settle state is a track cut to its own word, with the run's
-            readouts leaving the outline on leaders — the container and its
-            labels are one object, so nothing here is a caption sitting near
-            a badge. */
-        }
-        <span class="instruments-state" data-life-state>
-          <Racetrack
-            label="Settled"
-            top={`Gen ${settledGen}`}
-            bottom={BOARD}
-            signal
-          />
-        </span>
+        <Readout
+          pairs={[
+            { label: "Rule", value: "B3/S23" },
+            { label: "Seed", value: "martin_plan.txt" },
+          ]}
+        />
       </div>
-    </Plate>
+
+      <span class="instruments-state" data-life-state>
+        <Racetrack
+          label="Settled"
+          top={`Gen ${settledGen}`}
+          bottom={BOARD}
+          signal
+        />
+      </span>
+    </div>
   </div>
 
-  <div class="wrap hero-foot">
-    <p class="lead">
-      I write software for things that move or compute. That covers robotics,
-      simulation and industrial software at Aker Solutions, plus a steady stream
-      of side projects.
-    </p>
-
-    <SpecBlock
-      rows={[
-        { label: "Role", value: "Software engineer" },
-        { label: "At", value: "Aker Solutions, Verdal" },
-        { label: "Studying", value: "Applied physics & maths, NTNU" },
-      ]}
-    />
+  {
+    /* The lead has no rectangle. Its measure is whatever the aperture allows
+      at that line, so the first and last lines stop on the chamfer and the
+      paragraph is the shape rather than sitting inside one. */
+  }
+  <div class="wrap lead-band">
+    <Aperture variant="chamfer" aspect={0.17} cut={0.16} minHalf={0.5}>
+      <p class="lead">
+        I write software for things that move or compute. That covers <Pill
+          >robotics</Pill
+        > and simulation at Aker Solutions, plus a steady stream of side projects.
+        Alongside it I study <Pill signal>applied physics</Pill> and mathematics at
+        NTNU.
+      </p>
+    </Aperture>
   </div>
 </section>
 
 <style>
   .hero {
-    padding-block: var(--space-2) var(--space-4);
+    padding-block: var(--space-2) var(--space-5);
   }
 
-  .hero-head {
+  /* --- plate head --------------------------------------------------------- */
+  .plate-head {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-3);
+    align-items: center;
+    gap: var(--space-2);
   }
 
-  /* Sized to run the full measure rather than sit in a column: at 1280 this
-     lands a hair under the 78rem wrap. */
+  .head-rule {
+    flex: 1;
+    block-size: var(--rule);
+    background: var(--hair);
+  }
+
+  .plate-id {
+    color: var(--sig);
+  }
+
+  /* --- the nameplate ------------------------------------------------------ */
+  .nameplate {
+    display: grid;
+    /* The rule and the readout below can only be the name's width if the
+       wrapper is sized by its widest child, which is the name. */
+    inline-size: max-content;
+    max-inline-size: 100%;
+    gap: 0.5rem;
+    margin-block: var(--space-3) var(--space-2);
+  }
+
   .name {
-    font-size: clamp(2.4rem, 1.1rem + 7.4vw, 8.2rem);
-    line-height: 0.92;
-    letter-spacing: -0.04em;
+    font-size: clamp(2.3rem, 1rem + 7.2vw, 7.8rem);
+    line-height: 0.9;
+    letter-spacing: -0.045em;
     margin: 0;
-    text-wrap: balance;
   }
 
-  .hero-monogram {
-    flex: none;
-    margin-block-start: 0.4rem;
+  .name-rule {
+    block-size: var(--rule);
+    background: var(--ink);
   }
 
-  /* The figure is the band plus its two axes: rows up the left, columns along
-     the bottom, both printed in the board's own coordinates. */
+  .name-foot {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* --- the life figure ----------------------------------------------------- */
   .figure {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -225,8 +235,6 @@ const BOARD = `${plan.width}×${plan.height}`;
 
   .life-frame {
     grid-area: band;
-    /* Cropped to a band roughly 1.6x the settled word's height, so the word
-       reads as a slab rather than floating in empty substrate. */
     position: relative;
     width: 100%;
     aspect-ratio: 4;
@@ -244,8 +252,7 @@ const BOARD = `${plan.width}×${plan.height}`;
      both axes lands it in the frame without a magic offset.
 
      The settled word is 206 of the board's 356 columns, so 166% puts it at
-     96% of the frame: 1.66 * 206/356 = 0.96. It used to be 173%, which put it
-     at 100.1% and cut the outer column off the M and the N. */
+     96% of the frame: 1.66 * 206/356 = 0.96. */
   #life-canvas {
     position: absolute;
     left: 50%;
@@ -260,15 +267,13 @@ const BOARD = `${plan.width}×${plan.height}`;
     image-rendering: pixelated;
   }
 
-  /* Telemetry runs along the bottom edge of the panel, as it does on the
-     reference sheets, rather than in a column beside the figure. */
+  /* --- instruments --------------------------------------------------------- */
   .instruments {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
+    gap: var(--space-4);
     flex-wrap: wrap;
     padding-top: var(--space-2);
-    border-top: var(--rule) solid var(--hair);
   }
 
   .instruments-stack {
@@ -278,30 +283,25 @@ const BOARD = `${plan.width}×${plan.height}`;
 
   .instruments-state {
     margin-inline-start: auto;
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
   }
 
-  /* Any `display` beats the UA's `[hidden] { display: none }`, so setting
-     flex above silently made the annunciator permanent — the board claimed
-     SETTLED from generation zero. Caught by e2e/home.spec.ts. */
+  /* Any `display` beats the UA's `[hidden] { display: none }`, so this has to
+     restate it or the board claims SETTLED from generation zero. */
   .instruments-state[hidden] {
     display: none;
   }
 
-  .hero-foot {
-    display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-    gap: var(--space-5);
-    align-items: start;
-    margin-top: var(--space-3);
+  /* --- lead ---------------------------------------------------------------- */
+  .lead-band {
+    margin-top: var(--space-5);
   }
 
   .lead {
-    max-width: 42ch;
+    margin: 0;
     font-size: var(--step-1);
-    line-height: 1.45;
+    line-height: 1.5;
+    text-align: center;
+    text-wrap: pretty;
   }
 
   @media (max-width: 60rem) {
@@ -311,12 +311,8 @@ const BOARD = `${plan.width}×${plan.height}`;
   }
 
   @media (max-width: 46rem) {
-    .hero-head {
-      flex-direction: column;
-      gap: var(--space-2);
-    }
-    .hero-monogram {
-      margin-block-start: 0;
+    .nameplate {
+      inline-size: 100%;
     }
     .figure {
       grid-template-columns: minmax(0, 1fr);
@@ -332,9 +328,9 @@ const BOARD = `${plan.width}×${plan.height}`;
     .life-frame {
       aspect-ratio: 3;
     }
-    .hero-foot {
-      grid-template-columns: 1fr;
-      gap: var(--space-3);
+    .lead {
+      text-align: left;
+      font-size: var(--step-0);
     }
   }
 </style>
@@ -362,14 +358,10 @@ const BOARD = `${plan.width}×${plan.height}`;
 
   const series: number[] = [];
 
-  /* The trace ships rendered from the build-time population history, which is
-     the true record of the run. Two paths must not clobber it:
-
-     - Under reduced motion the scene reports once, already settled, so the
-       static trace IS the finished history and there is nothing to redraw.
-     - While animating, a series of one sample projects to a single point,
-       which draws no line at all — so the live trace only takes over once it
-       has a segment to draw. */
+  /* The trace ships rendered from the build-time population history. Two paths
+     must not clobber it: under reduced motion the scene reports once, already
+     settled, so the static trace IS the finished history; and while animating,
+     a series of one sample projects to a single point, which draws no line. */
   let ownsTrace = false;
 
   /* Mirrors the projection in Trace.astro. The two must agree or the trace
@@ -397,9 +389,8 @@ const BOARD = `${plan.width}×${plan.height}`;
     const scene = createLifeScene({
       canvas,
       planSrc: "/martin_plan.txt",
-      // 276 generations at the old 10/s took 28 seconds to spell the name,
-      // which meant in practice nobody ever saw it resolve. At 24/s it lands
-      // in about 11, and the board is a still life from there on.
+      // 276 generations at 24/s lands in about eleven seconds, and the board
+      // is a still life from there on.
       speed: 24,
       pauseWhenOffscreen: true,
       onGeneration(generation, settled, pop) {
