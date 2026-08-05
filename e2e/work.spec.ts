@@ -75,3 +75,30 @@ test("emits a VideoObject naming Aker as copyright holder", async ({
   expect(video.copyrightHolder.name).toBe("Aker Solutions");
   expect(video.duration).toBe("PT1M9S");
 });
+
+test("the play button states the file's real duration", async ({ page }) => {
+  // Hardcoding it once meant the Cipherbound trailer claimed the VPL video's
+  // runtime, so this asserts the label against the media itself.
+  for (const [path, expected] of [
+    ["/work/", "1:09"],
+    ["/projects/cipherbound/", "0:33"],
+  ] as const) {
+    await page.goto(path);
+    await expect(page.locator("[data-video-facade] .play")).toContainText(
+      expected,
+    );
+
+    await page.locator("[data-video-facade] button").click();
+    const seconds = await page.locator("[data-video-facade] video").evaluate(
+      (v: HTMLVideoElement) =>
+        new Promise<number>((resolve) => {
+          if (v.readyState >= 1) return resolve(v.duration);
+          v.addEventListener("loadedmetadata", () => resolve(v.duration), {
+            once: true,
+          });
+        }),
+    );
+    const [m, s] = expected.split(":").map(Number);
+    expect(Math.abs(seconds - (m! * 60 + s!))).toBeLessThan(1.5);
+  }
+});
