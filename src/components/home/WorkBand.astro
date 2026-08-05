@@ -1,12 +1,30 @@
 ---
+/**
+ * Plate 02 — Engagement.
+ *
+ * Every factual claim here traces to material Aker Solutions has already
+ * published: their own Verdal production site page and the captions baked
+ * into their own highlights video. No internal figures, no process detail,
+ * no Aker mark. See the confidentiality constraint in the site-rewrite spec.
+ */
+import Plate from "../micro/Plate.astro";
+import Mark from "../micro/Mark.astro";
+import Node from "../micro/Node.astro";
+import Tag from "../micro/Tag.astro";
+import Readout from "../micro/Readout.astro";
 import Rule from "../micro/Rule.astro";
-import SpecBlock from "../micro/SpecBlock.astro";
 import Icon from "../micro/Icon.astro";
+
+/* The five stages Aker lists for the line, in order. Drawn as a node chain
+   rather than named in a sentence, so the band carries the shape of the
+   process instead of a description of it. */
+const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
 ---
 
 <section class="band card">
   <div class="wrap">
-    <Rule label="Idx_01 / Day job" variant="hazard" />
+    <Mark n={2} label="Engagement" note="Day job" />
+    <Rule variant="hazard" />
 
     <div class="grid">
       <div class="text">
@@ -17,10 +35,20 @@ import Icon from "../micro/Icon.astro";
           structures at Aker Solutions.
         </p>
 
-        <SpecBlock
-          rows={[
-            { label: "Domain", value: "Robotics · welding automation" },
-            { label: "Also", value: "Scanning · robot control · data" },
+        {
+          /* Published by Aker on their own Verdal page and in the captions of
+            their own highlights video. Nothing here is internal. */
+        }
+        <Readout
+          layout="stack"
+          pairs={[
+            {
+              label: "Capacity",
+              value: "Up to one closed cage floater / week",
+            },
+            { label: "Automates", value: "Welding · sandblasting · painting" },
+            { label: "Scanning", value: "3D models of components pre-build" },
+            { label: "Domain", value: "Robotics · robot control · data" },
           ]}
         />
 
@@ -35,30 +63,51 @@ import Icon from "../micro/Icon.astro";
           home page, so it does the job the project thumbnails cannot: showing
           that the day job is a physical line, not a codebase. */
       }
-      <a class="plate" href="/work/" tabindex="-1" aria-hidden="true">
-        <img
-          src="/vpl/poster.avif"
-          alt=""
-          width="1280"
-          height="720"
-          loading="lazy"
-          decoding="async"
-        />
-        <span class="plate-tag micro-label">Verdal Production Line</span>
-      </a>
+      <div class="figure">
+        <Plate variant="corners">
+          <a class="poster" href="/work/" tabindex="-1" aria-hidden="true">
+            <img
+              src="/vpl/poster.avif"
+              alt=""
+              width="1280"
+              height="720"
+              loading="lazy"
+              decoding="async"
+            />
+            <span class="poster-tag">
+              <Tag>Verdal Production Line</Tag>
+            </span>
+          </a>
+        </Plate>
+
+        <ol class="flow">
+          {
+            stages.map((stage, i) => (
+              <li>
+                <Node
+                  label={stage}
+                  glyph={String(i + 1)}
+                  active={i === 1}
+                  size={16}
+                />
+              </li>
+            ))
+          }
+        </ol>
+      </div>
     </div>
   </div>
 </section>
 
 <style>
   .band {
-    padding-block: var(--space-6);
+    padding-block: var(--space-4);
   }
 
   .grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-    gap: var(--space-5);
+    gap: var(--space-4);
     align-items: start;
     margin-top: var(--space-3);
   }
@@ -74,28 +123,27 @@ import Icon from "../micro/Icon.astro";
     margin-bottom: var(--space-3);
   }
 
-  .plate {
+  .poster {
     display: block;
     position: relative;
-    border: var(--rule) solid var(--hair);
     /* The poster is the one warm, saturated thing in an otherwise hairline
        page. Held back until hover so it reads as a plate in a document. */
     filter: grayscale(1) contrast(1.04);
     transition: filter 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .plate:hover {
+  .poster:hover {
     filter: none;
   }
 
-  .plate img {
+  .poster img {
     width: 100%;
     height: auto;
     aspect-ratio: 16 / 9;
     object-fit: cover;
   }
 
-  .plate-tag {
+  .poster-tag {
     position: absolute;
     left: 0;
     bottom: 0;
@@ -103,6 +151,32 @@ import Icon from "../micro/Icon.astro";
     background: var(--sub);
     border-top: var(--rule) solid var(--hair);
     border-right: var(--rule) solid var(--hair);
+    line-height: 1;
+  }
+
+  /* The stage chain reads left to right with a hairline running between the
+     nodes, which is what makes it a flow rather than a list of words. */
+  .flow {
+    list-style: none;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 var(--space-2);
+  }
+
+  .flow li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .flow li:not(:last-child)::after {
+    content: "";
+    inline-size: var(--space-3);
+    block-size: var(--rule);
+    background: var(--hair);
   }
 
   .cta {

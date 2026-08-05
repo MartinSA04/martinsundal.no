@@ -1,6 +1,7 @@
 ---
-import Rule from "../micro/Rule.astro";
+import Mark from "../micro/Mark.astro";
 import Icon from "../micro/Icon.astro";
+import Tag from "../micro/Tag.astro";
 import Crosshair from "../micro/Crosshair.astro";
 
 const links = [
@@ -8,28 +9,32 @@ const links = [
     label: "Email",
     value: "martin.s.aspas@gmail.com",
     href: "mailto:martin.s.aspas@gmail.com",
+    channel: "Direct",
   },
   {
     label: "LinkedIn",
     value: "martinsa04",
     href: "https://linkedin.com/in/martinsa04",
+    channel: "Profile",
   },
   {
     label: "GitHub",
     value: "MartinSA04",
     href: "https://github.com/MartinSA04",
+    channel: "Source",
   },
   {
     label: "npm",
     value: "~martinsa04",
     href: "https://www.npmjs.com/~martinsa04",
+    channel: "Registry",
   },
 ];
 ---
 
 <section id="contact" class="contact card">
   <div class="wrap">
-    <Rule label="Idx_04 / Contact" />
+    <Mark n={5} label="Contact" note={`${links.length} channels`} />
 
     {
       /* The grid is a real hairline lattice — a --rule gap over a --hair
@@ -45,9 +50,14 @@ const links = [
                 href={l.href}
                 rel={l.href.startsWith("http") ? "me noopener" : undefined}
               >
-                <span class="micro-label">{l.label}</span>
+                <span class="head">
+                  <span class="micro-label">{l.label}</span>
+                  <Tag variant="angle">{l.channel}</Tag>
+                </span>
                 <span class="value">{l.value}</span>
-                <Icon name="arrow-right" class="arrow" />
+                <span class="arrow" aria-hidden="true">
+                  <Icon name="arrow-right" />
+                </span>
               </a>
             </li>
           ))
@@ -60,7 +70,7 @@ const links = [
 
 <style>
   .contact {
-    padding-block: var(--space-6) var(--space-7);
+    padding-block: var(--space-4) var(--space-5);
   }
 
   .lattice {
@@ -91,7 +101,7 @@ const links = [
      run five project rows and four more of the same shape read as filler. */
   ul {
     list-style: none;
-    margin: var(--space-4) 0 0;
+    margin: var(--space-3) 0 0;
     padding: 0;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -118,8 +128,14 @@ const links = [
     background: color-mix(in oklab, var(--sig) 8%, var(--sub));
   }
 
-  .micro-label {
+  /* The channel tag sits opposite the label so each cell opens with a paired
+     readout rather than a single word. */
+  .head {
     grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
     margin-bottom: 0.4rem;
   }
 
@@ -135,6 +151,8 @@ const links = [
   }
 
   .arrow {
+    display: block;
+    line-height: 0;
     color: var(--muted);
     transition:
       transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),

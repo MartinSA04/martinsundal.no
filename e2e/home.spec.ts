@@ -68,14 +68,57 @@ test("the old What I work on section is gone", async ({ page }) => {
   ).toHaveCount(0);
 });
 
-test("the hero reports the generation, and settles", async ({ page }) => {
+test("the hero instruments report the run, and settle", async ({ page }) => {
   await page.goto("/");
-  const readout = page.locator("[data-life-readout]");
-  await expect(readout).toBeVisible();
-  await expect(readout).toHaveText(/GEN \d{3} · B3\/S23 · 356×192/);
+
+  const value = page.locator('[data-dial="generation"] [data-dial-value]');
+  const state = page.locator("[data-life-state]");
+  const pop = page.locator('[data-trace="population"] [data-trace-value]');
+
+  await expect(value).toHaveText(/^\d{3}$/);
+  // The annunciator is only shown once the board reproduces itself.
+  await expect(state).toBeHidden();
 
   // ~11s at 24 generations/s, plus slack for a loaded machine.
-  await expect(readout).toHaveText(/GEN 276 · STILL LIFE/, { timeout: 25_000 });
+  await expect(value).toHaveText("276", { timeout: 25_000 });
+  await expect(state).toBeVisible();
+  await expect(pop).toHaveText("388");
+
+  // The dial is an arc, so the number is only half the readout: a settled
+  // board must show a full ring, not a full ring's worth of digits.
+  const offset = await page
+    .locator('[data-dial="generation"] [data-dial-arc]')
+    .getAttribute("stroke-dashoffset");
+  expect(Number(offset)).toBeCloseTo(0, 1);
+});
+
+/**
+ * The instruments are rendered at their settled values at build time, so the
+ * page is correct with no script at all. This is the assertion that stops
+ * them silently regressing to zeroed or empty boxes.
+ */
+test("the hero instruments ship their settled values without script", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.goto("/");
+
+  await expect(
+    page.locator('[data-dial="generation"] [data-dial-value]'),
+  ).toHaveText("276");
+  await expect(
+    page.locator('[data-trace="population"] [data-trace-value]'),
+  ).toHaveText("388");
+
+  // A single point projects to a polyline that draws nothing; the static
+  // trace must carry the whole rolling window.
+  const points = await page
+    .locator('[data-trace="population"] [data-trace-line]')
+    .getAttribute("points");
+  expect(points!.trim().split(/\s+/).length).toBeGreaterThan(100);
+
+  await context.close();
 });
 
 test("the settled word is not clipped by the frame", async ({ page }) => {

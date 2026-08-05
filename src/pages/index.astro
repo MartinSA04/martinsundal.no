@@ -4,7 +4,9 @@ import Hero from "../components/home/Hero.astro";
 import WorkBand from "../components/home/WorkBand.astro";
 import ProjectIndex from "../components/home/ProjectIndex.astro";
 import Contact from "../components/home/Contact.astro";
-import Rule from "../components/micro/Rule.astro";
+import Mark from "../components/micro/Mark.astro";
+import Plate from "../components/micro/Plate.astro";
+import Readout from "../components/micro/Readout.astro";
 import { orderedProjects } from "../lib/content.ts";
 import { homeGraph, SITE } from "../lib/jsonld.ts";
 
@@ -30,20 +32,35 @@ const description =
 
   <section id="about" class="about card">
     <div class="wrap">
-      <Rule label="Idx_03 / About" />
-      <div class="cols">
-        <p class="statement">
-          I build software for the physical world, where geometry and motion
-          drive the design, and for the systems that have to keep running around
-          it.
-        </p>
-        <p>
-          Alongside that I study Applied Physics and Mathematics at NTNU. The
-          side projects are how I learn things properly: a game engine written
-          from scratch teaches more about architecture than any tutorial, and a
-          renderer that bends light teaches the geometry it is modelling.
-        </p>
-      </div>
+      <Mark n={4} label="Notes" />
+
+      {
+        /* The statement used to be a large sentence floating in whitespace —
+          the most generic element on the page. Same words, now bounded and
+          registered, with the context beside it as readouts rather than as a
+          second paragraph of prose. */
+      }
+      <Plate variant="corners" edgeLeft="Notes 2026_MSA_04">
+        <div class="cols">
+          <p class="statement">
+            I build software for the physical world, where geometry and motion
+            drive the design, and for the systems that have to keep running
+            around it.
+          </p>
+
+          <Readout
+            layout="stack"
+            pairs={[
+              { label: "Studying", value: "Applied physics & maths, NTNU" },
+              {
+                label: "Engine",
+                value: "Architecture, taught by building one",
+              },
+              { label: "Renderer", value: "Geometry, taught by bending light" },
+            ]}
+          />
+        </div>
+      </Plate>
     </div>
   </section>
 
@@ -54,38 +71,30 @@ const description =
   /* Tighter than the bands above it on purpose: after five project rows the
      page needs to slow down, not present another full-width section. */
   .about {
-    padding-block: var(--space-6);
+    padding-block: var(--space-4);
   }
 
   .cols {
     display: grid;
     grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-    gap: var(--space-5);
-    margin-top: var(--space-4);
+    gap: var(--space-4);
     align-items: start;
   }
 
-  /* The one sentence that has to land carries the size; the context around it
-     stays at reading scale. */
+  /* Reading scale, not display scale. The sentence carries weight from being
+     bounded and annotated rather than from being set large. */
   .statement {
-    font-size: var(--step-2);
-    line-height: 1.25;
-    letter-spacing: -0.02em;
-    text-wrap: balance;
-  }
-
-  .cols p:not(.statement) {
-    color: var(--muted);
-    max-width: 48ch;
+    font-size: var(--step-1);
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+    text-wrap: pretty;
+    max-width: 46ch;
   }
 
   @media (max-width: 46rem) {
     .cols {
       grid-template-columns: 1fr;
       gap: var(--space-3);
-    }
-    .statement {
-      font-size: var(--step-1);
     }
   }
 </style>

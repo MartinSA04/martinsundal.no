@@ -195,12 +195,34 @@ the preserved easter egg at line 294 — are corrected to point here.
 
 ## Density target
 
-3,336px → **≤2,600px** at 1280px, while carrying strictly more information
-than the current page: the four Aker facts, per-project telemetry, and the
-board coordinate frame are all additions.
+Original target: 3,336px → ≤2,600px at 1280px, while carrying strictly more
+information.
 
-The reduction comes from collapsing the dead vertical space between bands and
-letting content butt against its plate frames. Type sizes do not shrink.
+**Measured outcome: 3,161px.** The target was missed by 561px and has been
+revised, because it was set before the content existed.
+
+What actually happened: the height came down 175px while the page gained the
+four published Aker facts, a five-stage process chain, per-project barcodes
+and index dots, the board's two coordinate axes, four channel tags, and the
+generation/population/settle instruments. Information per pixel rose sharply;
+total pixels barely moved.
+
+Reaching 2,600px from here requires deleting content rather than reclaiming
+space. The remaining height is load-bearing:
+
+| Section | Height | Floor |
+| --- | --- | --- |
+| Hero | 872px | The life band alone is ~290px at the 4:1 crop, and the crop cannot tighten further without cutting the settled word |
+| Work | 570px | Set by the 16:9 poster at its column width |
+| Index | 915px | Five rows at ~170px; the row is name + tagline + four tags + a 16:10 plate |
+| Notes | 263px | Already reduced from a display pull-quote to reading scale |
+| Contact | 398px | Two rows of a four-cell lattice |
+
+The cuts already applied: section padding from `--space-6`/`--space-7` down
+to `--space-4`/`--space-5`, project row padding from `--space-3` to
+`--space-2`, and the life band crop from 3.45:1 to 4:1 — verified against
+`e2e/home.spec.ts`, which asserts the settled word keeps a real inset on both
+sides.
 
 ## Degradation
 
