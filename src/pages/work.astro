@@ -29,6 +29,15 @@ const video = {
   contentUrl: `${SITE}/vpl/highlights.mp4`,
 };
 
+/* Applied to <body> by Base so the chrome sits on the same graphite; work.css
+   inherits these rather than declaring its own. */
+const WORLD = {
+  sub: "#16181b",
+  ink: "#eceef0",
+  hair: "#3c4046",
+  sig: "#f2c200",
+};
+
 const title = "Work | Martin Sundal Aspås";
 const description =
   "Robotics and industrial software at Aker Solutions, with the robotised Verdal Production Line as the flagship: welding automation, scanning, and robot control.";
@@ -40,6 +49,8 @@ const description =
   canonicalPath="/work/"
   ogImage={`${SITE}/og/work.png`}
   graph={workGraph(video)}
+  world={WORLD}
+  chromeTag="Idx_01"
 >
   <article data-world="work">
     <div class="wrap">

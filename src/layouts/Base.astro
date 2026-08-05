@@ -14,6 +14,14 @@ interface Props {
   ogType?: "website" | "profile" | "article";
   noindex?: boolean;
   bodyClass?: string;
+  /**
+   * A world's four tokens, applied to <body> rather than to the article that
+   * uses them. The header and footer are siblings of that article, so without
+   * this they keep the root theme and a bone bar brackets every dark world.
+   */
+  world?: { sub: string; ink: string; hair: string; sig: string };
+  /** Replaces the theme toggle on world pages, which are theme-invariant. */
+  chromeTag?: string;
 }
 
 const {
@@ -25,10 +33,26 @@ const {
   ogType,
   noindex,
   bodyClass,
+  world,
+  chromeTag,
 } = Astro.props;
 
 const year = new Date().getFullYear();
 const themeList = JSON.stringify(THEMES);
+
+/* --muted is re-derived here for the same reason project.css re-derives it:
+   custom properties are substituted where they are *declared*, so the :root
+   --muted would resolve against the root theme's ink and substrate and then
+   inherit down as an already-computed colour. */
+const worldStyle = world
+  ? [
+      `--sub:${world.sub}`,
+      `--ink:${world.ink}`,
+      `--hair:${world.hair}`,
+      `--sig:${world.sig}`,
+      `--muted:color-mix(in oklab, ${world.ink} 72%, ${world.sub})`,
+    ].join(";")
+  : undefined;
 ---
 
 <!doctype html>
@@ -99,7 +123,7 @@ const themeList = JSON.stringify(THEMES);
       src="https://gc.zgo.at/count.js"></script>
   </head>
 
-  <body class={bodyClass}>
+  <body class={bodyClass} style={worldStyle}>
     <a class="skip" href="#main">Skip to content</a>
 
     <header class="site-header">
@@ -114,9 +138,17 @@ const themeList = JSON.stringify(THEMES);
           <a href="/#contact">Contact</a>
         </nav>
 
-        <button id="theme-toggle" type="button" aria-label="Toggle theme">
-          <span aria-hidden="true">◐</span>
-        </button>
+        {
+          /* A world fixes its own substrate, so the toggle would be a control
+            that does nothing here. The page's index takes its place. */
+          chromeTag ? (
+            <span class="chrome-tag micro-label">{chromeTag}</span>
+          ) : (
+            <button id="theme-toggle" type="button" aria-label="Toggle theme">
+              <span aria-hidden="true">◐</span>
+            </button>
+          )
+        }
       </div>
     </header>
 
@@ -226,8 +258,14 @@ const themeList = JSON.stringify(THEMES);
         border-color: var(--ink);
       }
 
+      .chrome-tag {
+        border: var(--rule) solid var(--hair);
+        padding: 0.3rem 0.5rem;
+        line-height: 1;
+        color: var(--sig);
+      }
+
       .site-footer {
-        margin-top: var(--space-7);
         border-top: var(--rule) solid var(--hair);
       }
 
@@ -237,7 +275,7 @@ const themeList = JSON.stringify(THEMES);
         justify-content: space-between;
         gap: var(--space-3);
         flex-wrap: wrap;
-        padding-block: var(--space-3);
+        padding-block: var(--space-4);
       }
 
       @media (max-width: 34rem) {

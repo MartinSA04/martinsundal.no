@@ -31,11 +31,68 @@
   line-height: 1.65;
 }
 
+/* --- shape: the plate leads, the document follows ------------------------ */
+
+/* Full-bleed. The render is the thing the page exists to argue for, so it is
+   not a figure inside a text column; the text is an annotation under it. */
+.bh-plate {
+  margin-bottom: var(--space-5);
+}
+
+.bh-head {
+  margin-bottom: var(--space-6);
+}
+
+/* Two narrow columns, the way the papers this imitates actually set. The
+   column rule is the same hairline every other ornament uses. */
+.bh-cols {
+  margin-top: var(--space-6);
+  columns: 2;
+  column-gap: var(--space-6);
+  column-rule: var(--rule) solid var(--hair);
+}
+
+[data-world="black-hole"] .bh-cols p {
+  max-width: none;
+}
+
+/* Headings must not straddle a column break, and a section should not start
+   one line before the bottom of a column. */
+[data-world="black-hole"] .bh-cols > :is(h2, h3) {
+  break-after: avoid;
+  break-inside: avoid;
+  margin-top: var(--space-4);
+}
+
+[data-world="black-hole"] .bh-cols > :is(p, ul, pre, table) {
+  break-inside: avoid;
+}
+
+.bh-apparatus {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: var(--rule) solid var(--hair);
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (max-width: 52rem) {
+  .bh-cols {
+    columns: 1;
+  }
+  .bh-apparatus {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+}
+
 /* --- the render: the actual artifact, leading --------------------------- */
 
 .bh-render {
   position: relative;
-  border: var(--rule) solid var(--hair);
+  border-block: var(--rule) solid var(--hair);
   background: #000;
 }
 

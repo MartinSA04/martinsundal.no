@@ -42,6 +42,84 @@
   line-height: 2rem;
 }
 
+/* --- shape: text with a true left margin ---------------------------------- */
+
+.sc-body {
+  display: grid;
+  grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+  margin-top: var(--space-6);
+}
+
+/* The apparatus hangs beside the text for its whole length instead of being
+   parked in a sticky rail on the right. The rotated label is the spine. */
+.sc-apparatus {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2);
+  border-right: var(--rule) solid var(--hair);
+  padding-right: var(--space-3);
+}
+
+/* Reads downward from the top of the stack, like a spine label. */
+.sc-spine {
+  align-self: start;
+}
+
+.sc-apparatus-stack {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* In a 15rem margin the shared label/value grid squeezes both columns until
+   values break one word per line. Stack them instead. */
+.sc-apparatus .micro-spec {
+  grid-template-columns: 1fr;
+}
+
+.sc-apparatus .micro-spec > dt {
+  border-bottom: 0;
+  padding-block: 0.55rem 0;
+  padding-inline-end: 0;
+}
+
+.sc-apparatus .micro-spec > dd {
+  padding-block: 0.1rem 0.55rem;
+  font-size: var(--step--1);
+}
+
+.sc-apparatus .links a {
+  font-size: var(--step--2);
+  line-height: 1.4;
+  gap: var(--space-1);
+}
+
+/* Wider than the 62ch default: with the apparatus out of the text's way there
+   is room for a proper scholarly measure. */
+[data-world="study-companion"] .sc-body .prose p,
+[data-world="study-companion"] .sc-body .prose li {
+  max-width: 68ch;
+}
+
+@media (max-width: 60rem) {
+  .sc-body {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+  .sc-apparatus {
+    border-right: 0;
+    padding-right: 0;
+    border-top: var(--rule) solid var(--hair);
+    padding-top: var(--space-3);
+    grid-template-columns: 1fr;
+  }
+  .sc-apparatus .micro-marginalia {
+    display: none;
+  }
+}
+
 /* --- the centerpiece: data on the left, what it renders on the right ------ */
 
 .sc-split {

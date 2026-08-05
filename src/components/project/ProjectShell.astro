@@ -1,9 +1,13 @@
 ---
 /**
- * The parts every project page shares: head, breadcrumbs, title block, spec
- * readout, links, and the prose body. Each world supplies its own CSS and
- * decides how all of it looks — this only fixes the document order, so the
- * pages stay comparable to a reader and to a crawler.
+ * The invariants every project page shares, and nothing else: head metadata,
+ * the world's tokens, the breadcrumb trail, and the JSON-LD graph.
+ *
+ * It deliberately does NOT lay the page out. An earlier version owned the
+ * whole document order (rule, title, lede, centerpiece, prose beside a sticky
+ * sidebar), which meant all five worlds were the same page in five palettes.
+ * Layout is the page's job now; compose it from ProjectHead, SpecBlock and
+ * ProjectLinks, or hand-roll it.
  *
  * Worlds are separate page files rather than one [slug] route so that each
  * page bundles only its own CSS and JS.
@@ -11,26 +15,18 @@
 import type { CollectionEntry } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import Breadcrumbs from "../seo/Breadcrumbs.astro";
-import SpecBlock from "../micro/SpecBlock.astro";
-import Rule from "../micro/Rule.astro";
 import { projectGraph, projectTrail, SITE } from "../../lib/jsonld.ts";
 
 interface Props {
   entry: CollectionEntry<"projects">;
-  /** Rendered above the prose: the world's centerpiece. */
-  centerpieceLabel?: string;
+  /** Extra classes on the article, for worlds that need a layout hook. */
+  class?: string;
 }
 
-const { entry, centerpieceLabel } = Astro.props;
+const { entry, class: extraClass } = Astro.props;
 const p = entry.data;
 const trail = projectTrail(p, entry.id);
-
-const style = [
-  `--sub:${p.world.sub}`,
-  `--ink:${p.world.ink}`,
-  `--hair:${p.world.hair}`,
-  `--sig:${p.world.sig}`,
-].join(";");
+const idx = String(p.index).padStart(2, "0");
 ---
 
 <Base
@@ -39,55 +35,14 @@ const style = [
   canonicalPath={`/projects/${entry.id}/`}
   ogImage={`${SITE}/og/${entry.id}.png`}
   graph={projectGraph(p, entry.id)}
+  world={p.world}
+  chromeTag={`Prj_${idx}`}
 >
-  <article data-world={entry.id} style={style}>
-    <div class="wrap">
+  {/* Tokens live on <body> so the chrome matches; this keeps the hook only. */}
+  <article data-world={entry.id} class={extraClass}>
+    <div class="wrap crumb-bar">
       <Breadcrumbs trail={trail} />
-
-      <header class="head">
-        <Rule
-          label={`Idx_${String(p.index).padStart(2, "0")} / ${p.tags[0]}`}
-        />
-        <h1>{p.name}</h1>
-        <p class="lede">{p.tagline}</p>
-      </header>
-
-      {
-        Astro.slots.has("centerpiece") && (
-          <section class="centerpiece" aria-label={centerpieceLabel ?? "Demo"}>
-            <slot name="centerpiece" />
-          </section>
-        )
-      }
-
-      <div class="columns">
-        <div class="prose">
-          <slot />
-        </div>
-
-        <aside class="side">
-          <SpecBlock rows={p.spec} />
-
-          <ul class="links">
-            {
-              p.links.map((l) => (
-                <li>
-                  <a
-                    href={l.href}
-                    rel="noopener"
-                    data-primary={l.primary ? "" : undefined}
-                  >
-                    <span>{l.label}</span>
-                    <span aria-hidden="true">&rarr;</span>
-                  </a>
-                </li>
-              ))
-            }
-          </ul>
-
-          {p.award ? <p class="award">{p.award}</p> : null}
-        </aside>
-      </div>
     </div>
+    <slot />
   </article>
 </Base>

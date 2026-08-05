@@ -49,7 +49,7 @@ design and its own broken KaTeX.
 
 ## The shape
 
-Invert it. The framework owns everything — design, schema, page wiring, and
+Invert it. The framework owns the design, the schema, the page wiring, and
 twenty-odd widgets. A course owns only its content, and pins a version of the
 framework by git tag.
 
@@ -72,7 +72,7 @@ what each release needs.
 **The build fails on a dead cross-reference.** A `<Term>` or `<FormulaRef>`
 with no matching `course.yaml` entry, or a duplicate anchor, stops the build
 and names the offending section file. Broken internal links in study material
-are worse than useless — you trust them and they lie.
+are worse than useless, because you trust them and they lie.
 
 **KaTeX runs on the server.** Formulas are HTML by the time they reach the
 browser, so they are searchable, selectable, and free.

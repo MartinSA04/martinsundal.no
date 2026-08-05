@@ -31,12 +31,62 @@
 /* Prose sits on paper so the grid does not fight the text. */
 [data-world="game-of-life"] .prose,
 [data-world="game-of-life"] .head,
-[data-world="game-of-life"] .side {
+[data-world="game-of-life"] .gol-cell-spec {
   background: var(--sub);
 }
 
-[data-world="game-of-life"] .prose {
-  padding-right: var(--space-3);
+/* --- shape: plotted on the grid ------------------------------------------ */
+
+/* Twelve columns on the same 24px module the background rules are drawn on,
+   so every block starts on a visible line instead of on a text measure. */
+.gol-field {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--space-3) 24px;
+  align-items: start;
+}
+
+/* Rows are explicit so the spec plots beside the prose rather than being swept
+   into a row of its own by auto-placement. */
+.gol-cell-head {
+  grid-column: 1 / 10;
+  grid-row: 1;
+  padding: var(--space-2) var(--space-3) var(--space-3) 0;
+}
+
+.gol-cell-board {
+  grid-column: 1 / 13;
+  grid-row: 2;
+  margin-block: var(--space-3);
+}
+
+.gol-cell-prose {
+  grid-column: 1 / 9;
+  grid-row: 3;
+  padding: var(--space-3) var(--space-3) var(--space-3) 0;
+}
+
+.gol-cell-spec {
+  grid-column: 9 / 13;
+  grid-row: 3;
+  padding: var(--space-2) var(--space-3);
+  border: var(--rule) solid var(--hair);
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+@media (max-width: 60rem) {
+  .gol-field {
+    grid-template-columns: 1fr;
+  }
+  .gol-cell-head,
+  .gol-cell-spec,
+  .gol-cell-board,
+  .gol-cell-prose {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
 }
 
 /* --- the board ------------------------------------------------------------ */

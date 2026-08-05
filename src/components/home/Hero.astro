@@ -1,6 +1,6 @@
 ---
 import Rule from "../micro/Rule.astro";
-import Crosshair from "../micro/Crosshair.astro";
+import SpecBlock from "../micro/SpecBlock.astro";
 ---
 
 {
@@ -10,94 +10,112 @@ import Crosshair from "../micro/Crosshair.astro";
 <section id="home" class="hero">
   <div class="wrap">
     <Rule label="Idx_00 / Trondheim · NO" />
-
-    <h1 class="hi">
-      <span class="hi-prelude">Hi, I&rsquo;m</span>
-      <span class="visually-hidden">Martin Sundal Aspås</span>
-    </h1>
+    <h1 class="name">Martin Sundal Aspås</h1>
 
     {
-      /* The board converges to the word MARTIN around generation 277, which is
-        why it sits here instead of a heading: the name materialises out of the
-        simulation. The mask feathers the top and bottom so cells still in
-        flight dissolve rather than colliding with the text. */
+      /* The board settles into the word MARTIN at generation 277 and is a still
+      life from there on. It used to carry the name alone, with the real text
+      visually-hidden — which meant the name did not exist for the first five
+      seconds, or in any screenshot. The heading above says it immediately and
+      the simulation signs it.
+
+      Board coordinates are fixed by martin_plan.txt: the settled word occupies
+      x 21-79% and y 40-59% of a 356x192 board. Overscaling the canvas to 173%
+      and cropping puts the word's own width exactly on the heading's measure,
+      so the two line up as one block. */
     }
     <div class="life-frame" aria-hidden="true">
       <canvas id="life-canvas" width="356" height="192"></canvas>
     </div>
+  </div>
 
+  <div class="wrap hero-foot">
     <p class="lead">
       I write software for things that move or compute. That covers robotics,
       simulation and industrial software at Aker Solutions, plus a steady stream
       of side projects.
     </p>
 
-    <div class="hero-meta">
-      <span class="micro-label">Software engineer</span>
-      <Crosshair />
-      <span class="micro-label">Aker Solutions</span>
-      <Crosshair />
-      <span class="micro-label">Applied physics &amp; maths, NTNU</span>
-    </div>
+    <SpecBlock
+      rows={[
+        { label: "Role", value: "Software engineer" },
+        { label: "At", value: "Aker Solutions, Verdal" },
+        { label: "Studying", value: "Applied physics & maths, NTNU" },
+      ]}
+    />
   </div>
 </section>
 
 <style>
   .hero {
-    padding-block: var(--space-5) var(--space-4);
+    padding-block: var(--space-4) var(--space-6);
   }
 
-  .hi {
-    margin-block: var(--space-4) 0;
-  }
-
-  .hi-prelude {
-    display: block;
-    font-size: var(--step-3);
-    font-weight: 400;
-    letter-spacing: -0.03em;
+  /* Sized to run the full measure rather than sit in a column: at 1280 this
+     lands a hair under the 78rem wrap. */
+  .name {
+    font-size: clamp(2.6rem, 1.2rem + 8vw, 9rem);
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    margin-block: var(--space-3) 0;
+    text-wrap: balance;
   }
 
   .life-frame {
-    /* The board is 356x192. Left full-width it would be ~650px tall and
-       dominate the page, so it is capped and cropped to the centre band the
-       word settles into. Negative inline margins still let stray cells drift
-       past the text column while the simulation is busy. */
+    /* Cropped to a band roughly 1.6x the settled word's height, so the word
+       reads as a slab rather than floating in empty substrate. */
     --board-aspect: 356 / 192;
-    margin-inline: calc(var(--gutter) * -0.5);
-    margin-block: var(--space-1) var(--space-3);
-    max-width: 40rem;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3.45;
     overflow: hidden;
+    margin-block: var(--space-2) var(--space-5);
     mask-image: linear-gradient(
       to bottom,
       transparent 0%,
-      #000 26%,
-      #000 74%,
+      #000 10%,
+      #000 90%,
       transparent 100%
     );
   }
 
+  /* The word's centre is at 49.9% x and 49.7% y of the board, so centring on
+     both axes lands it in the frame without a magic offset. */
   #life-canvas {
-    width: 100%;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    width: 173%;
+    /* The kernel reset caps media at 100%, which would silently undo the
+       overscale the crop depends on. */
+    max-width: none;
     height: auto;
     aspect-ratio: var(--board-aspect);
     image-rendering: pixelated;
-    display: block;
+  }
+
+  .hero-foot {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
   }
 
   .lead {
-    max-width: 46ch;
+    max-width: 42ch;
     font-size: var(--step-1);
     line-height: 1.45;
-    color: var(--ink);
   }
 
-  .hero-meta {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    flex-wrap: wrap;
-    margin-top: var(--space-3);
+  @media (max-width: 46rem) {
+    .hero-foot {
+      grid-template-columns: 1fr;
+      gap: var(--space-3);
+    }
+    .life-frame {
+      aspect-ratio: 3;
+    }
   }
 </style>
 
@@ -109,7 +127,10 @@ import Crosshair from "../micro/Crosshair.astro";
     const scene = createLifeScene({
       canvas,
       planSrc: "/martin_plan.txt",
-      speed: 10,
+      // 277 generations at the old 10/s took 28 seconds to spell the name,
+      // which meant in practice nobody ever saw it resolve. At 24/s it lands
+      // in about 11, and the board is a still life from there on.
+      speed: 24,
       pauseWhenOffscreen: true,
     });
     scene?.start();

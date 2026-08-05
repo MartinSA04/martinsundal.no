@@ -1,6 +1,9 @@
 ---
 import { getEntry, render } from "astro:content";
 import ProjectShell from "../../components/project/ProjectShell.astro";
+import ProjectHead from "../../components/project/ProjectHead.astro";
+import ProjectLinks from "../../components/project/ProjectLinks.astro";
+import SpecBlock from "../../components/micro/SpecBlock.astro";
 import VideoFacade from "../../components/work/VideoFacade.astro";
 import "../../worlds/cipherbound.css";
 
@@ -9,8 +12,18 @@ if (!entry) throw new Error("missing content: projects/cipherbound");
 const { Content } = await render(entry);
 ---
 
-<ProjectShell entry={entry} centerpieceLabel="Trailer and dialogue box">
-  <div slot="centerpiece">
+{
+  /* Shape: a handheld screen. Nothing runs the full width of the viewport;
+    the page is a stack of framed panels in a narrow centred column, the way a
+    GBA menu is a stack of boxes. Spec and links sit in a two-up "status"
+    panel rather than a rail, because a rail is a desktop-document idea. */
+}
+<ProjectShell entry={entry} class="cb">
+  <div class="cb-screen">
+    <div class="cb-panel cb-frame">
+      <ProjectHead entry={entry} />
+    </div>
+
     <div class="cb-video cb-frame">
       <VideoFacade
         poster="/cipherbound/poster.avif"
@@ -40,9 +53,26 @@ const { Content } = await render(entry);
         Next
       </button>
     </div>
-  </div>
 
-  <Content />
+    <div class="cb-panel cb-frame">
+      <div class="prose">
+        <Content />
+      </div>
+    </div>
+
+    <div class="cb-status">
+      <section class="cb-panel cb-frame" aria-label="Stats">
+        <span class="cb-speaker">Stats</span>
+        <SpecBlock rows={entry.data.spec} />
+      </section>
+
+      <section class="cb-panel cb-frame" aria-label="Links">
+        <span class="cb-speaker">Links</span>
+        <ProjectLinks entry={entry} />
+        {entry.data.award ? <p class="award">{entry.data.award}</p> : null}
+      </section>
+    </div>
+  </div>
 </ProjectShell>
 
 <div class="cb-sprite" data-cb-sprite aria-hidden="true"></div>

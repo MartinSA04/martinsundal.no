@@ -1,6 +1,9 @@
 ---
 import { getEntry, render } from "astro:content";
 import ProjectShell from "../../components/project/ProjectShell.astro";
+import ProjectHead from "../../components/project/ProjectHead.astro";
+import ProjectLinks from "../../components/project/ProjectLinks.astro";
+import SpecBlock from "../../components/micro/SpecBlock.astro";
 import "../../worlds/ntnu-api.css";
 
 const entry = await getEntry("projects", "ntnu-api");
@@ -15,8 +18,14 @@ const PRESETS = [
 ];
 ---
 
-<ProjectShell entry={entry} centerpieceLabel="Live MCP console">
-  <div slot="centerpiece" class="mcp" data-mcp>
+{
+  /* Shape: a terminal session, so it runs top to bottom in one column with no
+    rail beside it. The console leads and the title follows it, because the
+    argument of the page is "this thing is live, watch it" and prose about a
+    protocol client is worth less than the client running. */
+}
+<ProjectShell entry={entry}>
+  <section class="wrap mcp" data-mcp aria-label="Live MCP console">
     <div class="mcp-bar">
       <span class="mcp-dot" data-mcp-dot aria-hidden="true"></span>
       <span class="micro-label">ntnu-mcp.martinsundal.no/mcp</span>
@@ -48,16 +57,40 @@ cross the network appear here, unedited.</pre>
         <div data-mcp-result>
           <p class="mcp-intro">
             This console is a hand-written MCP client. It calls the real server
-            from your browser — nothing here is recorded.
+            from your browser, and nothing here is recorded.
           </p>
         </div>
       </div>
     </div>
 
     <div class="mcp-fallback" data-mcp-fallback hidden></div>
-  </div>
+  </section>
 
-  <Content />
+  <div class="wrap">
+    <div class="na-stream">
+      <ProjectHead entry={entry} />
+
+      <div class="prose">
+        <Content />
+      </div>
+    </div>
+
+    {
+      /* The apparatus arrives as two more commands rather than as a rail, and
+        at the console's full width so the session ends where it started. */
+    }
+    <div class="na-tail">
+      <section class="na-readout" aria-label="Package details">
+        <span class="micro-label na-prompt">ntnu-api --info</span>
+        <SpecBlock rows={entry.data.spec} />
+      </section>
+
+      <section class="na-readout" aria-label="Links">
+        <span class="micro-label na-prompt">ntnu-api --links</span>
+        <ProjectLinks entry={entry} />
+      </section>
+    </div>
+  </div>
 </ProjectShell>
 
 <script>

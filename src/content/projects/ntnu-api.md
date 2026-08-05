@@ -46,14 +46,14 @@ dateModified: "2026-07-28"
 
 NTNU's course data is public, unauthenticated, and scattered across three
 systems that do not know about each other. Course pages serve JSON from
-Liferay — except exam logistics, which exist only as HTML. Grade statistics
+Liferay, but exam logistics exist only as HTML. Grade statistics
 live at HK-dir. Term ids and teaching weeks come from the TP timetable
 system. Nothing shares an identifier scheme.
 
 ## The client
 
 `ntnu-api` puts all of it behind one typed interface, fetch-based, with zero
-runtime dependencies — so it runs unchanged in Node, in a browser, and in a
+runtime dependencies, so it runs unchanged in Node, in a browser, and in a
 Cloudflare Worker.
 
 | Namespace | Data | Source |

@@ -1,13 +1,17 @@
 import { test, expect } from "@playwright/test";
 
-test("hero keeps the life canvas and the screen-reader name", async ({
+test("hero keeps the life canvas and states the name in real text", async ({
   page,
 }) => {
   await page.goto("/");
   await expect(page.locator("#life-canvas")).toHaveCount(1);
-  await expect(
-    page.locator(".visually-hidden", { hasText: "Martin" }).first(),
-  ).toHaveCount(1);
+
+  // The name used to live in a .visually-hidden span while the canvas spelled
+  // it out over ~28 seconds, so sighted visitors saw "Hi, I'm" above noise.
+  // It is now the visible h1 and the simulation echoes it.
+  const h1 = page.getByRole("heading", { level: 1 });
+  await expect(h1).toHaveText(/Martin Sundal Aspås/);
+  await expect(h1).toBeVisible();
 });
 
 test("the life canvas actually renders cells", async ({ page }) => {

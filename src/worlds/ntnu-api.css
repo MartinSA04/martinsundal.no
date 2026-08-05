@@ -28,6 +28,69 @@
   color: var(--sig);
 }
 
+/* --- shape: one column of terminal output --------------------------------- */
+
+/* No rail. Everything the page has to say arrives in sequence, at one measure,
+   the way a session scrolls. The console is above this and leads the page. */
+.na-stream {
+  max-width: 74ch;
+  margin-top: var(--space-5);
+}
+
+.na-stream .head {
+  margin-bottom: var(--space-5);
+}
+
+[data-world="ntnu-api"] .na-stream .head h1 {
+  margin-top: var(--space-2);
+}
+
+.na-tail {
+  margin-top: var(--space-6);
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.na-readout {
+  border: var(--rule) solid var(--hair);
+  padding: var(--space-3);
+}
+
+@media (max-width: 46rem) {
+  .na-tail {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Reads as the command that produced the block under it. */
+.na-prompt {
+  display: block;
+  margin-bottom: var(--space-2);
+  color: var(--sig);
+}
+
+.na-prompt::before {
+  content: "$ ";
+  color: var(--muted);
+}
+
+.na-readout .micro-spec {
+  border-top: 0;
+}
+
+.na-readout .micro-spec > dt:first-of-type,
+.na-readout .micro-spec > dd:first-of-type {
+  padding-top: 0;
+}
+
+.na-readout .links a:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+
 /* --- console -------------------------------------------------------------- */
 
 .mcp {

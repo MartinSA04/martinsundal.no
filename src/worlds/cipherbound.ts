@@ -12,7 +12,7 @@ const SCRIPT = [
   "Battles are a state machine over turn phases. Moves, types and damage resolution never touch how any of it is drawn.",
   "Conversations can branch, and they can change world state. That is what separates an NPC from a signpost.",
   "Everything that matters can be saved and loaded, which quietly constrains every other system.",
-  "TDT4102 called it the best project in the course. You are talking to the same sprite.",
+  "It won Best Project in Procedural and Object-Oriented Programming, the C++ course it was built for. The sprite in the margin is drawn from the game itself.",
 ];
 
 const box = document.querySelector<HTMLElement>("[data-cb-dialogue]");

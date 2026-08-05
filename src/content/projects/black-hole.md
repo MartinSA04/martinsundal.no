@@ -46,7 +46,7 @@ black hole that assumption is simply wrong, and abandoning it is the entire
 project.
 
 Instead of casting a straight ray per pixel, the renderer integrates the path
-light actually takes through curved spacetime — a null geodesic of the
+light actually takes through curved spacetime, a null geodesic of the
 Schwarzschild metric. Follow each ray until it either falls through the event
 horizon, escapes to the sky, or hits the accretion disc, and shade the pixel
 with whatever it found.
@@ -55,8 +55,8 @@ with whatever it found.
 
 Everything recognisable about a black hole image appears without being drawn.
 The Einstein ring, the disc bent up over the top of the hole and back under
-the bottom, the photon sphere hairline at `r = 1.5 rs` where light can orbit —
-none of these are effects. They are what the integration returns.
+the bottom, the photon sphere hairline at `r = 1.5 rs` where light can orbit.
+None of these are effects. They are what the integration returns.
 
 That is the appeal. You do not model the appearance; you model the geometry,
 and the appearance is a consequence.

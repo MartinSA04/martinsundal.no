@@ -15,44 +15,93 @@ import SpecBlock from "../micro/SpecBlock.astro";
           Production Line, a robotised line that welds, blasts and paints steel
           structures at Aker Solutions.
         </p>
+
+        <SpecBlock
+          rows={[
+            { label: "Domain", value: "Robotics · welding automation" },
+            { label: "Also", value: "Scanning · robot control · data" },
+          ]}
+        />
+
         <a class="cta" href="/work/">
           <span>The work in detail</span>
           <span aria-hidden="true">&rarr;</span>
         </a>
       </div>
 
-      <SpecBlock
-        rows={[
-          { label: "Domain", value: "Robotics · welding automation" },
-          { label: "Also", value: "Scanning · robot control · data" },
-          { label: "Studying", value: "Applied physics & maths, NTNU" },
-        ]}
-      />
+      {
+        /* The still the /work video opens on. It is the only photograph on the
+          home page, so it does the job the project thumbnails cannot: showing
+          that the day job is a physical line, not a codebase. */
+      }
+      <a class="plate" href="/work/" tabindex="-1" aria-hidden="true">
+        <img
+          src="/vpl/poster.avif"
+          alt=""
+          width="1280"
+          height="720"
+          loading="lazy"
+          decoding="async"
+        />
+        <span class="plate-tag micro-label">Verdal Production Line</span>
+      </a>
     </div>
   </div>
 </section>
 
 <style>
   .band {
-    padding-block: var(--space-5);
+    padding-block: var(--space-6);
   }
 
   .grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
     gap: var(--space-5);
     align-items: start;
     margin-top: var(--space-3);
   }
 
   h2 {
-    font-size: var(--step-2);
+    font-size: var(--step-3);
     margin-bottom: var(--space-2);
   }
 
   .text p {
     max-width: 44ch;
     color: var(--muted);
+    margin-bottom: var(--space-3);
+  }
+
+  .plate {
+    display: block;
+    position: relative;
+    border: var(--rule) solid var(--hair);
+    /* The poster is the one warm, saturated thing in an otherwise hairline
+       page. Held back until hover so it reads as a plate in a document. */
+    filter: grayscale(1) contrast(1.04);
+    transition: filter 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .plate:hover {
+    filter: none;
+  }
+
+  .plate img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+  }
+
+  .plate-tag {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding: 0.35rem 0.6rem;
+    background: var(--sub);
+    border-top: var(--rule) solid var(--hair);
+    border-right: var(--rule) solid var(--hair);
   }
 
   .cta {
@@ -76,7 +125,7 @@ import SpecBlock from "../micro/SpecBlock.astro";
   @media (max-width: 46rem) {
     .grid {
       grid-template-columns: 1fr;
-      gap: var(--space-3);
+      gap: var(--space-4);
     }
   }
 </style>

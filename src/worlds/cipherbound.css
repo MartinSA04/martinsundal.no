@@ -69,6 +69,64 @@
   margin-bottom: var(--space-4);
 }
 
+/* --- shape: a stack of panels on a handheld screen ------------------------ */
+
+/* Narrow and centred. The other worlds run wide; this one deliberately does
+   not, because a GBA screen is small and everything on it is boxed. */
+.cb-screen {
+  width: min(100% - var(--gutter) * 2, 54rem);
+  margin-inline: auto;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.cb-panel {
+  padding: var(--space-3);
+}
+
+[data-world="cipherbound"] .cb-panel .head h1 {
+  margin-block: var(--space-2) var(--space-2);
+}
+
+[data-world="cipherbound"] .cb-panel .lede {
+  max-width: none;
+}
+
+[data-world="cipherbound"] .cb-panel .prose p {
+  max-width: none;
+}
+
+/* Two-up status panels, the way a party screen splits stats from actions. */
+.cb-status {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.cb-status .cb-speaker {
+  display: block;
+  margin-bottom: var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+[data-world="cipherbound"] .cb-status .award {
+  margin-top: var(--space-3);
+}
+
+/* The crumb bar and the page's own gutter fight on a screen this narrow. */
+[data-world="cipherbound"] .crumb-bar {
+  width: min(100% - var(--gutter) * 2, 54rem);
+  margin-inline: auto;
+}
+
+@media (max-width: 46rem) {
+  .cb-status {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* --- dialogue box --------------------------------------------------------- */
 
 .cb-dialogue {

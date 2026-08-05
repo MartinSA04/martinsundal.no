@@ -15,7 +15,7 @@ export const worldSchema = z.object({
 
 export const projectSchema = z
   .object({
-    /** 01..05 — drives the IDX_0n label and the ordering of the home index. */
+    /** 01..05, drives the PRJ_0n label and the ordering of the home index. */
     index: z.number().int().min(1).max(5),
     name: z.string().min(1),
     /** Capped because it seeds the meta description. */

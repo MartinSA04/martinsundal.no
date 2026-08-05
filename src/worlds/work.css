@@ -1,11 +1,9 @@
-/* World: industrial. Graphite substrate, safety yellow signal. */
-[data-world="work"] {
-  --sub: #16181b;
-  --ink: #eceef0;
-  --hair: #3c4046;
-  --muted: #a2a8b0;
-  --sig: #f2c200;
+/* World: industrial. Graphite substrate, safety yellow signal.
 
+   The four tokens are declared in work.astro and applied to <body>, so the
+   header and footer sit on the same graphite the page does. This file inherits
+   them and only carries the world's structure. */
+[data-world="work"] {
   background: var(--sub);
   color: var(--ink);
   display: block;

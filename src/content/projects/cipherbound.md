@@ -2,7 +2,7 @@
 index: 3
 name: Cipherbound
 tagline: A Pokémon-like game written from scratch in C++, and the best project in its NTNU course.
-summary: A tile-based RPG built on hand-written game systems in C++ — map streaming, turn-based battles, dialogue, and save state. Won Best Project in TDT4102.
+summary: A tile-based RPG built in C++ on hand-written game systems for map streaming, turn-based battles, dialogue, and save state. Won Best Project in TDT4102.
 world:
   sub: "#101820"
   ink: "#e0f8d0"
@@ -68,9 +68,10 @@ other system: anything that matters has to be serialisable.
 
 ## Why it won
 
-TDT4102 is a first serious C++ course, and most projects stop at getting one
-mechanic working. This one is an architecture — systems with clean seams that
-can be extended without reaching into each other. It took **Best Project** in
-the course.
+Procedural and Object-Oriented Programming is where most students meet C++
+properly for the first time, and most projects stop at getting one mechanic
+working. This one is an architecture of systems with clean seams that can be
+extended without reaching into each other. It took **Best Project** in the
+course.
 
 The sprite walking around the margin of this page is from it.

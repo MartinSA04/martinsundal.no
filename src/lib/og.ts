@@ -11,7 +11,7 @@ export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
 
 export interface OgCard {
-  /** IDX_0n label; omitted for pages that are not numbered projects. */
+  /** PRJ_0n label; omitted for pages that are not numbered projects. */
   index?: number;
   eyebrow: string;
   title: string;
@@ -163,7 +163,7 @@ export function ogSvg(card: OgCard): string {
 
   const idx =
     card.index !== undefined
-      ? `<text x="${pad}" y="${pad + 34}" font-family="IBM Plex Mono" font-size="26" letter-spacing="3" fill="${world.sig}">IDX_${String(card.index).padStart(2, "0")}</text>`
+      ? `<text x="${pad}" y="${pad + 34}" font-family="IBM Plex Mono" font-size="26" letter-spacing="3" fill="${world.sig}">PRJ_${String(card.index).padStart(2, "0")}</text>`
       : "";
 
   const eyebrowX = card.index !== undefined ? pad + 150 : pad;

@@ -1,7 +1,11 @@
 /* ---------------------------------------------------------------------------
-   Structure shared by every project page. Colour and character come entirely
-   from the world's four tokens; this file only sets rhythm and layout, so a
-   world can override any of it without fighting.
+   What every project page has in common, which is deliberately not much.
+
+   This file used to carry a `.columns` grid and a sticky `.side` rail, so all
+   five worlds rendered the same document with different type and colour in it.
+   Layout now belongs to each world's own stylesheet. What stays here is the
+   substrate, prose typography, and the pieces whose markup is fixed by a
+   shared component (links, award, breadcrumbs).
    --------------------------------------------------------------------------- */
 
 [data-world] {
@@ -13,15 +17,15 @@
 
   /* Re-derived here, not inherited. Custom properties are substituted where
      they are *declared*, so the :root --muted resolves against the root
-     theme's ink and substrate and then inherits down as a fixed colour — on a
-     dark world under the light theme that lands at ~3:1. Worlds set --hair
-     explicitly, which is why only --muted was affected. */
+     theme's ink and substrate and then inherits down as a fixed colour. */
   --muted: color-mix(in oklab, var(--ink) 72%, var(--sub));
 }
 
-[data-world] .crumbs {
+[data-world] .crumb-bar {
   margin-bottom: var(--space-4);
 }
+
+/* --- title block ---------------------------------------------------------- */
 
 [data-world] .head h1 {
   font-size: var(--step-4);
@@ -40,13 +44,7 @@
   margin-block: var(--space-5);
 }
 
-[data-world] .columns {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
-  gap: var(--space-6);
-  align-items: start;
-  margin-top: var(--space-5);
-}
+/* --- prose ---------------------------------------------------------------- */
 
 [data-world] .prose > :is(h2, h3) {
   font-size: var(--step-2);
@@ -124,14 +122,7 @@
   color: color-mix(in oklab, var(--ink) 82%, var(--sub));
 }
 
-/* --- sidebar -------------------------------------------------------------- */
-
-[data-world] .side {
-  position: sticky;
-  top: 5rem;
-  display: grid;
-  gap: var(--space-3);
-}
+/* --- shared-markup pieces ------------------------------------------------- */
 
 [data-world] .links {
   list-style: none;
@@ -165,17 +156,17 @@
   font-family: var(--font-mono);
   font-size: var(--step--1);
   line-height: 1.5;
-  border-left: 2px solid var(--sig);
-  padding-left: var(--space-2);
+  border: var(--rule) solid var(--hair);
+  padding: var(--space-2);
   color: var(--ink);
 }
 
-@media (max-width: 56rem) {
-  [data-world] .columns {
-    grid-template-columns: 1fr;
-    gap: var(--space-5);
-  }
-  [data-world] .side {
-    position: static;
-  }
+[data-world] .award::before {
+  content: "Recognition";
+  display: block;
+  font-size: var(--step--2);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sig);
+  margin-bottom: 0.45rem;
 }

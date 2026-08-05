@@ -1,7 +1,6 @@
 ---
 import type { CollectionEntry } from "astro:content";
 import Rule from "../micro/Rule.astro";
-import Barcode from "../micro/Barcode.astro";
 
 interface Props {
   projects: CollectionEntry<"projects">[];
@@ -18,7 +17,12 @@ const { projects } = Astro.props;
       {
         projects.map((entry) => {
           const p = entry.data;
-          const style = `--w-sub:${p.world.sub};--w-ink:${p.world.ink};--w-sig:${p.world.sig}`;
+          const style = [
+            `--w-sub:${p.world.sub}`,
+            `--w-ink:${p.world.ink}`,
+            `--w-hair:${p.world.hair}`,
+            `--w-sig:${p.world.sig}`,
+          ].join(";");
           return (
             <li
               class="project-card card"
@@ -26,11 +30,7 @@ const { projects } = Astro.props;
               data-rpg-spawn={entry.id === "cipherbound" ? "" : undefined}
             >
               <a class="row" href={`/projects/${entry.id}/`}>
-                <span class="swatch" aria-hidden="true">
-                  <span class="swatch-sig" />
-                </span>
-
-                <span class="n micro-index">
+                <span class="n" aria-hidden="true">
                   {String(p.index).padStart(2, "0")}
                 </span>
 
@@ -44,25 +44,30 @@ const { projects } = Astro.props;
                   </span>
                 </span>
 
-                {/* A real thumbnail, not decoration. rpg.js spawns the player
-                    from `[data-rpg-spawn] img` and runs the black-hole easter
-                    egg off `img[src*="render.png"]`, and both bail out if the
-                    image has zero size — so these have to be laid out. */}
-                {p.image ? (
-                  <img
-                    class="thumb"
-                    src={p.image.src}
-                    alt={p.image.alt}
-                    width={p.image.width}
-                    height={p.image.height}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                ) : null}
+                {/* Every row gets a plate, drawn in that world's own four
+                    tokens, so five rows read as five identities rather than
+                    five strips. Two projects have a real image and it fills
+                    the plate; the rest get the world's texture.
 
-                <span class="trail" aria-hidden="true">
-                  <Barcode seed={entry.id} bars={14} />
-                  <span class="arrow">&rarr;</span>
+                    Both images are load-bearing beyond decoration: rpg.js
+                    spawns the player from `[data-rpg-spawn] img` and runs the
+                    black-hole easter egg off `img[src*="render.png"]`, and
+                    both bail out if the image has zero size. */}
+                <span class="plate" data-motif={entry.id} aria-hidden="true">
+                  {p.image ? (
+                    <img
+                      src={p.image.src}
+                      alt=""
+                      width={p.image.width}
+                      height={p.image.height}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : null}
+                </span>
+
+                <span class="go" aria-hidden="true">
+                  &rarr;
                 </span>
               </a>
             </li>
@@ -75,13 +80,14 @@ const { projects } = Astro.props;
 
 <style>
   .projects {
-    padding-block: var(--space-5);
+    padding-block: var(--space-6);
   }
 
   .rows {
     list-style: none;
-    margin: 0;
+    margin: var(--space-3) 0 0;
     padding: 0;
+    border-top: var(--rule) solid var(--hair);
   }
 
   .project-card {
@@ -90,7 +96,7 @@ const { projects } = Astro.props;
 
   .row {
     display: grid;
-    grid-template-columns: 3px auto 1fr auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     align-items: center;
     gap: var(--space-3);
     padding-block: var(--space-3);
@@ -99,33 +105,15 @@ const { projects } = Astro.props;
     position: relative;
   }
 
-  .thumb {
-    width: 7rem;
-    height: 4.4rem;
-    object-fit: cover;
-    border: var(--rule) solid var(--hair);
-    filter: grayscale(1) contrast(1.05);
-    opacity: 0.72;
-    transition:
-      filter 0.25s ease,
-      opacity 0.25s ease;
-  }
-
-  .row:hover .thumb,
-  .row:focus-visible .thumb {
-    filter: none;
-    opacity: 1;
-  }
-
-  /* The world's own substrate washes in on hover, so the row previews the
-     page it leads to. */
+  /* The world's own substrate washes in on hover, so the row previews the page
+     it leads to. Bled past the gutter so it reads as the world arriving. */
   .row::before {
     content: "";
     position: absolute;
     inset: 0 calc(var(--gutter) * -0.5);
     background: var(--w-sub);
     opacity: 0;
-    transition: opacity 0.25s ease;
+    transition: opacity 0.3s cubic-bezier(0.22, 1, 0.36, 1);
     z-index: -1;
   }
 
@@ -139,45 +127,41 @@ const { projects } = Astro.props;
     color: var(--w-ink);
   }
 
-  .swatch {
-    height: 100%;
-    min-height: 2.5rem;
-    background: var(--hair);
-    position: relative;
-  }
-
-  .swatch-sig {
-    position: absolute;
-    inset: auto 0 0 0;
-    height: 0;
-    background: var(--w-sig);
-    transition: height 0.25s ease;
-  }
-
-  .row:hover .swatch-sig,
-  .row:focus-visible .swatch-sig {
-    height: 100%;
-  }
-
+  /* The index numeral replaces the coloured edge stripe this row used to
+     carry. It stays on --muted until the world's substrate is behind it,
+     because several worlds' signals are unreadable on bone. */
   .n {
+    font-family: var(--font-mono);
+    font-size: var(--step-3);
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--muted);
+    align-self: start;
+    padding-top: 0.35rem;
+    transition: color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .row:hover .n,
+  .row:focus-visible .n {
+    color: var(--w-sig);
   }
 
   .body {
     display: grid;
-    gap: 0.25rem;
+    gap: 0.3rem;
   }
 
   .name {
     font-size: var(--step-2);
     font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
   }
 
   .tagline {
     color: var(--muted);
-    max-width: 54ch;
+    max-width: 52ch;
     font-size: var(--step-0);
   }
 
@@ -189,8 +173,8 @@ const { projects } = Astro.props;
   .tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.35rem;
+    gap: 0.4rem;
+    margin-top: 0.3rem;
   }
 
   .tag {
@@ -203,34 +187,158 @@ const { projects } = Astro.props;
     padding: 0.15rem 0.45rem;
   }
 
-  .trail {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
+  .row:hover .tag,
+  .row:focus-visible .tag {
+    color: color-mix(in oklab, var(--w-ink) 62%, var(--w-sub));
+    border-color: var(--w-hair);
   }
 
-  .arrow {
+  /* --- the world plate --------------------------------------------------- */
+
+  .plate {
+    position: relative;
+    display: block;
+    width: clamp(7rem, 13vw, 12rem);
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: var(--w-sub);
+    border: var(--rule) solid var(--hair);
+    transition: border-color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .row:hover .plate,
+  .row:focus-visible .plate {
+    border-color: var(--w-hair);
+  }
+
+  .plate img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.05);
+    opacity: 0.8;
+    transition:
+      filter 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .row:hover .plate img,
+  .row:focus-visible .plate img {
+    filter: none;
+    opacity: 1;
+  }
+
+  /* Worlds without a screenshot get their own texture instead, drawn from the
+     same four tokens the page itself uses. */
+  .plate[data-motif="study-companion"]::before {
+    content: "";
+    position: absolute;
+    inset: 12% 14%;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        var(--w-hair) 0 1px,
+        transparent 1px 9px
+      ),
+      linear-gradient(to right, var(--w-sig) 0 2px, transparent 2px);
+  }
+
+  .plate[data-motif="ntnu-api"]::before {
+    content: "";
+    position: absolute;
+    inset: 16% 12%;
+    background-image:
+      linear-gradient(var(--w-sig), var(--w-sig)),
+      linear-gradient(var(--w-hair), var(--w-hair)),
+      linear-gradient(var(--w-hair), var(--w-hair)),
+      linear-gradient(var(--w-sig), var(--w-sig)),
+      linear-gradient(var(--w-hair), var(--w-hair));
+    background-repeat: no-repeat;
+    background-size:
+      38% 3px,
+      72% 3px,
+      54% 3px,
+      26% 3px,
+      64% 3px;
+    background-position:
+      0 0,
+      0 22%,
+      0 44%,
+      0 66%,
+      0 88%;
+  }
+
+  .plate[data-motif="game-of-life"]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(
+        to right,
+        var(--w-hair) 0 1px,
+        transparent 1px 11px
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        var(--w-hair) 0 1px,
+        transparent 1px 11px
+      );
+  }
+
+  /* A glider, on the grid it lives on. */
+  .plate[data-motif="game-of-life"]::after {
+    content: "";
+    position: absolute;
+    left: 33px;
+    top: 22px;
+    width: 10px;
+    height: 10px;
+    background: var(--w-sig);
+    box-shadow:
+      11px 11px 0 var(--w-sig),
+      -11px 22px 0 var(--w-sig),
+      0 22px 0 var(--w-sig),
+      11px 22px 0 var(--w-sig);
+  }
+
+  .go {
     font-size: var(--step-1);
     color: var(--muted);
     transition:
-      transform 0.25s ease,
-      color 0.25s ease;
+      transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+      color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .row:hover .arrow,
-  .row:focus-visible .arrow {
-    transform: translateX(4px);
+  .row:hover .go,
+  .row:focus-visible .go {
+    transform: translateX(5px);
     color: var(--w-sig);
   }
 
-  @media (max-width: 46rem) {
+  @media (max-width: 52rem) {
     .row {
-      grid-template-columns: 3px auto 1fr;
-      gap: var(--space-2);
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: var(--space-2) var(--space-3);
     }
-    .trail,
-    .thumb {
+    .go {
       display: none;
+    }
+    .n {
+      font-size: var(--step-2);
+    }
+  }
+
+  @media (max-width: 34rem) {
+    .row {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+    /* The plate keeps its box so rpg.js still measures a real image, but it
+       stops competing with the name on a narrow screen. */
+    .plate {
+      grid-column: 2;
+      width: 100%;
+      max-width: 11rem;
+      margin-top: var(--space-1);
     }
   }
 </style>

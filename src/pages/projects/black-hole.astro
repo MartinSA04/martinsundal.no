@@ -1,6 +1,9 @@
 ---
 import { getEntry, render } from "astro:content";
 import ProjectShell from "../../components/project/ProjectShell.astro";
+import ProjectHead from "../../components/project/ProjectHead.astro";
+import ProjectLinks from "../../components/project/ProjectLinks.astro";
+import SpecBlock from "../../components/micro/SpecBlock.astro";
 import "../../worlds/black-hole.css";
 
 const entry = await getEntry("projects", "black-hole");
@@ -9,15 +12,15 @@ const { Content } = await render(entry);
 const img = entry.data.image!;
 ---
 
-<ProjectShell
-  entry={entry}
-  centerpieceLabel="The render, and how the rays get there"
->
-  <div slot="centerpiece">
-    {
-      /* The C++ output leads. It is the artifact this page is about, and the
-        filename must stay render.png — the Konami RPG selects on it. */
-    }
+{
+  /* Shape: an observation plate. The render is the artifact the page argues
+    for, so it runs edge to edge before anything else and the title sits under
+    it as a caption would. The prose then sets in two narrow columns, which is
+    how the papers this is imitating actually set. */
+}
+<ProjectShell entry={entry}>
+  <div class="bh-plate">
+    {/* The filename must stay render.png: the Konami RPG selects on it. */}
     <figure class="bh-render">
       <img
         src={img.src}
@@ -27,12 +30,18 @@ const img = entry.data.image!;
         decoding="async"
       />
     </figure>
-    <p class="bh-caption">
+    <p class="bh-caption wrap">
       <span>Rendered in C++</span>
       <span>Schwarzschild metric</span>
       <span>Null geodesic integration</span>
     </p>
+  </div>
 
+  <div class="wrap">
+    <ProjectHead entry={entry} class="bh-head" />
+  </div>
+
+  <div class="wrap">
     <div class="bh-diagram">
       <div class="bh-diagram-head">
         <span class="micro-label">How the rays get there</span>
@@ -54,9 +63,17 @@ const img = entry.data.image!;
         <span class="bh-key" data-key="photon">Photon sphere</span>
       </div>
     </div>
-  </div>
 
-  <Content />
+    <div class="prose bh-cols">
+      <Content />
+    </div>
+
+    {/* Apparatus as a plate footer, the way a figure carries its data. */}
+    <footer class="bh-apparatus">
+      <SpecBlock rows={entry.data.spec} />
+      <ProjectLinks entry={entry} />
+    </footer>
+  </div>
 </ProjectShell>
 
 <script>

@@ -1,6 +1,9 @@
 ---
 import { getEntry, render } from "astro:content";
 import ProjectShell from "../../components/project/ProjectShell.astro";
+import ProjectHead from "../../components/project/ProjectHead.astro";
+import ProjectLinks from "../../components/project/ProjectLinks.astro";
+import SpecBlock from "../../components/micro/SpecBlock.astro";
 import "../../worlds/game-of-life.css";
 
 const entry = await getEntry("projects", "game-of-life");
@@ -10,48 +13,68 @@ const { Content } = await render(entry);
 const MAX_GEN = 540;
 ---
 
-<ProjectShell entry={entry} centerpieceLabel="Glider synthesis, scrubbable">
-  <div slot="centerpiece">
-    <div class="gol">
-      <canvas
-        class="gol-board"
-        data-life
-        width="656"
-        height="256"
-        role="img"
-        aria-label="Conway's Game of Life board running a glider synthesis that settles into text"
-      ></canvas>
+{
+  /* Shape: plotted on the grid the world already draws. The page is a 12
+    column field on the same 24px module as the background, and every block
+    is placed by column span rather than flowing down a text measure. */
+}
+<ProjectShell entry={entry}>
+  <div class="wrap gol-field">
+    <ProjectHead entry={entry} class="gol-cell-head" />
 
-      <div class="gol-controls">
-        <button
-          class="gol-play"
-          type="button"
-          data-life-play
-          aria-pressed="true"
-        >
-          Pause
-        </button>
-        <input
-          type="range"
-          min="0"
-          max={MAX_GEN}
-          value="0"
-          step="1"
-          data-life-scrubber
-          aria-label="Generation"
-        />
-        <span class="gol-gen" data-life-gen aria-live="off"
-          >gen 0 / {MAX_GEN}</span
-        >
+    <div class="gol-cell-board">
+      <div class="gol">
+        <canvas
+          class="gol-board"
+          data-life
+          width="656"
+          height="256"
+          role="img"
+          aria-label="Conway's Game of Life board running a glider synthesis that settles into text"
+        ></canvas>
+
+        <div class="gol-controls">
+          <button
+            class="gol-play"
+            type="button"
+            data-life-play
+            aria-pressed="true"
+          >
+            Pause
+          </button>
+          <input
+            type="range"
+            min="0"
+            max={MAX_GEN}
+            value="0"
+            step="1"
+            data-life-scrubber
+            aria-label="Generation"
+          />
+          <span class="gol-gen" data-life-gen aria-live="off"
+            >gen 0 / {MAX_GEN}</span
+          >
+        </div>
       </div>
+      <p class="gol-note">
+        Every position recomputes from the seed, so any generation is
+        reproducible. Nothing here is a recording.
+      </p>
     </div>
-    <p class="gol-note">
-      Every position recomputes from the seed, so any generation is
-      reproducible. Nothing here is a recording.
-    </p>
-  </div>
 
-  <Content />
+    <div class="prose gol-cell-prose">
+      <Content />
+    </div>
+
+    {
+      /* Plotted beside the prose, not stacked under the title, so the right
+        four columns carry something for the length of the text. */
+    }
+    <div class="gol-cell-spec">
+      <SpecBlock rows={entry.data.spec} />
+      <ProjectLinks entry={entry} />
+    </div>
+  </div>
 </ProjectShell>
 
 <script>

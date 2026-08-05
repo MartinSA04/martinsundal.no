@@ -13,7 +13,7 @@ const STATIONS = [
   { id: "03", name: "Weld", note: "Robotic, tubular sections" },
   { id: "04", name: "Blast", note: "Surface treatment" },
   { id: "05", name: "Coat", note: "Protective coatings" },
-  { id: "06", name: "MC", note: "Mechanical completion" },
+  { id: "06", name: "Complete", note: "Mechanical completion" },
 ];
 ---
 
@@ -64,6 +64,10 @@ const STATIONS = [
     display: grid;
     gap: 0.3rem;
     position: relative;
+    /* Without this the rows stretch to fill the tallest station in the track,
+       so a two-line note pushed that station's node, number and name down and
+       the six stations stair-stepped instead of sharing a baseline. */
+    align-content: start;
   }
 
   .node {

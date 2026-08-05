@@ -51,7 +51,7 @@ Not by search. The renderer turns each glyph pixel into a 2×2 still-life
 block, and the planner constructs a collision that produces it.
 
 It walks the blocks outward from the centre. For each one it picks a
-two-glider synthesis — a pair of gliders whose launch direction and delay make
+two-glider synthesis, a pair of gliders whose launch direction and delay make
 them collide exactly where that block belongs. The hard constraint is
 interference: each pair has to stay clear of every block already placed **and**
 every block still to come, since those gliders have not been fired yet but

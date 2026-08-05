@@ -32,7 +32,7 @@ const description =
     <div class="wrap">
       <Rule label="Idx_03 / About" />
       <div class="cols">
-        <p>
+        <p class="statement">
           I build software for the physical world, where geometry and motion
           drive the design, and for the systems that have to keep running around
           it.
@@ -62,19 +62,41 @@ const description =
 </Base>
 
 <style>
+  /* Tighter than the bands above it on purpose: after five project rows the
+     page needs to slow down, not present another full-width section. */
   .about {
-    padding-block: var(--space-5);
+    padding-block: var(--space-6);
   }
 
   .cols {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
-    gap: var(--space-4);
-    margin-top: var(--space-3);
-    max-width: 72ch;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: var(--space-5);
+    margin-top: var(--space-4);
+    align-items: start;
   }
 
-  .cols p {
+  /* The one sentence that has to land carries the size; the context around it
+     stays at reading scale. */
+  .statement {
+    font-size: var(--step-2);
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .cols p:not(.statement) {
     color: var(--muted);
+    max-width: 48ch;
+  }
+
+  @media (max-width: 46rem) {
+    .cols {
+      grid-template-columns: 1fr;
+      gap: var(--space-3);
+    }
+    .statement {
+      font-size: var(--step-1);
+    }
   }
 </style>

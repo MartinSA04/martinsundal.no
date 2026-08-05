@@ -1,6 +1,10 @@
 ---
 import { getEntry, render } from "astro:content";
 import ProjectShell from "../../components/project/ProjectShell.astro";
+import ProjectHead from "../../components/project/ProjectHead.astro";
+import ProjectLinks from "../../components/project/ProjectLinks.astro";
+import SpecBlock from "../../components/micro/SpecBlock.astro";
+import Marginalia from "../../components/micro/Marginalia.astro";
 import "../../worlds/study-companion.css";
 
 const entry = await getEntry("projects", "study-companion");
@@ -8,11 +12,22 @@ if (!entry) throw new Error("missing content: projects/study-companion");
 const { Content } = await render(entry);
 ---
 
-<ProjectShell
-  entry={entry}
-  centerpieceLabel="A course.yaml and what it renders"
->
-  <div slot="centerpiece" class="sc-split" data-sc-split>
+{
+  /* Shape: a critical edition. Everything apparatus-like (spec, links, the
+    award) hangs in a true left margin running the length of the text, the way
+    a scholarly edition annotates a page, rather than sitting in a sticky rail
+    to the right of it. The text column stays wide and single. */
+}
+<ProjectShell entry={entry}>
+  <div class="wrap">
+    <ProjectHead entry={entry} />
+  </div>
+
+  <section
+    class="wrap centerpiece sc-split"
+    data-sc-split
+    aria-label="A course.yaml and what it renders"
+  >
     <div class="sc-pane">
       <span class="micro-label">content/course.yaml</span>
       <pre
@@ -63,9 +78,22 @@ const { Content } = await render(entry);
         <p style="margin:0">4. desember 2026 · hjelpemiddelkode C</p>
       </div>
     </div>
-  </div>
+  </section>
 
-  <Content />
+  <div class="wrap sc-body">
+    <aside class="sc-apparatus">
+      <Marginalia text="Apparatus" side="right" class="sc-spine" />
+      <div class="sc-apparatus-stack">
+        <SpecBlock rows={entry.data.spec} />
+        <ProjectLinks entry={entry} />
+        {entry.data.award ? <p class="award">{entry.data.award}</p> : null}
+      </div>
+    </aside>
+
+    <div class="prose">
+      <Content />
+    </div>
+  </div>
 </ProjectShell>
 
 <script>
