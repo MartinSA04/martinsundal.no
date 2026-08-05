@@ -1,0 +1,230 @@
+---
+import "../styles/kernel.css";
+import Seo from "../components/seo/Seo.astro";
+import JsonLd from "../components/seo/JsonLd.astro";
+import Barcode from "../components/micro/Barcode.astro";
+import { STORAGE_KEY, THEMES } from "../scripts/theme.ts";
+
+interface Props {
+  title: string;
+  description: string;
+  canonicalPath: string;
+  ogImage: string;
+  graph: unknown;
+  ogType?: "website" | "profile" | "article";
+  noindex?: boolean;
+  bodyClass?: string;
+}
+
+const {
+  title,
+  description,
+  canonicalPath,
+  ogImage,
+  graph,
+  ogType,
+  noindex,
+  bodyClass,
+} = Astro.props;
+
+const year = new Date().getFullYear();
+const themeList = JSON.stringify(THEMES);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    {/* Must run before any paint, or the page flashes the wrong theme. */}
+    <script is:inline define:vars={{ key: STORAGE_KEY, themeList }}>
+      (function () {
+        var valid = JSON.parse(themeList);
+        var stored = null;
+        try {
+          stored = localStorage.getItem(key);
+        } catch (e) {
+          /* blocked storage; fall through to the system preference */
+        }
+        var theme =
+          valid.indexOf(stored) !== -1
+            ? stored
+            : window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+
+    <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)" />
+
+    <link rel="preload" href="/fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/plexmono-400.woff2" as="font" type="font/woff2" crossorigin />
+
+    <Seo
+      title={title}
+      description={description}
+      canonicalPath={canonicalPath}
+      ogImage={ogImage}
+      ogType={ogType}
+      noindex={noindex}
+    />
+    <JsonLd graph={graph} />
+
+    <script
+      data-goatcounter="https://martinsundal.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"></script>
+  </head>
+
+  <body class={bodyClass}>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="mark" href="/" aria-label="Martin Sundal Aspås — home">
+          <span aria-hidden="true">MSA</span>
+        </a>
+
+        <nav class="site-nav" aria-label="Primary">
+          <a href="/work/">Work</a>
+          <a href="/#projects">Projects</a>
+          <a href="/#contact">Contact</a>
+        </nav>
+
+        <button id="theme-toggle" type="button" aria-label="Toggle theme">
+          <span aria-hidden="true">◐</span>
+        </button>
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <span class="micro-label">© {year} Martin Sundal Aspås</span>
+        <Barcode seed={`msa-${year}`} bars={18} />
+        <span class="micro-label">Trondheim · NO</span>
+      </div>
+    </footer>
+
+    <script>
+      import { initTheme } from "../scripts/theme.ts";
+      initTheme();
+    </script>
+
+    <style>
+      .skip {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        z-index: 100;
+        padding: 0.7rem 1rem;
+        background: var(--ink);
+        color: var(--sub);
+        font-family: var(--font-mono);
+        font-size: var(--step--1);
+        text-decoration: none;
+      }
+
+      .skip:focus {
+        left: 0;
+      }
+
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: color-mix(in srgb, var(--sub) 88%, transparent);
+        backdrop-filter: blur(10px);
+        border-bottom: var(--rule) solid var(--hair);
+      }
+
+      .header-inner {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        min-height: 3.5rem;
+      }
+
+      .mark {
+        font-family: var(--font-mono);
+        font-weight: 600;
+        letter-spacing: 0.22em;
+        font-size: var(--step--1);
+        text-decoration: none;
+        padding-inline-end: var(--space-2);
+        border-inline-end: var(--rule) solid var(--hair);
+      }
+
+      .site-nav {
+        display: flex;
+        gap: var(--space-3);
+        margin-inline-end: auto;
+        font-family: var(--font-mono);
+        font-size: var(--step--1);
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+      }
+
+      .site-nav a {
+        color: var(--muted);
+        text-decoration: none;
+        padding-block: 0.35rem;
+        border-bottom: var(--rule) solid transparent;
+        transition: color 0.15s ease, border-color 0.15s ease;
+      }
+
+      .site-nav a:hover {
+        color: var(--ink);
+        border-bottom-color: var(--sig);
+      }
+
+      #theme-toggle {
+        background: none;
+        border: var(--rule) solid var(--hair);
+        color: var(--muted);
+        width: 2rem;
+        height: 2rem;
+        line-height: 1;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        transition: color 0.15s ease, border-color 0.15s ease;
+      }
+
+      #theme-toggle:hover {
+        color: var(--ink);
+        border-color: var(--ink);
+      }
+
+      .site-footer {
+        margin-top: var(--space-7);
+        border-top: var(--rule) solid var(--hair);
+      }
+
+      .footer-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+        flex-wrap: wrap;
+        padding-block: var(--space-3);
+      }
+
+      @media (max-width: 34rem) {
+        .site-nav {
+          gap: var(--space-2);
+        }
+        .mark {
+          border-inline-end: 0;
+          padding-inline-end: 0;
+        }
+      }
+    </style>
+  </body>
+</html>

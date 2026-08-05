@@ -1,15 +1,43 @@
 ---
+import Base from "../layouts/Base.astro";
+import { orderedProjects } from "../lib/content.ts";
+import { homeGraph, SITE } from "../lib/jsonld.ts";
+
+const projects = await orderedProjects();
+const graph = homeGraph(projects.map((e) => ({ id: e.id, data: e.data })));
+
 const title = "Martin Sundal Aspås | Software Engineer, Robotics & Simulation";
+const description =
+  "Software engineer in Trondheim. I build robotics, simulation and industrial software at Aker Solutions, and study Applied Physics and Mathematics at NTNU.";
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title}</title>
-  </head>
-  <body>
-    <h1>{title}</h1>
-  </body>
-</html>
+<Base
+  title={title}
+  description={description}
+  canonicalPath="/"
+  ogImage={`${SITE}/og/home.png`}
+  ogType="profile"
+  graph={graph}>
+  <div class="wrap">
+    <h1>Martin Sundal Aspås</h1>
+    <p>{description}</p>
+
+    <section id="projects">
+      <h2>Projects</h2>
+      <ul>
+        {
+          projects.map((p) => (
+            <li>
+              <a href={`/projects/${p.id}/`}>{p.data.name}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section id="contact">
+      <h2>Contact</h2>
+      <a href="mailto:martin.s.aspas@gmail.com">martin.s.aspas@gmail.com</a>
+    </section>
+  </div>
+</Base>
