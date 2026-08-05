@@ -156,17 +156,21 @@ sub-pixel rect edges leave a visible seam through every dot. The existing
 
 ### Everything else
 
-- **Project rows.** `.n` is pushed onto the name's baseline with
-  `align-self: start; padding-top: 0.35rem`, a magic number that drifts as
-  `--step-2` and `--step-3` scale against each other. Align the numeral to the
-  name's cap height by shared line-box geometry instead. The trailing arrow
-  column is `auto`, so its width follows the glyph; with an `Icon` it becomes
-  a fixed column and all five rows agree.
+- **Project rows.** `.n` is pushed onto the name's line with
+  `align-self: start; padding-top: 0.35rem`, one constant against an offset
+  that is not constant. Measured from font metrics, the numeral's cap top sits
+  5.9px below the name's at 760px and 9.6px below at 1920px. Bounding boxes
+  cannot see this — the two boxes start on the same line by construction — so
+  the correction and its test both work in cap tops. The trailing arrow column
+  is `auto`, so its width follows the glyph; with an `Icon` it becomes a fixed
+  column and all five rows agree.
 - **Contact.** The 2×2 grid is already a real hairline lattice — `gap: var(--rule)`
   over a `--hair` background. Mark its centre intersection with the existing
   `Crosshair` primitive, which is currently unused outside the kitchen sink.
-- **About.** Set the section's index in the left gutter with `Marginalia`, the
-  other primitive the home page never reaches for.
+- **About.** Left as it is. `Marginalia` in the gutter was specified here and
+  then dropped during implementation: the only text it could carry is the
+  section index, and the labelled rule two centimetres above it already reads
+  `Idx_03 / About`.
 - **Mobile.** A pass at 390px over all of the above, plus the project plate,
   which currently drops below the name at `max-width: 34rem` and takes a full
   block of vertical space per row.

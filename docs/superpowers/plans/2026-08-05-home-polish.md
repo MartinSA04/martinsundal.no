@@ -1350,3 +1350,42 @@ If Steps 1-5 all passed with no changes needed, say so explicitly with the comma
 **Type consistency.** `IconName` is declared once in Task 2 and its five members are used verbatim in Tasks 3 and 4. `isStillLife(cells, width, height)` and `onGeneration(generation, settled)` are declared in Task 5's Interfaces block and used with those exact signatures in its steps. `sameBoard` is private to `life.ts` and never referenced outside it. `data-life-readout`, `data-micro="icon"`, `data-icon` and `data-micro="crosshair"` are the four selectors tests depend on, and each is introduced in the same task that first asserts it.
 
 **One deliberate omission.** `LifeSceneOptions.loopAfter`, `restartOnExtinction` and `LifeScene.renderGeneration` have no callers — `Hero.astro` is the only consumer of `createLifeScene`, and the Game of Life project page imports `parsePlan` and `step` directly. Removing them is a real cleanup but it is not in this spec, so Task 5 leaves them in place and guards the still-life halt behind them rather than assuming they are unused.
+
+---
+
+## Deviations, recorded after execution
+
+Four things went differently from the plan. All four were measurement
+correcting a guess.
+
+1. **`Icon.astro` does not export `IconName`.** `export type` in Astro
+   frontmatter fails the esbuild pass with `Unexpected "|"`. The union is
+   inlined in `Props` instead. Nothing imported the type.
+
+2. **The deep-space mark was redrawn.** A ring around an outlined circle is an
+   eye. It is a filled disc on a flat ring now.
+
+3. **The numeral correction is metric-derived, not a shared line box.** A
+   shared `line-height` does not align cap tops across two fonts, and
+   `align-self: baseline` does nothing useful here — `.body` is a nested grid
+   and does not expose `.name`'s baseline. What works is cancelling each
+   element's own (ascent − cap-height), which is a fixed fraction of its font
+   size: 0.157 for Archivo at line-height 1.05, 0.168 for Plex Mono at 1. The
+   `≤52rem` media query drops `.n` to `--step-2` and needs its own correction.
+   Result: within 1.1px at eight widths, from 5.9–9.6px.
+
+   The plan's original test for this was worthless — it compared bounding-box
+   tops, which are equal by construction whatever the glyphs do. It passed
+   against the unfixed code. Replaced with one that measures cap tops from
+   font metrics at all eight widths.
+
+4. **The About marginalia was dropped.** It would have read `Idx_03 / About`
+   directly under a rule that says `Idx_03 / About`. It also broke the
+   two-column grid, for the same reason the contact crosshair did: a `class`
+   passed to a child component does not carry the parent's scope hash, so the
+   absolute positioning never applied and the component became a grid item.
+   The crosshair is wrapped in an element the template owns; the marginalia is
+   gone.
+
+   The crosshair also needed a substrate-coloured pad. It draws in `--hair`
+   and so does the lattice, so laid over the intersection it was invisible.
