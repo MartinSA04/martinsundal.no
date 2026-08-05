@@ -38,17 +38,17 @@ crosshair and rule.
 
 ### Call sites
 
-| File | Now | After |
-| --- | --- | --- |
-| `components/home/Contact.astro:42` | `&rarr;` | `<Icon name="arrow-right" />` |
-| `components/home/WorkBand.astro:28` | `&rarr;` | `<Icon name="arrow-right" />` |
-| `components/home/ProjectIndex.astro:70` | `&rarr;` | `<Icon name="arrow-right" />` |
-| `components/project/ProjectLinks.astro:26` | `&rarr;` | `<Icon name="arrow-right" />` |
-| `pages/work.astro:82` | `&rarr;` inside the link text | `<Icon name="arrow-right" />` after it |
-| `layouts/Base.astro:148` | `◐` | three theme icons, see below |
-| `worlds/cipherbound.css:169` | `content: "\25bc"` | rule dropped; `<Icon name="caret-down" />` added to the `data-cb-next` button in `pages/projects/cipherbound.astro:52` |
-| `worlds/study-companion.css:242` | `content: "□"` | a drawn hairline box, see below |
-| `worlds/black-hole.ts:132` | `fillText("light in →")` | `fillText("light in")` plus an arrowhead drawn with `lineTo` |
+| File                                       | Now                           | After                                                                                                                  |
+| ------------------------------------------ | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `components/home/Contact.astro:42`         | `&rarr;`                      | `<Icon name="arrow-right" />`                                                                                          |
+| `components/home/WorkBand.astro:28`        | `&rarr;`                      | `<Icon name="arrow-right" />`                                                                                          |
+| `components/home/ProjectIndex.astro:70`    | `&rarr;`                      | `<Icon name="arrow-right" />`                                                                                          |
+| `components/project/ProjectLinks.astro:26` | `&rarr;`                      | `<Icon name="arrow-right" />`                                                                                          |
+| `pages/work.astro:82`                      | `&rarr;` inside the link text | `<Icon name="arrow-right" />` after it                                                                                 |
+| `layouts/Base.astro:148`                   | `◐`                           | three theme icons, see below                                                                                           |
+| `worlds/cipherbound.css:169`               | `content: "\25bc"`            | rule dropped; `<Icon name="caret-down" />` added to the `data-cb-next` button in `pages/projects/cipherbound.astro:52` |
+| `worlds/study-companion.css:242`           | `content: "□"`                | a drawn hairline box, see below                                                                                        |
+| `worlds/black-hole.ts:132`                 | `fillText("light in →")`      | `fillText("light in")` plus an arrowhead drawn with `lineTo`                                                           |
 
 Two of these are deliberately not icons.
 
@@ -83,7 +83,9 @@ say the same thing visually.
 Base.astro inlines all three icons inside the button. CSS shows exactly one:
 
 ```css
-#theme-toggle svg { display: none; }
+#theme-toggle svg {
+  display: none;
+}
 [data-theme="light"] #theme-toggle [data-icon="theme-light"],
 [data-theme="dark"] #theme-toggle [data-icon="theme-dark"],
 [data-theme="deep-space"] #theme-toggle [data-icon="theme-deep-space"] {
@@ -107,43 +109,50 @@ The three marks, all on the 24-grid in hairline stroke:
 
 ### The hero band
 
-The largest single flaw on the page, with three independent faults.
+Measured in the browser at the settled generation, at 1280px and at 390px,
+rather than reasoned about. Two faults, and two things that turned out to be
+fine.
 
-1. `mask-image` fades the frame out over `0-10%` and `90-100%`. The settled
-   word occupies y 40-59% of the board, but the frame is a crop of that board,
-   so the top and bottom rows of the letters land inside the fade and dissolve.
-2. At 390px the frame is `aspect-ratio: 3` against a canvas overscaled to
-   173%, which crops the word to roughly one and a half rows of cells.
-3. For the eleven seconds before generation 277 the band is undifferentiated
-   noise sitting immediately below the name, with nothing saying it is
-   computing anything.
+**Fault 1 — the word is clipped flush against both edges.** The settled word
+is 206 cells wide on a 356-cell board, so it occupies 57.87% of the canvas.
+The canvas is overscaled to `173%`, which puts the word at
+`1.73 × 0.5787 = 100.1%` of the frame — deliberately, so it lines up with the
+`h1`'s measure. It overshoots by 0.6px on each side, so the outermost column
+of the M's left stem and the N's right stem is cut. Measured: word 1153.2px
+against a 1152px frame at desktop, 350.4px against 350px at mobile.
 
-Fixes:
+Fix: drop the overscale to `166%`, which puts the word at 96% of the measure —
+a 2% inset on each side. Verified against a three-way prototype: the letters
+clear the edge and the alignment with the heading still reads.
 
-- **Replace the gradient mask with hairline rules** on the frame's top and
-  bottom edges. The band then reads as a plate in a document, which is what
-  every other bounded element on the site is, and no part of the word is eaten.
-  The mask exists to hide the crop boundary; a rule states it instead.
-- **Re-crop for the word, at both sizes.** Pick the frame aspect ratio and the
-  canvas overscale from the board coordinates in `martin_plan.txt` (x 21-79%,
-  y 40-59%) rather than from the two hand-tuned values in place now, and derive
-  the mobile pair the same way instead of only lowering the aspect ratio.
-- **Add a generation readout.** A `micro-label` on the frame's bottom rule,
-  ticking with the simulation:
+**Fault 2 — eleven seconds of noise.** Before generation 276 the band is
+undifferentiated static below the name, with nothing saying it is computing
+anything.
 
-  ```
-  GEN 041 · B3/S23 · 356×192
-  ```
+Fix: a `micro-label` readout on the frame's bottom edge, ticking with the
+simulation:
 
-  settling to `GEN 277 · STILL LIFE` and stopping. The eleven seconds become
-  eleven seconds of instrument rather than eleven seconds of noise, and the
-  convergence the whole hero is built around finally announces itself.
+```
+GEN 041 · B3/S23 · 356×192
+```
 
-  `createLifeScene` in `src/lib/life.ts` must expose the generation count for
-  this. It is a pure module with tests in `test/life.test.ts`; the readout is
-  a callback or an exposed counter, and the DOM writing stays in `Hero.astro`.
-  The counter is asserted in `test/life.test.ts` alongside the existing
-  convergence assertions.
+settling to `GEN 276 · STILL LIFE` and stopping. The eleven seconds become
+eleven seconds of instrument rather than eleven seconds of noise, and the
+convergence the whole hero is built around finally announces itself.
+
+`createLifeScene` in `src/lib/life.ts` gains an `onGeneration` callback for
+this; the DOM writing stays in `Hero.astro`. The scene also gains a still-life
+halt — once a step produces a board identical to the previous one, stepping
+stops. That is what produces `STILL LIFE`, and it also stops the home page
+running a 68,352-cell simulation forever for no visible change.
+
+**Not faults, contrary to the first draft of this spec.** The `mask-image`
+fade was measured and does not touch the word: the letters span 18.1-81.9% of
+the frame at desktop and 22.3-77.7% at mobile, against a fade over 0-10% and
+90-100%. The mobile crop does not cut the word either. Both stay as they are.
+An anti-aliased rewrite of the cell rendering was prototyped and is worse —
+sub-pixel rect edges leave a visible seam through every dot. The existing
+`putImageData` plus `image-rendering: pixelated` path is correct and stays.
 
 ### Everything else
 
@@ -207,8 +216,10 @@ and it is unaffected.
   header's existence is covered by the tests that use it.
 - `README.md` — rewrite the "Things that look incidental but are not" section.
   Two of its three bullets are about the RPG. What remains: the hero Game of
-  Life converging to MARTIN at generation 277, and `--life-cell` being read by
-  `life.ts`. The Game of Life bullet gains the generation readout.
+  Life converging to MARTIN at generation 276, and `--life-cell` being read by
+  `life.ts`. The Game of Life bullet gains the generation readout, the
+  still-life halt, and the fact that the `166%` overscale is derived from the
+  word's 206-cell width rather than chosen by eye.
 
 ### Not affected
 
