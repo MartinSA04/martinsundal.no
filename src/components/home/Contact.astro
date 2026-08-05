@@ -1,0 +1,84 @@
+---
+import Rule from "../micro/Rule.astro";
+
+const links = [
+  { label: "Email", value: "martin.s.aspas@gmail.com", href: "mailto:martin.s.aspas@gmail.com" },
+  { label: "LinkedIn", value: "martinsa04", href: "https://linkedin.com/in/martinsa04" },
+  { label: "GitHub", value: "MartinSA04", href: "https://github.com/MartinSA04" },
+  { label: "npm", value: "~martinsa04", href: "https://www.npmjs.com/~martinsa04" },
+];
+---
+
+<section id="contact" class="contact card">
+  <div class="wrap">
+    <Rule label="Idx_04 / Contact" />
+    <ul>
+      {
+        links.map((l) => (
+          <li>
+            <a href={l.href} rel={l.href.startsWith("http") ? "me noopener" : undefined}>
+              <span class="micro-label">{l.label}</span>
+              <span class="value">{l.value}</span>
+              <span class="arrow" aria-hidden="true">
+                &rarr;
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .contact {
+    padding-block: var(--space-5);
+  }
+
+  ul {
+    list-style: none;
+    margin: var(--space-2) 0 0;
+    padding: 0;
+  }
+
+  li {
+    border-bottom: var(--rule) solid var(--hair);
+  }
+
+  a {
+    display: grid;
+    grid-template-columns: 8rem 1fr auto;
+    align-items: baseline;
+    gap: var(--space-2);
+    padding-block: 0.85rem;
+    text-decoration: none;
+  }
+
+  a:hover .value {
+    color: var(--sig);
+  }
+
+  .value {
+    font-size: var(--step-1);
+    transition: color 0.15s ease;
+  }
+
+  .arrow {
+    color: var(--muted);
+    transition: transform 0.2s ease;
+  }
+
+  a:hover .arrow {
+    transform: translateX(4px);
+  }
+
+  @media (max-width: 34rem) {
+    a {
+      grid-template-columns: 1fr auto;
+    }
+    .value {
+      font-size: var(--step-0);
+      grid-column: 1 / -1;
+    }
+  }
+</style>

@@ -1,0 +1,222 @@
+---
+import type { CollectionEntry } from "astro:content";
+import Rule from "../micro/Rule.astro";
+import Barcode from "../micro/Barcode.astro";
+
+interface Props {
+  projects: CollectionEntry<"projects">[];
+}
+
+const { projects } = Astro.props;
+---
+
+<section id="projects" class="projects">
+  <div class="wrap">
+    <Rule label="Idx_02 / Projects" />
+
+    <ol class="rows">
+      {
+        projects.map((entry) => {
+          const p = entry.data;
+          const style = `--w-sub:${p.world.sub};--w-ink:${p.world.ink};--w-sig:${p.world.sig}`;
+          return (
+            <li
+              class="project-card card"
+              style={style}
+              data-rpg-spawn={entry.id === "cipherbound" ? "" : undefined}
+            >
+              <a class="row" href={`/projects/${entry.id}/`}>
+                <span class="swatch" aria-hidden="true">
+                  <span class="swatch-sig" />
+                </span>
+
+                <span class="n micro-index">
+                  {String(p.index).padStart(2, "0")}
+                </span>
+
+                <span class="body">
+                  <span class="name">{p.name}</span>
+                  <span class="tagline">{p.tagline}</span>
+                  <span class="tags">
+                    {p.tags.slice(0, 4).map((t) => (
+                      <span class="tag">{t}</span>
+                    ))}
+                  </span>
+                </span>
+
+                <span class="trail" aria-hidden="true">
+                  <Barcode seed={entry.id} bars={14} />
+                  <span class="arrow">&rarr;</span>
+                </span>
+              </a>
+
+              {/* Cipherbound carries the RPG spawn point; rpg.js selects
+                  [data-rpg-spawn] img, so this image must stay an <img>. */}
+              {entry.id === "cipherbound" && p.image ? (
+                <img
+                  class="spawn"
+                  src={p.image.src}
+                  alt={p.image.alt}
+                  width={p.image.width}
+                  height={p.image.height}
+                  loading="lazy"
+                />
+              ) : null}
+            </li>
+          );
+        })
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .projects {
+    padding-block: var(--space-5);
+  }
+
+  .rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .project-card {
+    border-bottom: var(--rule) solid var(--hair);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 3px auto 1fr auto;
+    align-items: center;
+    gap: var(--space-3);
+    padding-block: var(--space-3);
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+  }
+
+  /* The world's own substrate washes in on hover, so the row previews the
+     page it leads to. */
+  .row::before {
+    content: "";
+    position: absolute;
+    inset: 0 calc(var(--gutter) * -0.5);
+    background: var(--w-sub);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    z-index: -1;
+  }
+
+  .row:hover::before,
+  .row:focus-visible::before {
+    opacity: 1;
+  }
+
+  .row:hover,
+  .row:focus-visible {
+    color: var(--w-ink);
+  }
+
+  .swatch {
+    height: 100%;
+    min-height: 2.5rem;
+    background: var(--hair);
+    position: relative;
+  }
+
+  .swatch-sig {
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 0;
+    background: var(--w-sig);
+    transition: height 0.25s ease;
+  }
+
+  .row:hover .swatch-sig,
+  .row:focus-visible .swatch-sig {
+    height: 100%;
+  }
+
+  .n {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .body {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .name {
+    font-size: var(--step-2);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .tagline {
+    color: var(--muted);
+    max-width: 54ch;
+    font-size: var(--step-0);
+  }
+
+  .row:hover .tagline,
+  .row:focus-visible .tagline {
+    color: color-mix(in oklab, var(--w-ink) 70%, var(--w-sub));
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.35rem;
+  }
+
+  .tag {
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: var(--rule) solid var(--hair);
+    padding: 0.15rem 0.45rem;
+  }
+
+  .trail {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .arrow {
+    font-size: var(--step-1);
+    color: var(--muted);
+    transition: transform 0.25s ease, color 0.25s ease;
+  }
+
+  .row:hover .arrow,
+  .row:focus-visible .arrow {
+    transform: translateX(4px);
+    color: var(--w-sig);
+  }
+
+  /* The spawn image exists for the Konami RPG, which measures it. It must be
+     laid out but must not occupy visual space in the index. */
+  .spawn {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  @media (max-width: 46rem) {
+    .row {
+      grid-template-columns: 3px auto 1fr;
+      gap: var(--space-2);
+    }
+    .trail {
+      display: none;
+    }
+  }
+</style>

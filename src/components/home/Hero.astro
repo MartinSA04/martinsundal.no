@@ -1,0 +1,111 @@
+---
+import Rule from "../micro/Rule.astro";
+import Crosshair from "../micro/Crosshair.astro";
+---
+
+<section class="hero">
+  <div class="wrap">
+    <Rule label="Idx_00 / Trondheim · NO" />
+
+    <h1 class="hi">
+      <span class="hi-prelude">Hi, I&rsquo;m</span>
+      <span class="visually-hidden">Martin Sundal Aspås</span>
+    </h1>
+
+    {/* The board converges to the word MARTIN around generation 277, which is
+        why it sits here instead of a heading: the name materialises out of the
+        simulation. The mask feathers the top and bottom so cells still in
+        flight dissolve rather than colliding with the text. */}
+    <div class="life-frame" aria-hidden="true">
+      <canvas id="life-canvas" width="356" height="192"></canvas>
+    </div>
+
+    <p class="lead">
+      I write software for things that move or compute. That covers robotics,
+      simulation and industrial software at Aker Solutions, plus a steady
+      stream of side projects.
+    </p>
+
+    <div class="hero-meta">
+      <span class="micro-label">Software engineer</span>
+      <Crosshair />
+      <span class="micro-label">Aker Solutions</span>
+      <Crosshair />
+      <span class="micro-label">Applied physics &amp; maths, NTNU</span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    padding-block: var(--space-5) var(--space-4);
+  }
+
+  .hi {
+    margin-block: var(--space-4) 0;
+  }
+
+  .hi-prelude {
+    display: block;
+    font-size: var(--step-3);
+    font-weight: 400;
+    letter-spacing: -0.03em;
+  }
+
+  .life-frame {
+    /* The board is 356x192. Left full-width it would be ~650px tall and
+       dominate the page, so it is capped and cropped to the centre band the
+       word settles into. Negative inline margins still let stray cells drift
+       past the text column while the simulation is busy. */
+    --board-aspect: 356 / 192;
+    margin-inline: calc(var(--gutter) * -0.5);
+    margin-block: var(--space-1) var(--space-3);
+    max-width: 40rem;
+    overflow: hidden;
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 26%,
+      #000 74%,
+      transparent 100%
+    );
+  }
+
+  #life-canvas {
+    width: 100%;
+    height: auto;
+    aspect-ratio: var(--board-aspect);
+    image-rendering: pixelated;
+    display: block;
+  }
+
+  .lead {
+    max-width: 46ch;
+    font-size: var(--step-1);
+    line-height: 1.45;
+    color: var(--ink);
+  }
+
+  .hero-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    margin-top: var(--space-3);
+  }
+</style>
+
+<script>
+  import { createLifeScene } from "../../lib/life.ts";
+
+  const canvas = document.getElementById("life-canvas");
+  if (canvas instanceof HTMLCanvasElement) {
+    const scene = createLifeScene({
+      canvas,
+      planSrc: "/martin_plan.txt",
+      speed: 10,
+      pauseWhenOffscreen: true,
+    });
+    scene?.start();
+  }
+</script>

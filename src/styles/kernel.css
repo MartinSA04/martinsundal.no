@@ -84,18 +84,23 @@
   --measure: 68ch;
   --gutter: clamp(1.25rem, 5vw, 4rem);
   --rule: 1px;
+
+  /* The colour live Game of Life cells are painted in. Read by life.ts. */
+  --life-cell: #1a1714;
 }
 
 [data-theme="dark"] {
   --sub: #0b0b0c;
   --ink: #f4f1ea;
   --sig: #e2703a;
+  --life-cell: #7af595;
 }
 
 [data-theme="deep-space"] {
   --sub: #05060a;
   --ink: #cfd6e6;
   --sig: #7c9cff;
+  --life-cell: #7c9cff;
 }
 
 /* --- reset ---------------------------------------------------------------- */
@@ -242,16 +247,19 @@ a {
   height: 4px;
 }
 
+/* Hazard stripes read as a warning, so they stay quiet: a thin band that
+   fades out rather than a full-width barber pole. */
 .micro-rule[data-variant="hazard"] {
   border: 0;
-  height: 8px;
+  height: 5px;
   width: 100%;
   background-image: repeating-linear-gradient(
     -45deg,
-    var(--sig) 0 6px,
-    transparent 6px 12px
+    var(--sig) 0 5px,
+    transparent 5px 10px
   );
-  opacity: 0.85;
+  opacity: 0.5;
+  mask-image: linear-gradient(to right, #000 0%, #000 32%, transparent 82%);
 }
 
 /* Labelled rule: a hairline with a mono caption sitting on it. */
