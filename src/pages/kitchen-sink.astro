@@ -11,6 +11,7 @@ import SpecBlock from "../components/micro/SpecBlock.astro";
 import Crosshair from "../components/micro/Crosshair.astro";
 import Marginalia from "../components/micro/Marginalia.astro";
 import Barcode from "../components/micro/Barcode.astro";
+import Icon from "../components/micro/Icon.astro";
 
 const themes = ["light", "dark", "deep-space"] as const;
 
@@ -48,6 +49,12 @@ const specRows = [
               <Crosshair size={22} />
               <Barcode seed="alpha" />
               <Barcode seed="bravo" />
+              <Icon name="arrow-right" />
+              <Icon name="caret-down" />
+              <Icon name="theme-light" />
+              <Icon name="theme-dark" />
+              <Icon name="theme-deep-space" />
+              <Icon name="arrow-right" size={24} />
             </div>
 
             <Rule variant="dashed" />
@@ -82,6 +89,8 @@ const specRows = [
           <Index n={3} label="Cipherbound" />
           <Crosshair />
           <Barcode seed="alpha" />
+          <Icon name="arrow-right" />
+          <Icon name="theme-deep-space" />
         </div>
         <SpecBlock rows={specRows} />
       </section>

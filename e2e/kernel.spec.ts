@@ -67,3 +67,48 @@ test("Barcode is deterministic for a given seed", async ({ page }) => {
     .innerHTML();
   expect(bravo).not.toBe(first[0]);
 });
+
+test("every icon renders as an svg that inherits currentColor", async ({
+  page,
+}) => {
+  await page.goto("/kitchen-sink/");
+  const icons = page.locator('[data-micro="icon"]');
+  await expect(icons.first()).toBeVisible();
+
+  const names = await icons.evaluateAll((els) =>
+    els.map((e) => e.getAttribute("data-icon")),
+  );
+  for (const name of [
+    "arrow-right",
+    "caret-down",
+    "theme-light",
+    "theme-dark",
+    "theme-deep-space",
+  ]) {
+    expect(names).toContain(name);
+  }
+
+  // Hidden from the accessibility tree: every call site names itself in text
+  // or on the parent control.
+  for (const attr of await icons.evaluateAll((els) =>
+    els.map((e) => e.getAttribute("aria-hidden")),
+  )) {
+    expect(attr).toBe("true");
+  }
+
+  // No hard-coded colour anywhere in the kit, or an icon would go invisible
+  // in one of the five worlds.
+  const painted = await icons.evaluateAll((els) =>
+    els.flatMap((e) =>
+      [...e.querySelectorAll("*")].map((n) => ({
+        fill: n.getAttribute("fill"),
+        stroke: n.getAttribute("stroke"),
+      })),
+    ),
+  );
+  for (const p of painted) {
+    for (const v of [p.fill, p.stroke]) {
+      if (v) expect(["currentColor", "none"]).toContain(v);
+    }
+  }
+});
