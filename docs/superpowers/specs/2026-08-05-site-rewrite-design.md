@@ -16,7 +16,7 @@ Seven pages: home, `/work`, and five project pages.
 
 ## Design language
 
-Reference: `study_companion/inspo/` — `micrographics.png`, `symbols.webp`,
+Reference: `docs/inspo/` — `micrographics.png`, `symbols.webp`,
 `modu-grap-micro_graphic_sets-o.avif`, `lumon.webp`.
 
 Technical spec-sheet ornamentation: hairline linework, dense monospace
@@ -101,9 +101,13 @@ only in terms of them:
 | `--sig` | signal accent — one per world, used sparingly |
 
 Base theme: bone `#f4f1ea` substrate, ink `#0b0b0c`. The toggle inverts to
-ink substrate with bone ink. `deep-space` remains as the third state reached
-by cycling. Theme is stored in `localStorage` under the existing `msa-theme`
-key and applied by a blocking inline script in `<head>` to prevent FOUC.
+ink substrate with bone ink. Theme is stored in `localStorage` under the
+existing `msa-theme` key and applied by a blocking inline script in `<head>`
+to prevent FOUC.
+
+**Superseded:** this originally specified a third `deep-space` state reached
+by cycling. The theme system is two-state as of
+`2026-08-05-home-plates-design.md`.
 
 Type scale: a single modular scale on an 8px baseline grid, shared by all
 worlds. Worlds change proportion and weight, never the underlying rhythm.
@@ -291,7 +295,8 @@ These are load-bearing and must survive the rewrite:
   `.site-header`, `.card`, `.project-card`, `[data-rpg-spawn] img`, and
   `img[src*="render.png"]`. These class names and attributes are kept
   deliberately on the home page, and `render.png` is not renamed.
-- The three-state theme system including the `deep-space` easter egg.
+- The theme system and its `msa-theme` storage key. (The `deep-space` third
+  state was later dropped; see `2026-08-05-home-plates-design.md`.)
 - GoatCounter analytics.
 - `CNAME` (`martinsundal.no`), served from `public/`.
 
