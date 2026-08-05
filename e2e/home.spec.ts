@@ -96,3 +96,80 @@ test("the settled word is not clipped by the frame", async ({ page }) => {
   expect(box.left).toBeGreaterThan(4);
   expect(box.right).toBeLessThan(box.frame - 4);
 });
+
+/**
+ * Screen y of an element's cap top, from font metrics. Comparing bounding
+ * boxes cannot see this: `.n` and `.name` start on the same line by
+ * construction, so their box tops always agree while the glyphs inside them
+ * sit at different heights.
+ */
+function capTopDelta() {
+  const probe = document.createElement("canvas").getContext("2d")!;
+  const capTop = (el: Element, sample: string) => {
+    const cs = getComputedStyle(el);
+    probe.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const m = probe.measureText(sample);
+    const fontH = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent;
+    const lh =
+      cs.lineHeight === "normal" ? fontH : Number.parseFloat(cs.lineHeight);
+    const box = el.getBoundingClientRect();
+    const baseline =
+      box.top +
+      Number.parseFloat(cs.paddingTop) +
+      (lh - fontH) / 2 +
+      m.fontBoundingBoxAscent;
+    return baseline - m.actualBoundingBoxAscent;
+  };
+  return [...document.querySelectorAll(".project-card .row")].map(
+    (row) =>
+      capTop(row.querySelector(".n")!, "01") -
+      capTop(row.querySelector(".name")!, "S"),
+  );
+}
+
+test("the project index numerals cap-align with their names at every width", async ({
+  page,
+}) => {
+  // The correction is derived from both type steps, and --step-2 and --step-3
+  // clamp at different widths, so one viewport proves nothing. Before it, the
+  // numeral sagged 5.9px to 9.6px depending on where you measured.
+  for (const width of [390, 560, 760, 900, 1100, 1280, 1600, 1920]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    const deltas = await page.evaluate(capTopDelta);
+    expect(deltas).toHaveLength(5);
+    for (const d of deltas) {
+      expect(
+        Math.abs(d),
+        `cap delta ${d.toFixed(2)}px at ${width}px`,
+      ).toBeLessThan(2);
+    }
+  }
+});
+
+test("the contact lattice is marked at its centre", async ({ page }) => {
+  // Two columns, so the grid has a centre intersection to mark.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+  const mark = page.locator("#contact [data-micro='crosshair']");
+  await expect(mark).toBeVisible();
+
+  const box = await mark.boundingBox();
+  const grid = await page.locator("#contact ul").boundingBox();
+  expect(
+    Math.abs(box!.x + box!.width / 2 - (grid!.x + grid!.width / 2)),
+  ).toBeLessThan(2);
+  expect(
+    Math.abs(box!.y + box!.height / 2 - (grid!.y + grid!.height / 2)),
+  ).toBeLessThan(2);
+});
+
+test("the lattice mark is gone once the grid is one column", async ({
+  page,
+}) => {
+  // Below 40rem there is no intersection, so a crosshair would be a mark on
+  // nothing.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await expect(page.locator("#contact [data-micro='crosshair']")).toBeHidden();
+});

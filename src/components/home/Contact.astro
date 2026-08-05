@@ -1,6 +1,7 @@
 ---
 import Rule from "../micro/Rule.astro";
 import Icon from "../micro/Icon.astro";
+import Crosshair from "../micro/Crosshair.astro";
 
 const links = [
   {
@@ -29,28 +30,61 @@ const links = [
 <section id="contact" class="contact card">
   <div class="wrap">
     <Rule label="Idx_04 / Contact" />
-    <ul>
-      {
-        links.map((l) => (
-          <li>
-            <a
-              href={l.href}
-              rel={l.href.startsWith("http") ? "me noopener" : undefined}
-            >
-              <span class="micro-label">{l.label}</span>
-              <span class="value">{l.value}</span>
-              <Icon name="arrow-right" class="arrow" />
-            </a>
-          </li>
-        ))
-      }
-    </ul>
+
+    {
+      /* The grid is a real hairline lattice — a --rule gap over a --hair
+        background — and its centre is the one intersection the page makes on
+        purpose. Marking it is what the crosshair primitive is for. */
+    }
+    <div class="lattice">
+      <ul>
+        {
+          links.map((l) => (
+            <li>
+              <a
+                href={l.href}
+                rel={l.href.startsWith("http") ? "me noopener" : undefined}
+              >
+                <span class="micro-label">{l.label}</span>
+                <span class="value">{l.value}</span>
+                <Icon name="arrow-right" class="arrow" />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <span class="lattice-mark"><Crosshair size={18} /></span>
+    </div>
   </div>
 </section>
 
 <style>
   .contact {
     padding-block: var(--space-6) var(--space-7);
+  }
+
+  .lattice {
+    position: relative;
+  }
+
+  /* Sits on the intersection the two hairline gaps already make. A wrapper
+     rather than a class on <Crosshair>: scoped styles are keyed to elements
+     this template declares, and a child component's root is not one.
+
+     The substrate padding is load-bearing. The crosshair draws in --hair and
+     so does the lattice, so laid straight over the intersection it is exactly
+     invisible. Punching a hole in the lines and setting the mark inside it is
+     what makes it read as a registration mark rather than as nothing. */
+  .lattice-mark {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    display: block;
+    line-height: 0;
+    padding: 0.55rem;
+    background: var(--sub);
+    pointer-events: none;
   }
 
   /* Two by two rather than a fifth stack of full-width rows. The page has just
@@ -115,6 +149,10 @@ const links = [
   @media (max-width: 40rem) {
     ul {
       grid-template-columns: 1fr;
+    }
+    /* One column, so there is no intersection to mark. */
+    .lattice-mark {
+      display: none;
     }
     .value {
       font-size: var(--step-0);

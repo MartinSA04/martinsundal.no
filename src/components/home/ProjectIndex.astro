@@ -128,7 +128,14 @@ const { projects } = Astro.props;
     line-height: 1;
     color: var(--muted);
     align-self: start;
-    padding-top: 0.35rem;
+    /* Cap tops, not box tops. Both boxes already start on the same line; the
+       cap sits (ascent - cap-height) below each box top, which is a fixed
+       fraction of that element's own font size — measured at 0.157 for
+       Archivo at line-height 1.05 and 0.168 for Plex Mono at line-height 1.
+       Cancelling the difference tracks both type steps, where the 0.35rem
+       this replaces was tuned at one width and drifted 6px to 9.6px across
+       the range. e2e/home.spec.ts asserts the result at four widths. */
+    translate: 0 calc(var(--step-2) * 0.157 - var(--step-3) * 0.168);
     transition: color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
@@ -312,8 +319,11 @@ const { projects } = Astro.props;
     .go {
       display: none;
     }
+    /* Both are --step-2 from here down, so the cap correction collapses to
+       the difference between the two fonts' own constants. */
     .n {
       font-size: var(--step-2);
+      translate: 0 calc(var(--step-2) * -0.011);
     }
   }
 
