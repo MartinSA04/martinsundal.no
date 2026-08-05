@@ -1,0 +1,16 @@
+---
+interface Props {
+  text: string;
+  side?: "left" | "right";
+  class?: string;
+}
+
+const { text, side = "right", class: className } = Astro.props;
+---
+
+<span
+  class:list={["micro-marginalia", className]}
+  data-micro="marginalia"
+  data-side={side}
+  aria-hidden="true">{text}</span
+>

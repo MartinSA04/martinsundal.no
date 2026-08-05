@@ -118,10 +118,10 @@ preloaded for the two kernel faces only. No Google Fonts request.
 | Kernel display / UI | Archivo | OFL |
 | Kernel mono / microlabels | IBM Plex Mono | OFL |
 | Serif accent (worlds 01, 04) | Newsreader | OFL |
-| Pixel (world 03) | Departure Mono | MIT |
+| Pixel (world 03) | Departure Mono | OFL |
 
-Licenses are re-verified during implementation; any face that does not check
-out is replaced with an OFL equivalent before merge.
+All four verified OFL 1.1 at implementation time (2026-08-05); the license
+text ships alongside each face in `public/fonts/`.
 
 ## The five worlds
 

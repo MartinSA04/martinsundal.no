@@ -1,0 +1,14 @@
+---
+interface Props {
+  n: number;
+  label?: string;
+  class?: string;
+}
+
+const { n, label, class: className } = Astro.props;
+const padded = String(n).padStart(2, "0");
+---
+
+<span class:list={["micro-index", className]} data-micro="index">
+  IDX_{padded}{label ? <span class="micro-label"> / {label}</span> : null}
+</span>

@@ -1,0 +1,88 @@
+---
+/**
+ * Development aid, not a placeholder. Renders the whole micrographics kit in
+ * every theme and under a world override, so a change to kernel.css can be
+ * eyeballed in one place. Excluded from the sitemap and noindexed.
+ */
+import "../styles/kernel.css";
+import Rule from "../components/micro/Rule.astro";
+import Index from "../components/micro/Index.astro";
+import SpecBlock from "../components/micro/SpecBlock.astro";
+import Crosshair from "../components/micro/Crosshair.astro";
+import Marginalia from "../components/micro/Marginalia.astro";
+import Barcode from "../components/micro/Barcode.astro";
+
+const themes = ["light", "dark", "deep-space"] as const;
+
+const specRows = [
+  { label: "Stack", value: "Astro · TypeScript" },
+  { label: "Deps", value: "0 runtime" },
+  { label: "Output", value: "Static" },
+];
+---
+
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Kitchen sink — micrographics kit</title>
+  </head>
+  <body>
+    <main class="wrap" style="padding-block: var(--space-5)">
+      <h1 style="font-size: var(--step-3)">Micrographics kit</h1>
+
+      {
+        themes.map((theme) => (
+          <section
+            data-theme={theme}
+            style="background: var(--sub); color: var(--ink); padding: var(--space-4); margin-block: var(--space-4); border: 1px solid var(--hair)"
+          >
+            <Rule label={`Theme / ${theme}`} />
+
+            <div style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; margin-block: var(--space-3)">
+              <Index n={1} label="Study Companion" />
+              <Index n={12} />
+              <Crosshair />
+              <Crosshair size={22} />
+              <Barcode seed="alpha" />
+              <Barcode seed="bravo" />
+            </div>
+
+            <Rule variant="dashed" />
+            <div style="height: var(--space-2)" />
+            <Rule variant="double" />
+            <div style="height: var(--space-2)" />
+            <Rule variant="hazard" />
+
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); margin-block: var(--space-3)">
+              <SpecBlock rows={specRows} />
+              <Marginalia text={`Asset_id 2026_MSA_${theme}`} />
+            </div>
+
+            <p class="micro-label">Micro label · tabular 0123456789</p>
+            <p style="max-width: var(--measure)">
+              Body copy in Archivo, sitting on the same baseline grid in every
+              world. The ornament decorates a document rather than becoming
+              the document.
+            </p>
+          </section>
+        ))
+      }
+
+      <section
+        data-world="demo"
+        style="--sub:#101820; --ink:#e0f8d0; --sig:#88c070; background: var(--sub); color: var(--ink); padding: var(--space-4); border: 1px solid var(--hair)">
+        <Rule label="World override / four tokens only" />
+        <div
+          style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; margin-block: var(--space-3)">
+          <Index n={3} label="Cipherbound" />
+          <Crosshair />
+          <Barcode seed="alpha" />
+        </div>
+        <SpecBlock rows={specRows} />
+      </section>
+    </main>
+  </body>
+</html>
