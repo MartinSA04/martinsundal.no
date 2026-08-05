@@ -136,8 +136,15 @@ export interface LifeSceneOptions {
   /**
    * Called after every generation, and once more when the board settles.
    * `settled` is true from the first generation that reproduces itself.
+   * `population` is the live cell count of the board currently on screen —
+   * the hero plots it, so it must describe the drawn board rather than the
+   * one about to be drawn.
    */
-  onGeneration?: (generation: number, settled: boolean) => void;
+  onGeneration?: (
+    generation: number,
+    settled: boolean,
+    population: number,
+  ) => void;
 }
 
 export interface LifeScene {
@@ -198,6 +205,7 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
   let board: Uint8Array | null = null;
   let image: ImageData | null = null;
   let generation = 0;
+  let population = 0;
   let settled = false;
   let running = false;
   let visible = !pauseWhenOffscreen;
@@ -214,14 +222,20 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
     const data = image.data;
     data.fill(0);
     const [r, g, b] = readColor(colorVar);
+    // Counted here rather than with countLive(): this loop already visits
+    // every one of the 68,352 cells, so the population is free, and it is
+    // guaranteed to describe exactly the board being painted.
+    let live = 0;
     for (let i = 0; i < board.length; i++) {
       if (board[i] !== 1) continue;
+      live++;
       const o = i * 4;
       data[o] = r;
       data[o + 1] = g;
       data[o + 2] = b;
       data[o + 3] = 255;
     }
+    population = live;
     ctx!.clearRect(0, 0, plan.width, plan.height);
     ctx!.putImageData(image, 0, 0);
   }
@@ -254,7 +268,7 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
       // that is the number the readout must show — 276, not 277.
       if (!loopAfter && !restartOnExtinction && sameBoard(next, board)) {
         settled = true;
-        onGeneration?.(generation, true);
+        onGeneration?.(generation, true, population);
         stop();
         return;
       }
@@ -274,7 +288,7 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
     }
 
     draw();
-    onGeneration?.(generation, settled);
+    onGeneration?.(generation, settled, population);
     raf = requestAnimationFrame(frame);
   }
 
@@ -304,7 +318,7 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
     if (reducedMotion) {
       renderGeneration(loopAfter ?? 276);
       settled = true;
-      onGeneration?.(generation, true);
+      onGeneration?.(generation, true, population);
       return;
     }
 

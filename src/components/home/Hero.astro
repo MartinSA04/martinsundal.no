@@ -1,38 +1,148 @@
 ---
-import Rule from "../micro/Rule.astro";
+/**
+ * Plate 01 — Subject.
+ *
+ * The Game of Life band is a real cellular automaton carrying real state, so
+ * it gets instrumented rather than captioned: a generation dial, a live
+ * population trace, a settle annunciator, and the board's own coordinate
+ * frame printed along two edges.
+ *
+ * Every number below is computed at build time from the same plan file and
+ * the same pure functions the browser runs, so the page is correct before any
+ * script executes and the static values cannot drift from the simulation.
+ * Stepping all 276 generations of the 356x192 board costs about 110ms.
+ */
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { parsePlan, step, countLive } from "../../lib/life.ts";
+import Plate from "../micro/Plate.astro";
+import Dial from "../micro/Dial.astro";
+import Trace from "../micro/Trace.astro";
+import Tag from "../micro/Tag.astro";
+import Readout from "../micro/Readout.astro";
+import Ruler from "../micro/Ruler.astro";
+import Node from "../micro/Node.astro";
 import SpecBlock from "../micro/SpecBlock.astro";
+
+const planPath = fileURLToPath(
+  new URL("../../../public/martin_plan.txt", import.meta.url),
+);
+const plan = parsePlan(readFileSync(planPath, "utf8"));
+
+/* Step until the board reproduces itself, recording the population of every
+   generation on the way. The settled generation is the last one *before* the
+   repeat, which is the number the readout has always shown: 276, not 277. */
+const population: number[] = [countLive(plan.cells)];
+let cells = plan.cells;
+let settledGen = 0;
+
+for (let g = 1; g <= 1000; g++) {
+  const next = step(cells, plan.width, plan.height);
+  let same = true;
+  for (let i = 0; i < next.length; i++) {
+    if (next[i] !== cells[i]) {
+      same = false;
+      break;
+    }
+  }
+  if (same) {
+    settledGen = g - 1;
+    break;
+  }
+  cells = next;
+  population.push(countLive(cells));
+}
+
+const settledPop = population[population.length - 1]!;
+
+/* The runtime trace keeps a rolling window of the last 120 generations, so
+   the statically rendered one shows exactly the same window at its end
+   state — what a visitor without script would have seen had they watched. */
+const TRACE_WINDOW = 120;
+const traceSeries = population.slice(-TRACE_WINDOW);
+
+const BOARD = `${plan.width}×${plan.height}`;
 ---
 
 <section class="hero">
   <div class="wrap">
-    <Rule label="Idx_00 / Trondheim · NO" />
-    <h1 class="name">Martin Sundal Aspås</h1>
+    <Plate
+      id="Plate 01"
+      title="Subject"
+      edgeLeft={`Asset_id 2026_MSA_01`}
+      edgeRight="Trondheim · 63.43°N 10.40°E"
+      foot={`Seed martin_plan.txt · settles gen ${settledGen}`}
+    >
+      <div class="hero-head">
+        <h1 class="name">Martin Sundal Aspås</h1>
+        {
+          /* Wrapped rather than styled through a class prop: Astro scopes
+            these styles to elements declared in this file, so a class handed
+            to a child component's own root element never matches. */
+        }
+        <div class="hero-monogram"><Node glyph="M" label="26" /></div>
+      </div>
 
-    {
-      /* The board settles into the word MARTIN at generation 277 and is a still
-      life from there on. It used to carry the name alone, with the real text
-      visually-hidden — which meant the name did not exist for the first five
-      seconds, or in any screenshot. The heading above says it immediately and
-      the simulation signs it.
+      {
+        /* The board settles into the word MARTIN at generation 276 and is a
+        still life from there on. It used to carry the name alone, with the
+        real text visually-hidden — which meant the name did not exist for the
+        first five seconds, or in any screenshot. The heading above says it
+        immediately and the simulation signs it.
 
-      Board coordinates are fixed by martin_plan.txt: the settled word occupies
-      x 21-79% and y 40-59% of a 356x192 board. Overscaling the canvas to 173%
-      and cropping puts the word's own width exactly on the heading's measure,
-      so the two line up as one block. */
-    }
-    <div class="life-frame" aria-hidden="true">
-      <canvas id="life-canvas" width="356" height="192"></canvas>
-    </div>
+        Board coordinates are fixed by martin_plan.txt: the settled word
+        occupies x 21-79% and y 40-59% of a 356x192 board. Overscaling the
+        canvas to 166% and cropping puts the word's own width exactly on the
+        heading's measure, so the two line up as one block. The band therefore
+        keeps the full plate width — the instrument strip runs beneath it
+        rather than beside it, which would have narrowed the band and broken
+        that alignment. */
+      }
+      <div class="figure">
+        <div class="figure-rows">
+          <Ruler axis="y" from={0} to={plan.height} majors={3} minors={2} />
+        </div>
 
-    {
-      /* The board takes about eleven seconds to spell the name, and without
-      this the band is undifferentiated static for all of them, with nothing
-      saying a simulation is running. aria-hidden: the h1 above already states
-      the name, and a screen reader has no use for a generation counter. */
-    }
-    <p class="micro-label life-readout" data-life-readout aria-hidden="true">
-      GEN 000 · B3/S23 · 356×192
-    </p>
+        <div class="life-frame" aria-hidden="true">
+          <canvas id="life-canvas" width={plan.width} height={plan.height}
+          ></canvas>
+        </div>
+
+        <div class="figure-cols">
+          <Ruler axis="x" from={0} to={plan.width} majors={5} />
+        </div>
+      </div>
+
+      <div class="instruments" aria-hidden="true">
+        <Dial
+          value={settledGen}
+          max={settledGen}
+          label="Gen"
+          key="generation"
+          size={92}
+        />
+
+        <div class="instruments-stack">
+          <Trace
+            points={traceSeries}
+            label="Pop"
+            value={String(settledPop)}
+            key="population"
+            width={148}
+          />
+          <Readout
+            pairs={[
+              { label: "Rule", value: "B3/S23" },
+              { label: "Board", value: BOARD },
+            ]}
+          />
+        </div>
+
+        <span class="instruments-state" data-life-state>
+          <Tag signal>Settled</Tag>
+        </span>
+      </div>
+    </Plate>
   </div>
 
   <div class="wrap hero-foot">
@@ -54,28 +164,61 @@ import SpecBlock from "../micro/SpecBlock.astro";
 
 <style>
   .hero {
-    padding-block: var(--space-4) var(--space-6);
+    padding-block: var(--space-3) var(--space-5);
+  }
+
+  .hero-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
   }
 
   /* Sized to run the full measure rather than sit in a column: at 1280 this
      lands a hair under the 78rem wrap. */
   .name {
-    font-size: clamp(2.6rem, 1.2rem + 8vw, 9rem);
+    font-size: clamp(2.4rem, 1.1rem + 7.4vw, 8.2rem);
     line-height: 0.92;
     letter-spacing: -0.04em;
-    margin-block: var(--space-3) 0;
+    margin: 0;
     text-wrap: balance;
   }
 
+  .hero-monogram {
+    flex: none;
+    margin-block-start: 0.4rem;
+  }
+
+  /* The figure is the band plus its two axes: rows up the left, columns along
+     the bottom, both printed in the board's own coordinates. */
+  .figure {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "rows band"
+      ".    cols";
+    column-gap: var(--space-1);
+    margin-block: var(--space-3) var(--space-2);
+  }
+
+  .figure-rows {
+    grid-area: rows;
+  }
+
+  .figure-cols {
+    grid-area: cols;
+    margin-top: 4px;
+  }
+
   .life-frame {
+    grid-area: band;
     /* Cropped to a band roughly 1.6x the settled word's height, so the word
        reads as a slab rather than floating in empty substrate. */
-    --board-aspect: 356 / 192;
     position: relative;
     width: 100%;
     aspect-ratio: 3.45;
     overflow: hidden;
-    margin-block: var(--space-2) var(--space-1);
+    border-inline: var(--rule) solid var(--hair);
     mask-image: linear-gradient(
       to bottom,
       transparent 0%,
@@ -101,14 +244,28 @@ import SpecBlock from "../micro/SpecBlock.astro";
        overscale the crop depends on. */
     max-width: none;
     height: auto;
-    aspect-ratio: var(--board-aspect);
+    aspect-ratio: 356 / 192;
     image-rendering: pixelated;
   }
 
-  .life-readout {
-    display: block;
-    margin-bottom: var(--space-5);
-    font-variant-numeric: tabular-nums;
+  /* Telemetry runs along the bottom edge of the panel, as it does on the
+     reference sheets, rather than in a column beside the figure. */
+  .instruments {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    padding-top: var(--space-2);
+    border-top: var(--rule) solid var(--hair);
+  }
+
+  .instruments-stack {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .instruments-state {
+    margin-inline-start: auto;
   }
 
   .hero-foot {
@@ -116,6 +273,7 @@ import SpecBlock from "../micro/SpecBlock.astro";
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
     gap: var(--space-5);
     align-items: start;
+    margin-top: var(--space-4);
   }
 
   .lead {
@@ -124,13 +282,37 @@ import SpecBlock from "../micro/SpecBlock.astro";
     line-height: 1.45;
   }
 
+  @media (max-width: 60rem) {
+    .instruments-state {
+      margin-inline-start: 0;
+    }
+  }
+
   @media (max-width: 46rem) {
-    .hero-foot {
-      grid-template-columns: 1fr;
-      gap: var(--space-3);
+    .hero-head {
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+    .hero-monogram {
+      margin-block-start: 0;
+    }
+    .figure {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas:
+        "band"
+        "cols";
+    }
+    /* The row axis needs horizontal room the phone layout does not have, and
+       the column axis already establishes the board's scale. */
+    .figure-rows {
+      display: none;
     }
     .life-frame {
       aspect-ratio: 3;
+    }
+    .hero-foot {
+      grid-template-columns: 1fr;
+      gap: var(--space-3);
     }
   }
 </style>
@@ -139,9 +321,57 @@ import SpecBlock from "../micro/SpecBlock.astro";
   import { createLifeScene } from "../../lib/life.ts";
 
   const canvas = document.getElementById("life-canvas");
-  const readout = document.querySelector("[data-life-readout]");
+  const dial = document.querySelector<HTMLElement>('[data-dial="generation"]');
+  const dialArc = dial?.querySelector<SVGCircleElement>("[data-dial-arc]");
+  const dialValue = dial?.querySelector<HTMLElement>("[data-dial-value]");
+  const trace = document.querySelector<HTMLElement>(
+    '[data-trace="population"]',
+  );
+  const traceLine =
+    trace?.querySelector<SVGPolylineElement>("[data-trace-line]");
+  const traceValue = trace?.querySelector<HTMLElement>("[data-trace-value]");
+  const state = document.querySelector<HTMLElement>("[data-life-state]");
+
+  /* The dial ships rendered at the settled generation so the page is correct
+     with script off. Once script runs it is driving a live simulation from
+     zero, so the settle mark is cleared and re-earned. */
+  const MAX_GEN = Number(dialValue?.textContent?.trim() ?? 276) || 276;
+  const WINDOW = 120;
+
+  const series: number[] = [];
+
+  /* The trace ships rendered from the build-time population history, which is
+     the true record of the run. Two paths must not clobber it:
+
+     - Under reduced motion the scene reports once, already settled, so the
+       static trace IS the finished history and there is nothing to redraw.
+     - While animating, a series of one sample projects to a single point,
+       which draws no line at all — so the live trace only takes over once it
+       has a segment to draw. */
+  let ownsTrace = false;
+
+  /* Mirrors the projection in Trace.astro. The two must agree or the trace
+     would jump the moment the first live sample replaced the static one. */
+  function project(values: number[], w: number, h: number): string {
+    if (values.length === 0) return "";
+    const lo = Math.min(...values);
+    const hi = Math.max(...values);
+    const span = hi - lo;
+    const stepX = values.length > 1 ? w / (values.length - 1) : 0;
+    return values
+      .map((n, i) => {
+        const y = span === 0 ? h - 1 : h - 1 - ((n - lo) / span) * (h - 2);
+        return `${(i * stepX).toFixed(2)},${y.toFixed(2)}`;
+      })
+      .join(" ");
+  }
 
   if (canvas instanceof HTMLCanvasElement) {
+    const width = Number(trace?.dataset.width ?? 148);
+    const height = Number(trace?.dataset.height ?? 28);
+
+    if (state) state.hidden = true;
+
     const scene = createLifeScene({
       canvas,
       planSrc: "/martin_plan.txt",
@@ -150,12 +380,32 @@ import SpecBlock from "../micro/SpecBlock.astro";
       // in about 11, and the board is a still life from there on.
       speed: 24,
       pauseWhenOffscreen: true,
-      onGeneration(generation, settled) {
-        if (!readout) return;
-        const n = String(generation).padStart(3, "0");
-        readout.textContent = settled
-          ? `GEN ${n} · STILL LIFE`
-          : `GEN ${n} · B3/S23 · 356×192`;
+      onGeneration(generation, settled, pop) {
+        if (dialValue) {
+          dialValue.textContent = String(generation).padStart(3, "0");
+        }
+        if (dialArc) {
+          const pct = Math.min(100, (generation / MAX_GEN) * 100);
+          dialArc.setAttribute("stroke-dashoffset", String(100 - pct));
+        }
+
+        // A first report that is already settled is the reduced-motion path:
+        // leave the rendered history alone.
+        if (series.length === 0 && settled) {
+          if (state) state.hidden = false;
+          return;
+        }
+
+        series.push(pop);
+        if (series.length > WINDOW) series.shift();
+        if (series.length >= 2) ownsTrace = true;
+
+        if (traceLine && ownsTrace) {
+          traceLine.setAttribute("points", project(series, width, height));
+        }
+        if (traceValue) traceValue.textContent = String(pop);
+
+        if (state) state.hidden = !settled;
       },
     });
     scene?.start();

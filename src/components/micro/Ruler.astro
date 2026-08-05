@@ -99,6 +99,63 @@ const ticks = Array.from({ length: majors }, (_, i) => {
     block-size: var(--tick-minor);
   }
 
+  /* --- vertical ----------------------------------------------------------
+     The same tick positions rotated onto the block axis: the track becomes a
+     column with a left edge, ticks grow rightward, and labels stack down it.
+     Kept as its own block rather than a transform so the type stays upright,
+     which is the difference between an axis and a rotated caption. */
+  .micro-ruler[data-axis="y"] {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+    inline-size: auto;
+    block-size: 100%;
+  }
+
+  .micro-ruler[data-axis="y"] .micro-ruler-track {
+    block-size: 100%;
+    inline-size: var(--tick-major);
+    border-top: 0;
+    border-right: var(--rule) solid var(--hair);
+    order: 2;
+  }
+
+  .micro-ruler[data-axis="y"] .micro-ruler-major,
+  .micro-ruler[data-axis="y"] .micro-ruler-minor {
+    top: var(--at);
+    left: auto;
+    right: 0;
+    inline-size: var(--tick-minor);
+    block-size: var(--rule);
+  }
+
+  .micro-ruler[data-axis="y"] .micro-ruler-major {
+    inline-size: var(--tick-major);
+  }
+
+  .micro-ruler[data-axis="y"] .micro-ruler-labels {
+    position: relative;
+    block-size: 100%;
+    inline-size: 2.6em;
+    margin-top: 0;
+    order: 1;
+  }
+
+  .micro-ruler[data-axis="y"] .micro-ruler-label {
+    left: auto;
+    right: 0;
+    top: var(--at);
+    translate: 0 -50%;
+  }
+
+  .micro-ruler[data-axis="y"] .micro-ruler-label:first-child {
+    translate: 0 0;
+  }
+
+  .micro-ruler[data-axis="y"] .micro-ruler-label:last-child {
+    translate: 0 -100%;
+  }
+
   .micro-ruler-labels {
     position: relative;
     block-size: 1.1em;
