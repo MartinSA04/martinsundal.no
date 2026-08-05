@@ -23,6 +23,22 @@ import Ruler from "../components/micro/Ruler.astro";
 import Node from "../components/micro/Node.astro";
 import Plate from "../components/micro/Plate.astro";
 import Mark from "../components/micro/Mark.astro";
+import Figure from "../components/micro/Figure.astro";
+
+const figures = [
+  "starburst",
+  "quadrant",
+  "halfdisc",
+  "spoke",
+  "capsule",
+  "concentric",
+  "tangent",
+  "target",
+  "eclipse",
+  "lozenges",
+  "wedge",
+  "grid",
+] as const;
 
 const themes = ["light", "dark"] as const;
 
@@ -91,7 +107,17 @@ const specRows = [
               document.
             </p>
 
-            <Mark n={9} label="Composite mark" note="11 primitives" />
+            <Mark n={9} label="Figures" note="12 marks" />
+
+            <div style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; margin-block: var(--space-3)">
+              {figures.map((f) => (
+                <Figure name={f} size={64} />
+              ))}
+              <Figure name="starburst" size={40} signal />
+              <Figure name="eclipse" size={96} />
+            </div>
+
+            <Mark n={10} label="Composite mark" note="12 primitives" />
 
             <div style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; margin-block: var(--space-3)">
               <Tag>Activated</Tag>

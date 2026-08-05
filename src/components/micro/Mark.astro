@@ -3,22 +3,38 @@
  * The composite section header, and the direct replacement for a bare
  * "IDX_02 / PROJECTS" over a hairline.
  *
- * In the references a heading is never one element: it is a ringed numeral,
- * the name, a rule that runs out to the margin, and a row of ticks closing
- * it off. Assembling that here means every section gets the full mark
- * instead of each call site rebuilding a partial one.
+ * In the references a heading is never one element: a geometric figure
+ * anchors it, the number and name sit beside it, a rule runs out to the
+ * margin, and a row of ticks closes it off. Assembling that here means every
+ * section gets the full mark instead of each call site rebuilding a partial
+ * one — and the five figures, read down the page, form a column of marks
+ * that carries the sheet.
  */
-import Numeral from "./Numeral.astro";
+import Figure from "./Figure.astro";
 
 interface Props {
   n: number;
   label: string;
+  /** The anchor figure. Each section should own a distinct one. */
+  figure:
+    | "starburst"
+    | "quadrant"
+    | "halfdisc"
+    | "spoke"
+    | "capsule"
+    | "concentric"
+    | "tangent"
+    | "target"
+    | "eclipse"
+    | "lozenges"
+    | "wedge"
+    | "grid";
   /** Printed at the far right of the rule, e.g. a count or a status. */
   note?: string;
   class?: string;
 }
 
-const { n, label, note, class: className } = Astro.props;
+const { n, label, figure, note, class: className } = Astro.props;
 
 /* A short run of ticks that steps down in height, closing the rule the way
    the reference sheets close theirs. */
@@ -26,8 +42,13 @@ const ticks = [10, 7, 5, 4, 3];
 ---
 
 <div class:list={["micro-mark", className]} data-micro="mark">
-  <Numeral n={n} ring />
-  <span class="micro-mark-label">{label}</span>
+  <Figure name={figure} size={44} />
+
+  <span class="micro-mark-id">
+    <span class="micro-mark-n">{String(n).padStart(2, "0")}</span>
+    <span class="micro-mark-label">{label}</span>
+  </span>
+
   <span class="micro-mark-rule" aria-hidden="true"></span>
   {note && <span class="micro-mark-note micro-label">{note}</span>}
   <span class="micro-mark-ticks" aria-hidden="true">
@@ -43,13 +64,31 @@ const ticks = [10, 7, 5, 4, 3];
     margin-block-end: var(--space-3);
   }
 
+  .micro-mark-id {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  /* The number is set as a numeral, not as part of the label string, so the
+     figure and the digits read as one stacked identifier. */
+  .micro-mark-n {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--step-1);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+
   .micro-mark-label {
     font-family: var(--font-mono);
     font-size: var(--step--1);
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: var(--ink);
+    color: var(--muted);
     white-space: nowrap;
+    line-height: 1;
   }
 
   .micro-mark-rule {

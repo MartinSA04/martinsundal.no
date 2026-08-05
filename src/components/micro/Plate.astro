@@ -10,12 +10,31 @@
  * from a CSS border at fractional device pixel ratios.
  */
 import Marginalia from "./Marginalia.astro";
+import Figure from "./Figure.astro";
 
 interface Props {
   /** Printed at the top right, e.g. "PLATE 01". */
   id?: string;
   /** Printed at the top left. */
   title?: string;
+  /**
+   * Anchor figure for the plate head, matching the one `Mark` gives every
+   * other section — so all five sections carry a figure at the same position
+   * and the page reads as one column of marks.
+   */
+  figure?:
+    | "starburst"
+    | "quadrant"
+    | "halfdisc"
+    | "spoke"
+    | "capsule"
+    | "concentric"
+    | "tangent"
+    | "target"
+    | "eclipse"
+    | "lozenges"
+    | "wedge"
+    | "grid";
   /** Rotated label running up the left edge. */
   edgeLeft?: string;
   /** Rotated label running down the right edge. */
@@ -31,6 +50,7 @@ interface Props {
 const {
   id,
   title,
+  figure,
   edgeLeft,
   edgeRight,
   foot,
@@ -39,7 +59,7 @@ const {
   class: className,
 } = Astro.props;
 
-const hasHead = Boolean(id || title);
+const hasHead = Boolean(id || title || figure);
 ---
 
 <Tag
@@ -50,7 +70,10 @@ const hasHead = Boolean(id || title);
   {
     hasHead && (
       <div class="micro-plate-head">
-        {title && <span class="micro-label">{title}</span>}
+        <span class="micro-plate-title">
+          {figure && <Figure name={figure} size={44} />}
+          {title && <span class="micro-label">{title}</span>}
+        </span>
         {id && <span class="micro-plate-id micro-label">{id}</span>}
       </div>
     )
@@ -102,6 +125,16 @@ const hasHead = Boolean(id || title);
     justify-content: space-between;
     gap: var(--space-2);
     padding-block: 0.4rem;
+  }
+
+  .micro-plate-head {
+    align-items: center;
+  }
+
+  .micro-plate-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
   }
 
   .micro-plate-id {

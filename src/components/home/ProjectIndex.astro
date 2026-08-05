@@ -2,7 +2,7 @@
 import type { CollectionEntry } from "astro:content";
 import Mark from "../micro/Mark.astro";
 import Tag from "../micro/Tag.astro";
-import Barcode from "../micro/Barcode.astro";
+import Figure from "../micro/Figure.astro";
 import Icon from "../micro/Icon.astro";
 
 interface Props {
@@ -10,11 +10,30 @@ interface Props {
 }
 
 const { projects } = Astro.props;
+
+/* One figure per project, chosen to describe the thing rather than to
+   decorate it: layered rings for a course authored as data, a hub fanning
+   out to clients for the API, a tiled quadrant for the game, the accretion
+   mark for the renderer, and a live glider on its own grid for the
+   automaton. Five distinct silhouettes read down the gutter as five
+   identities. */
+const FIGURES = {
+  "study-companion": "concentric",
+  "ntnu-api": "spoke",
+  cipherbound: "quadrant",
+  "black-hole": "eclipse",
+  "game-of-life": "grid",
+} as const;
 ---
 
 <section id="projects" class="projects">
   <div class="wrap">
-    <Mark n={3} label="Index" note={`${projects.length} entries`} />
+    <Mark
+      n={3}
+      label="Index"
+      figure="lozenges"
+      note={`${projects.length} entries`}
+    />
 
     <ol class="rows">
       {
@@ -38,7 +57,12 @@ const { projects } = Astro.props;
                     is unchanged and e2e/home.spec.ts still holds. */}
                 <span class="gutter" aria-hidden="true">
                   <span class="n">{String(p.index).padStart(2, "0")}</span>
-                  <Barcode seed={entry.id} bars={10} />
+                  <span class="motif">
+                    <Figure
+                      name={FIGURES[entry.id as keyof typeof FIGURES]}
+                      size={40}
+                    />
+                  </span>
                   <span class="dots">
                     {Array.from({ length: 5 }, (_, i) => (
                       <i data-on={i < p.index ? "" : undefined} />
@@ -205,6 +229,20 @@ const { projects } = Astro.props;
     flex-wrap: wrap;
     gap: 0.2rem 0.9rem;
     margin-top: 0.3rem;
+  }
+
+  /* The figure inherits currentColor, so it takes the world's signal on hover
+     with no second rule. It sits at --muted at rest, a step back from the
+     numeral, so the numeral still leads the row. */
+  .motif {
+    display: block;
+    color: var(--muted);
+    transition: color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .row:hover .motif,
+  .row:focus-visible .motif {
+    color: var(--w-sig);
   }
 
   /* Index dots: filled up to this project's own number, so the column reads

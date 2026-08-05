@@ -108,16 +108,21 @@ const offset = 100 - pct;
 
   .micro-dial circle {
     fill: none;
-    stroke-width: 1;
     vector-effect: non-scaling-stroke;
   }
 
+  /* The track stays a hairline and the arc is drawn heavy. A gauge whose
+     value reads at the same weight as its scale is a diagram of a gauge;
+     the weight difference is what makes it an instrument. */
   .micro-dial-track {
     stroke: var(--hair);
+    stroke-width: 1;
   }
 
   .micro-dial-arc {
     stroke: var(--sig);
+    stroke-width: 2.5;
+    stroke-linecap: butt;
     /* Only the offset transitions, and only when the visitor allows motion. */
     transition: stroke-dashoffset 180ms linear;
   }

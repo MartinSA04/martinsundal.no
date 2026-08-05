@@ -10,6 +10,7 @@
 import Plate from "../micro/Plate.astro";
 import Mark from "../micro/Mark.astro";
 import Node from "../micro/Node.astro";
+import Fan from "../micro/Fan.astro";
 import Tag from "../micro/Tag.astro";
 import Readout from "../micro/Readout.astro";
 import Rule from "../micro/Rule.astro";
@@ -23,7 +24,7 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
 
 <section class="band card">
   <div class="wrap">
-    <Mark n={2} label="Engagement" note="Day job" />
+    <Mark n={2} label="Engagement" figure="halfdisc" note="Day job" />
     <Rule variant="hazard" />
 
     <div class="grid">
@@ -79,6 +80,15 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
             </span>
           </a>
         </Plate>
+
+        {
+          /* The fan spreads from the poster down onto the stage chain, so the
+            line reads as one process feeding five stations rather than as a
+            caption sitting under a photograph. */
+        }
+        <div class="spray" aria-hidden="true">
+          <Fan rays={17} spread={126} accentEvery={8} size={80} />
+        </div>
 
         <ol class="flow">
           {
@@ -156,6 +166,15 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
 
   /* The stage chain reads left to right with a hairline running between the
      nodes, which is what makes it a flow rather than a list of words. */
+  /* The spray is a graphic join, not a spacer: it overlaps the gap between
+     the poster and the chain so the two read as connected. */
+  .spray {
+    display: flex;
+    justify-content: center;
+    margin-block: calc(var(--space-2) * -1) calc(var(--space-3) * -1);
+    color: var(--hair);
+  }
+
   .flow {
     list-style: none;
     margin: var(--space-3) 0 0;

@@ -22,6 +22,7 @@ import Tag from "../micro/Tag.astro";
 import Readout from "../micro/Readout.astro";
 import Ruler from "../micro/Ruler.astro";
 import Node from "../micro/Node.astro";
+import Figure from "../micro/Figure.astro";
 import SpecBlock from "../micro/SpecBlock.astro";
 
 const planPath = fileURLToPath(
@@ -69,6 +70,7 @@ const BOARD = `${plan.width}×${plan.height}`;
     <Plate
       id="Plate 01"
       title="Subject"
+      figure="starburst"
       edgeLeft={`Asset_id 2026_MSA_01`}
       edgeRight="Trondheim · 63.43°N 10.40°E"
       foot={`Seed martin_plan.txt · settles gen ${settledGen}`}
@@ -138,7 +140,14 @@ const BOARD = `${plan.width}×${plan.height}`;
           />
         </div>
 
+        {
+          /* The settle annunciator, drawn as the references draw a status
+            bar: a solid capsule with the label set into it, rather than
+            another line of hairline type. It is the one filled mass in the
+            hero, so the board reaching a still life actually registers. */
+        }
         <span class="instruments-state" data-life-state>
+          <Figure name="capsule" size={52} signal />
           <Tag signal>Settled</Tag>
         </span>
       </div>
@@ -266,6 +275,16 @@ const BOARD = `${plan.width}×${plan.height}`;
 
   .instruments-state {
     margin-inline-start: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  /* Any `display` beats the UA's `[hidden] { display: none }`, so setting
+     flex above silently made the annunciator permanent — the board claimed
+     SETTLED from generation zero. Caught by e2e/home.spec.ts. */
+  .instruments-state[hidden] {
+    display: none;
   }
 
   .hero-foot {
