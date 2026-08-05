@@ -58,8 +58,8 @@
   };
 
   const SHEETS = {
-    player: createSheet("assets/player_sheet.png"),
-    girl: createSheet("assets/girl_sheet.png"),
+    player: createSheet("/sprites/player_sheet.png"),
+    girl: createSheet("/sprites/girl_sheet.png"),
   };
 
   let cachedHeaderBottomOffset = null;
@@ -292,6 +292,9 @@
   class Game {
     constructor() {
       this.canvas = document.createElement("canvas");
+      // Entities are drawn on this canvas rather than as DOM nodes, so this
+      // attribute is the only handle a test has on "the RPG is running".
+      this.canvas.setAttribute("data-rpg-canvas", "");
       Object.assign(this.canvas.style, {
         position: "fixed",
         top: "0",
@@ -1248,6 +1251,7 @@
     if (active) return;
     const currentGame = ensureGame();
     currentGame.start();
+    document.documentElement.setAttribute("data-rpg-active", "");
 
     const escHandler = (event) => {
       if (event.key === "Escape") {
@@ -1264,6 +1268,7 @@
     if (!active) return;
     window.removeEventListener("keydown", active.escHandler);
     active.game.stop();
+    document.documentElement.removeAttribute("data-rpg-active");
     active = null;
   }
 

@@ -44,24 +44,27 @@ const { projects } = Astro.props;
                   </span>
                 </span>
 
+                {/* A real thumbnail, not decoration. rpg.js spawns the player
+                    from `[data-rpg-spawn] img` and runs the black-hole easter
+                    egg off `img[src*="render.png"]`, and both bail out if the
+                    image has zero size — so these have to be laid out. */}
+                {p.image ? (
+                  <img
+                    class="thumb"
+                    src={p.image.src}
+                    alt={p.image.alt}
+                    width={p.image.width}
+                    height={p.image.height}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : null}
+
                 <span class="trail" aria-hidden="true">
                   <Barcode seed={entry.id} bars={14} />
                   <span class="arrow">&rarr;</span>
                 </span>
               </a>
-
-              {/* Cipherbound carries the RPG spawn point; rpg.js selects
-                  [data-rpg-spawn] img, so this image must stay an <img>. */}
-              {entry.id === "cipherbound" && p.image ? (
-                <img
-                  class="spawn"
-                  src={p.image.src}
-                  alt={p.image.alt}
-                  width={p.image.width}
-                  height={p.image.height}
-                  loading="lazy"
-                />
-              ) : null}
             </li>
           );
         })
@@ -87,13 +90,29 @@ const { projects } = Astro.props;
 
   .row {
     display: grid;
-    grid-template-columns: 3px auto 1fr auto;
+    grid-template-columns: 3px auto 1fr auto auto;
     align-items: center;
     gap: var(--space-3);
     padding-block: var(--space-3);
     text-decoration: none;
     color: inherit;
     position: relative;
+  }
+
+  .thumb {
+    width: 7rem;
+    height: 4.4rem;
+    object-fit: cover;
+    border: var(--rule) solid var(--hair);
+    filter: grayscale(1) contrast(1.05);
+    opacity: 0.72;
+    transition: filter 0.25s ease, opacity 0.25s ease;
+  }
+
+  .row:hover .thumb,
+  .row:focus-visible .thumb {
+    filter: none;
+    opacity: 1;
   }
 
   /* The world's own substrate washes in on hover, so the row previews the
@@ -200,22 +219,13 @@ const { projects } = Astro.props;
     color: var(--w-sig);
   }
 
-  /* The spawn image exists for the Konami RPG, which measures it. It must be
-     laid out but must not occupy visual space in the index. */
-  .spawn {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    pointer-events: none;
-  }
-
   @media (max-width: 46rem) {
     .row {
       grid-template-columns: 3px auto 1fr;
       gap: var(--space-2);
     }
-    .trail {
+    .trail,
+    .thumb {
       display: none;
     }
   }

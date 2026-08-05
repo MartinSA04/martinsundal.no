@@ -3,7 +3,9 @@ import Rule from "../micro/Rule.astro";
 import Crosshair from "../micro/Crosshair.astro";
 ---
 
-<section class="hero">
+{/* id="home" is load-bearing: rpg.js excludes descendants of #home from its
+    collision set, so without it the hero's own cards become walls. */}
+<section id="home" class="hero">
   <div class="wrap">
     <Rule label="Idx_00 / Trondheim · NO" />
 
