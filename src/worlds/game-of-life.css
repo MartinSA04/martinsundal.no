@@ -96,7 +96,7 @@
   margin-top: var(--space-2);
   font-family: var(--font-mono);
   font-size: var(--step--2);
-  color: color-mix(in oklab, var(--ink) 55%, var(--sub));
+  color: color-mix(in oklab, var(--ink) 72%, var(--sub));
 }
 
 @media (max-width: 40rem) {

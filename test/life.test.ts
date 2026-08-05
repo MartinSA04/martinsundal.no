@@ -40,7 +40,10 @@ test("parsePlan reads the board size header and the coordinates", () => {
   assert.equal(plan.height, 3);
   assert.equal(plan.cells[0], 1);
   assert.equal(plan.cells[2 * 4 + 3], 1);
-  assert.equal(plan.cells.reduce((n, c) => n + c, 0), 2);
+  assert.equal(
+    plan.cells.reduce((n, c) => n + c, 0),
+    2,
+  );
 });
 
 test("parsePlan infers a board size when the header is absent", () => {
@@ -61,7 +64,11 @@ test("the hero plan converges to a stable board and holds it", () => {
   for (let i = 0; i < 277; i++) cells = step(cells, plan.width, plan.height);
 
   const settled = step(cells, plan.width, plan.height);
-  assert.deepEqual([...settled], [...cells], "board should be stable at generation 277");
+  assert.deepEqual(
+    [...settled],
+    [...cells],
+    "board should be stable at generation 277",
+  );
 
   const live = cells.reduce((n, c) => n + c, 0);
   assert.ok(live > 0, "board must not be empty");
@@ -72,5 +79,8 @@ test("the hero plan converges to a stable board and holds it", () => {
   const from = Math.floor(plan.height * 0.35) * plan.width;
   const to = Math.floor(plan.height * 0.65) * plan.width;
   for (let i = from; i < to; i++) centre += cells[i]!;
-  assert.ok(centre / live > 0.9, `expected the word centred, got ${centre}/${live}`);
+  assert.ok(
+    centre / live > 0.9,
+    `expected the word centred, got ${centre}/${live}`,
+  );
 });

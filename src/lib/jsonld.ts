@@ -69,7 +69,8 @@ export function personNode() {
       url: "https://www.akersolutions.com/",
       sameAs: "https://en.wikipedia.org/wiki/Aker_Solutions",
     },
-    award: "Best Project, TDT4102 Procedural and Object-Oriented Programming, NTNU",
+    award:
+      "Best Project, TDT4102 Procedural and Object-Oriented Programming, NTNU",
     knowsAbout: [
       "C++",
       "Python",

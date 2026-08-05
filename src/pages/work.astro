@@ -39,7 +39,8 @@ const description =
   description={description}
   canonicalPath="/work/"
   ogImage={`${SITE}/og/work.png`}
-  graph={workGraph(video)}>
+  graph={workGraph(video)}
+>
   <article data-world="work">
     <div class="wrap">
       <Breadcrumbs trail={workTrail()} />
@@ -92,14 +93,26 @@ const description =
       <div class="role">
         <SpecBlock
           rows={[
-            { label: "Robotics", value: "Robot control and motion for welding cells" },
-            { label: "Scanning", value: "Geometry capture feeding the robot programs" },
+            {
+              label: "Robotics",
+              value: "Robot control and motion for welding cells",
+            },
+            {
+              label: "Scanning",
+              value: "Geometry capture feeding the robot programs",
+            },
           ]}
         />
         <SpecBlock
           rows={[
-            { label: "Industrial data", value: "Process data off the line, made usable" },
-            { label: "Architecture", value: "How the pieces stay reliable together" },
+            {
+              label: "Industrial data",
+              value: "Process data off the line, made usable",
+            },
+            {
+              label: "Architecture",
+              value: "How the pieces stay reliable together",
+            },
           ]}
         />
       </div>

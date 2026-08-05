@@ -67,6 +67,12 @@ test("the fan is mirrored about the axis", () => {
 
 test("the fan spans captured and escaping rays", () => {
   const rays = rayFan(12, 8);
-  assert.ok(rays.some((r) => r.captured), "expected some captured");
-  assert.ok(rays.some((r) => !r.captured), "expected some to escape");
+  assert.ok(
+    rays.some((r) => r.captured),
+    "expected some captured",
+  );
+  assert.ok(
+    rays.some((r) => !r.captured),
+    "expected some to escape",
+  );
 });

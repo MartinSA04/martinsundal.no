@@ -53,7 +53,9 @@ if (root) {
   const fallback = el<HTMLElement>("[data-mcp-fallback]")!;
   const dot = el<HTMLElement>("[data-mcp-dot]")!;
   const status = el<HTMLElement>("[data-mcp-status]")!;
-  const buttons = [...document.querySelectorAll<HTMLButtonElement>("[data-mcp-preset]")];
+  const buttons = [
+    ...document.querySelectorAll<HTMLButtonElement>("[data-mcp-preset]"),
+  ];
 
   let client: McpClient | null = null;
 
@@ -69,9 +71,11 @@ if (root) {
 
   function renderResult(preset: Preset, data: unknown, text: string) {
     // Course list
-    const courses = (data as { courses?: { code: string; name: string }[] })?.courses;
+    const courses = (data as { courses?: { code: string; name: string }[] })
+      ?.courses;
     if (Array.isArray(courses) && courses.length) {
-      const found = (data as { num_found?: number }).num_found ?? courses.length;
+      const found =
+        (data as { num_found?: number }).num_found ?? courses.length;
       result.innerHTML =
         `<p class="micro-label">${found} matches · showing ${Math.min(courses.length, 12)}</p>` +
         `<div class="mcp-rows">` +
@@ -156,7 +160,9 @@ if (root) {
 
   async function run(preset: Preset, button: HTMLButtonElement) {
     setBusy(true);
-    buttons.forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+    buttons.forEach((b) =>
+      b.setAttribute("aria-pressed", String(b === button)),
+    );
     fallback.hidden = true;
     dot.dataset.state = "";
     status.textContent = "connecting";

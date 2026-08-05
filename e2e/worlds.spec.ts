@@ -32,10 +32,14 @@ for (const w of WORLDS) {
         .locator("nav[aria-label='Breadcrumb'] li")
         .allInnerTexts();
       const ld = JSON.parse(
-        (await page.locator("script[type='application/ld+json']").first().textContent())!,
+        (await page
+          .locator("script[type='application/ld+json']")
+          .first()
+          .textContent())!,
       );
-      const crumbs = ld["@graph"].find((n: any) => n["@type"] === "BreadcrumbList")
-        .itemListElement;
+      const crumbs = ld["@graph"].find(
+        (n: any) => n["@type"] === "BreadcrumbList",
+      ).itemListElement;
       // The visible trail is uppercased by CSS, which innerText reflects. The
       // invariant is that the names agree, not their presentational casing.
       expect(visible.map((t) => t.trim().toLowerCase())).toEqual(
@@ -43,7 +47,9 @@ for (const w of WORLDS) {
       );
     });
 
-    test("renders full content with JavaScript disabled", async ({ browser }) => {
+    test("renders full content with JavaScript disabled", async ({
+      browser,
+    }) => {
       const ctx = await browser.newContext({ javaScriptEnabled: false });
       const p = await ctx.newPage();
       await p.goto(`/projects/${w.slug}/`);
@@ -56,7 +62,9 @@ for (const w of WORLDS) {
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto(`/projects/${w.slug}/`);
       const overflow = await page.evaluate(
-        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        () =>
+          document.documentElement.scrollWidth -
+          document.documentElement.clientWidth,
       );
       expect(overflow).toBeLessThanOrEqual(0);
     });
@@ -66,7 +74,9 @@ for (const w of WORLDS) {
       await page.goto(`/projects/${w.slug}/`);
       await page.waitForTimeout(400);
       const running = await page.evaluate(
-        () => document.getAnimations().filter((a) => a.playState === "running").length,
+        () =>
+          document.getAnimations().filter((a) => a.playState === "running")
+            .length,
       );
       expect(running).toBe(0);
     });

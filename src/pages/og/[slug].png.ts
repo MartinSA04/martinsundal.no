@@ -12,7 +12,8 @@ import type { World } from "../../lib/schema.ts";
  * back on, and a card that silently renders in DejaVu is worse than no card.
  */
 
-const FONT_DIR = new URL("../../../scripts/og-fonts/", import.meta.url).pathname;
+const FONT_DIR = new URL("../../../scripts/og-fonts/", import.meta.url)
+  .pathname;
 
 const BASE_WORLD: World = {
   sub: "#f4f1ea",
@@ -31,18 +32,21 @@ const WORK_WORLD: World = {
 export async function getStaticPaths() {
   const projects = await getCollection("projects");
 
-  const paths = projects.map((entry) => ({
-    params: { slug: entry.id },
-    props: {
-      card: {
-        index: entry.data.index,
-        eyebrow: entry.data.tags[0] ?? "Project",
-        title: entry.data.name,
-        tags: entry.data.tags,
-        world: entry.data.world,
-      } satisfies OgCard,
-    },
-  }));
+  // Typed up front: inferring from the project entries would make `index`
+  // required, and the home and work cards deliberately have none.
+  const paths: { params: { slug: string }; props: { card: OgCard } }[] =
+    projects.map((entry) => ({
+      params: { slug: entry.id },
+      props: {
+        card: {
+          index: entry.data.index,
+          eyebrow: entry.data.tags[0] ?? "Project",
+          title: entry.data.name,
+          tags: entry.data.tags,
+          world: entry.data.world,
+        } satisfies OgCard,
+      },
+    }));
 
   paths.push({
     params: { slug: "home" },

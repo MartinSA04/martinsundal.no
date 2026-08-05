@@ -6,11 +6,18 @@ const valid = {
   index: 1,
   name: "Study Companion",
   tagline: "An Astro framework for interactive course study guides.",
-  summary: "Courses are authored as plain data against a pinned framework version.",
+  summary:
+    "Courses are authored as plain data against a pinned framework version.",
   world: { sub: "#f4f1ea", ink: "#0b0b0c", hair: "#c9c3b6", sig: "#8a5a2b" },
   spec: [{ label: "STACK", value: "Astro · MDX · KaTeX" }],
   tags: ["Astro", "MDX"],
-  links: [{ label: "Browse courses", href: "https://kurs.martinsundal.no", primary: true }],
+  links: [
+    {
+      label: "Browse courses",
+      href: "https://kurs.martinsundal.no",
+      primary: true,
+    },
+  ],
   languages: ["TypeScript"],
   datePublished: "2026-05-01",
   dateModified: "2026-07-28",
@@ -42,7 +49,9 @@ test("rejects a dateModified earlier than datePublished", () => {
 });
 
 test("caps tagline at 160 chars so it can seed a meta description", () => {
-  assert.throws(() => projectSchema.parse({ ...valid, tagline: "x".repeat(161) }));
+  assert.throws(() =>
+    projectSchema.parse({ ...valid, tagline: "x".repeat(161) }),
+  );
 });
 
 test("requires alt text whenever an image is present", () => {

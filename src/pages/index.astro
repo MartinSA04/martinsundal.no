@@ -22,7 +22,8 @@ const description =
   canonicalPath="/"
   ogImage={`${SITE}/og/home.png`}
   ogType="profile"
-  graph={graph}>
+  graph={graph}
+>
   <Hero />
   <WorkBand />
   <ProjectIndex projects={projects} />
@@ -33,8 +34,8 @@ const description =
       <div class="cols">
         <p>
           I build software for the physical world, where geometry and motion
-          drive the design, and for the systems that have to keep running
-          around it.
+          drive the design, and for the systems that have to keep running around
+          it.
         </p>
         <p>
           Alongside that I study Applied Physics and Mathematics at NTNU. The
@@ -48,9 +49,11 @@ const description =
 
   <Contact />
 
-  {/* Konami easter egg. Home page only — the RPG's collision model and spawn
+  {
+    /* Konami easter egg. Home page only — the RPG's collision model and spawn
       point are built from this page's .card / .project-card / [data-rpg-spawn]
-      elements. */}
+      elements. */
+  }
   <script>
     import "../scripts/rpg.js";
     import { initKonami } from "../scripts/konami.ts";

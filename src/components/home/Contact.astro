@@ -2,10 +2,26 @@
 import Rule from "../micro/Rule.astro";
 
 const links = [
-  { label: "Email", value: "martin.s.aspas@gmail.com", href: "mailto:martin.s.aspas@gmail.com" },
-  { label: "LinkedIn", value: "martinsa04", href: "https://linkedin.com/in/martinsa04" },
-  { label: "GitHub", value: "MartinSA04", href: "https://github.com/MartinSA04" },
-  { label: "npm", value: "~martinsa04", href: "https://www.npmjs.com/~martinsa04" },
+  {
+    label: "Email",
+    value: "martin.s.aspas@gmail.com",
+    href: "mailto:martin.s.aspas@gmail.com",
+  },
+  {
+    label: "LinkedIn",
+    value: "martinsa04",
+    href: "https://linkedin.com/in/martinsa04",
+  },
+  {
+    label: "GitHub",
+    value: "MartinSA04",
+    href: "https://github.com/MartinSA04",
+  },
+  {
+    label: "npm",
+    value: "~martinsa04",
+    href: "https://www.npmjs.com/~martinsa04",
+  },
 ];
 ---
 
@@ -16,7 +32,10 @@ const links = [
       {
         links.map((l) => (
           <li>
-            <a href={l.href} rel={l.href.startsWith("http") ? "me noopener" : undefined}>
+            <a
+              href={l.href}
+              rel={l.href.startsWith("http") ? "me noopener" : undefined}
+            >
               <span class="micro-label">{l.label}</span>
               <span class="value">{l.value}</span>
               <span class="arrow" aria-hidden="true">

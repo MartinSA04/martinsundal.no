@@ -1,1 +1,114 @@
 # martinsundal.no
+
+Personal site. Astro 6, static output, deployed to GitHub Pages.
+
+Seven pages: home, `/work/`, and one page per project — each project in its own
+visual world under a shared "micrographics" design language.
+
+## Running it
+
+```sh
+pnpm install
+pnpm dev          # http://localhost:4321
+pnpm build        # static output to dist/
+pnpm preview
+```
+
+## Tests
+
+Two tiers. Pure logic lives in `src/lib/` precisely so it can be tested without
+a browser; anything needing a rendered page goes through Playwright.
+
+```sh
+pnpm test         # node --test, pure modules only, ~200ms
+pnpm test:e2e     # Playwright against a real build
+pnpm typecheck
+pnpm lint
+```
+
+Playwright runs **one worker locally** (`playwright.config.ts`). The default is
+one per core, which makes the machine unusable while the suite runs. CI goes
+wider.
+
+Extra checks, run manually:
+
+```sh
+node scripts/check-contrast.mjs   # every world's palette against WCAG
+node scripts/check-links.mjs      # every external link in dist/
+```
+
+Visual review, written to `shots/` (gitignored):
+
+```sh
+SHOTS=1 pnpm test:e2e e2e/shots.spec.ts --project=desktop
+```
+
+## How a "world" works
+
+Every page's identity is four CSS custom properties:
+
+| Token    | Meaning                         |
+| -------- | ------------------------------- |
+| `--sub`  | substrate (page background)     |
+| `--ink`  | primary text and heavy linework |
+| `--hair` | hairline rules and 1px ornament |
+| `--sig`  | signal accent, used sparingly   |
+
+The micrographics components in `src/components/micro/` draw **only** in terms
+of those four, so a world changes identity by redefining them — never by
+rewriting a component. `src/pages/kitchen-sink.astro` renders the whole kit in
+every theme plus a world override; that page is the proof the architecture
+holds.
+
+One gotcha worth knowing: custom properties are substituted where they are
+_declared_. A derived token like `--muted` declared at `:root` resolves against
+the root theme and then inherits down as a fixed colour, so any world that
+overrides `--ink`/`--sub` must re-derive it (see `src/styles/project.css`).
+
+Project pages are five separate files rather than one `[slug]` route, so each
+bundles only its own CSS and JS.
+
+## Content
+
+`src/content/projects/*.md` frontmatter is the single source of truth for page
+copy, spec blocks, JSON-LD, OG images, and sitemap entries. The zod schema in
+`src/lib/schema.ts` enforces hex world tokens, required image alt text, a
+160-character tagline cap, and date ordering. Structured data cannot drift from
+the visible text because both come from the same record.
+
+## Things that look incidental but are not
+
+- **The hero Game of Life converges to "MARTIN"** around generation 277.
+  `test/life.test.ts` asserts the board is stable there and that the settled
+  cells sit in the centre band the layout mask expects.
+- **The Konami code starts an RPG** (`src/scripts/rpg.js`, home page only). It
+  hardcodes `.site-header`, `.card`, `.project-card`, `[data-rpg-spawn] img`
+  and `img[src*="render.png"]`, and it needs `#home` on the hero — without it
+  the hero's own cards become collision walls. Both easter-egg images must be
+  laid out at real size; a zero-sized image makes them silently do nothing.
+  **Do not rename `render.png`.**
+- **`--life-cell`** is read by `src/lib/life.ts` to colour live cells.
+
+## Two manual steps
+
+1. **GitHub Pages source must be set to "GitHub Actions"** in repository
+   settings. It cannot be changed from the repo, and the site will not update
+   until it is.
+2. **`/work/` is built only from material Aker Solutions has published** — their
+   Verdal production site page and the captions in their own highlights video.
+   Nothing on it comes from internal repositories, scan data, or tooling, and
+   the "10x faster" and "opened 2024" claims that circulate in search results
+   are deliberately absent because neither appears on Aker's own page. Keep it
+   that way. The video is Aker's copyright, republished with credit and a link
+   back.
+
+## Fonts
+
+Self-hosted woff2 in `public/fonts/`, all OFL 1.1, license text alongside.
+`scripts/convert-og-fonts.sh` regenerates the TTF copies the OG card renderer
+needs — resvg has no browser font stack and does not read woff2.
+
+## Docs
+
+- `docs/superpowers/specs/2026-08-05-site-rewrite-design.md` — the design
+- `docs/superpowers/plans/2026-08-05-site-rewrite.md` — the implementation plan

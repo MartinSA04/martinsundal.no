@@ -33,7 +33,9 @@ test("each page points at its own og image", async ({ page }) => {
     ["/projects/cipherbound/", "cipherbound"],
   ] as const) {
     await page.goto(path);
-    const og = await page.locator("meta[property='og:image']").getAttribute("content");
+    const og = await page
+      .locator("meta[property='og:image']")
+      .getAttribute("content");
     expect(og).toBe(`https://martinsundal.no/og/${slug}.png`);
   }
 });

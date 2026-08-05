@@ -1,9 +1,13 @@
 import { test, expect } from "@playwright/test";
 
-test("hero keeps the life canvas and the screen-reader name", async ({ page }) => {
+test("hero keeps the life canvas and the screen-reader name", async ({
+  page,
+}) => {
   await page.goto("/");
   await expect(page.locator("#life-canvas")).toHaveCount(1);
-  await expect(page.locator(".visually-hidden", { hasText: "Martin" }).first()).toHaveCount(1);
+  await expect(
+    page.locator(".visually-hidden", { hasText: "Martin" }).first(),
+  ).toHaveCount(1);
 });
 
 test("the life canvas actually renders cells", async ({ page }) => {
@@ -53,12 +57,16 @@ test("no horizontal overflow at 390px", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    () =>
+      document.documentElement.scrollWidth -
+      document.documentElement.clientWidth,
   );
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
 test("the old What I work on section is gone", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /what i work on/i })).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: /what i work on/i }),
+  ).toHaveCount(0);
 });

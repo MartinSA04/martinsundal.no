@@ -38,13 +38,16 @@ const style = [
   description={p.tagline}
   canonicalPath={`/projects/${entry.id}/`}
   ogImage={`${SITE}/og/${entry.id}.png`}
-  graph={projectGraph(p, entry.id)}>
+  graph={projectGraph(p, entry.id)}
+>
   <article data-world={entry.id} style={style}>
     <div class="wrap">
       <Breadcrumbs trail={trail} />
 
       <header class="head">
-        <Rule label={`Idx_${String(p.index).padStart(2, "0")} / ${p.tags[0]}`} />
+        <Rule
+          label={`Idx_${String(p.index).padStart(2, "0")} / ${p.tags[0]}`}
+        />
         <h1>{p.name}</h1>
         <p class="lede">{p.tagline}</p>
       </header>
@@ -69,7 +72,11 @@ const style = [
             {
               p.links.map((l) => (
                 <li>
-                  <a href={l.href} rel="noopener" data-primary={l.primary ? "" : undefined}>
+                  <a
+                    href={l.href}
+                    rel="noopener"
+                    data-primary={l.primary ? "" : undefined}
+                  >
                     <span>{l.label}</span>
                     <span aria-hidden="true">&rarr;</span>
                   </a>

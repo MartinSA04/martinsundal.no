@@ -60,7 +60,11 @@ export function parsePlan(text: string): Plan {
 }
 
 /** One generation. Returns a new board; does not mutate the input. */
-export function step(cells: Uint8Array, width: number, height: number): Uint8Array {
+export function step(
+  cells: Uint8Array,
+  width: number,
+  height: number,
+): Uint8Array {
   const next = new Uint8Array(cells.length);
 
   for (let y = 0; y < height; y++) {
@@ -122,7 +126,9 @@ export interface LifeScene {
 }
 
 function readColor(varName: string): [number, number, number] {
-  const raw = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  const raw = getComputedStyle(document.documentElement)
+    .getPropertyValue(varName)
+    .trim();
   if (raw.startsWith("#")) {
     const hex = raw.slice(1);
     const full =
@@ -174,7 +180,9 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
   let last = 0;
   let acc = 0;
 
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
 
   function draw() {
     if (!plan || !board || !image) return;

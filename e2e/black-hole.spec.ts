@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 
-test("leads with the C++ render, not with a live simulation", async ({ page }) => {
+test("leads with the C++ render, not with a live simulation", async ({
+  page,
+}) => {
   await page.goto("/projects/black-hole/");
   const render = page.locator(".bh-render img[src*='render.png']");
   await expect(render).toBeVisible();
@@ -9,7 +11,9 @@ test("leads with the C++ render, not with a live simulation", async ({ page }) =
   const order = await page.evaluate(() => {
     const img = document.querySelector(".bh-render img")!;
     const diagram = document.querySelector("[data-bh-diagram]")!;
-    return img.compareDocumentPosition(diagram) & Node.DOCUMENT_POSITION_FOLLOWING;
+    return (
+      img.compareDocumentPosition(diagram) & Node.DOCUMENT_POSITION_FOLLOWING
+    );
   });
   expect(order).toBeTruthy();
 });
@@ -34,7 +38,11 @@ test("uses no WebGL at all", async ({ page }) => {
   const contexts: string[] = [];
   await page.addInitScript(() => {
     const orig = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = function (type: string, ...rest: unknown[]) {
+    HTMLCanvasElement.prototype.getContext = function (
+      this: HTMLCanvasElement,
+      type: string,
+      ...rest: unknown[]
+    ) {
       (window as any).__ctx = [...((window as any).__ctx ?? []), type];
       return (orig as any).call(this, type, ...rest);
     } as typeof orig;

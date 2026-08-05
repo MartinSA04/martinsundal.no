@@ -21,19 +21,27 @@ for (const path of PAGES) {
     });
 
     test("has a self-referencing canonical", async ({ page }) => {
-      const href = await page.locator("link[rel=canonical]").getAttribute("href");
+      const href = await page
+        .locator("link[rel=canonical]")
+        .getAttribute("href");
       expect(href).toBe(`https://martinsundal.no${path}`);
     });
 
-    test("has a title and a description within sane length", async ({ page }) => {
+    test("has a title and a description within sane length", async ({
+      page,
+    }) => {
       expect((await page.title()).length).toBeGreaterThan(10);
-      const desc = await page.locator("meta[name=description]").getAttribute("content");
+      const desc = await page
+        .locator("meta[name=description]")
+        .getAttribute("content");
       expect(desc!.length).toBeGreaterThan(50);
       expect(desc!.length).toBeLessThanOrEqual(160);
     });
 
     test("has an absolute og:image", async ({ page }) => {
-      const og = await page.locator("meta[property='og:image']").getAttribute("content");
+      const og = await page
+        .locator("meta[property='og:image']")
+        .getAttribute("content");
       expect(og).toMatch(/^https:\/\/martinsundal\.no\//);
     });
 
@@ -50,7 +58,9 @@ for (const path of PAGES) {
       }
     });
 
-    test("all images carry alt text and explicit dimensions", async ({ page }) => {
+    test("all images carry alt text and explicit dimensions", async ({
+      page,
+    }) => {
       const imgs = page.locator("img:not([aria-hidden='true'])");
       const n = await imgs.count();
       for (let i = 0; i < n; i++) {
@@ -67,7 +77,9 @@ for (const path of PAGES) {
   });
 }
 
-test("sitemap lists all seven pages and excludes the kitchen sink", async ({ request }) => {
+test("sitemap lists all seven pages and excludes the kitchen sink", async ({
+  request,
+}) => {
   const index = await (await request.get("/sitemap-index.xml")).text();
   const loc = index.match(/<loc>([^<]+sitemap-0\.xml)<\/loc>/)![1]!;
   // The index carries absolute production URLs; fetch the same file locally.

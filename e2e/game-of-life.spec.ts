@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 
-test("the scrubber moves the simulation deterministically", async ({ page }) => {
+test("the scrubber moves the simulation deterministically", async ({
+  page,
+}) => {
   await page.goto("/projects/game-of-life/");
   const scrub = page.locator("[data-life-scrubber]");
   await scrub.fill("120");
@@ -56,5 +58,7 @@ test("the board actually draws cells", async ({ page }) => {
 
 test("links to the live browser version", async ({ page }) => {
   await page.goto("/projects/game-of-life/");
-  await expect(page.locator("a[href*='conway.martinsundal.no']").first()).toBeVisible();
+  await expect(
+    page.locator("a[href*='conway.martinsundal.no']").first(),
+  ).toBeVisible();
 });

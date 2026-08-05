@@ -44,7 +44,13 @@ const escape = (s: string) =>
   s.replace(
     /[&<>"']/g,
     (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[c]!,
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&apos;",
+      })[c]!,
   );
 
 /** Deterministic bar strip, same FNV-1a hash the Barcode component uses. */
@@ -98,7 +104,10 @@ function fitTitle(
       }
     }
     if (line) lines.push(line);
-    if (lines.length <= 3 && lines.every((l) => textWidth(l, size) <= maxWidth)) {
+    if (
+      lines.length <= 3 &&
+      lines.every((l) => textWidth(l, size) <= maxWidth)
+    ) {
       return { lines, size };
     }
   }
@@ -112,7 +121,11 @@ export function ogSvg(card: OgCard): string {
   const meta = blend(world.hair, world.ink, 0.45);
   const contentWidth = OG_WIDTH - pad * 2;
 
-  const { lines: titleLines, size: titleSize } = fitTitle(card.title, contentWidth, 96);
+  const { lines: titleLines, size: titleSize } = fitTitle(
+    card.title,
+    contentWidth,
+    96,
+  );
   // Bottom-align the block so one-, two- and three-line cards share a baseline.
   const titleBottom = 420;
   const lineHeight = titleSize * 1.08;

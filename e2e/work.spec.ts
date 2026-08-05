@@ -1,9 +1,12 @@
 import { test, expect } from "@playwright/test";
 
-test("video transfers zero bytes before the user clicks play", async ({ page }) => {
+test("video transfers zero bytes before the user clicks play", async ({
+  page,
+}) => {
   const videoRequests: string[] = [];
   page.on("request", (r) => {
-    if (/\.(webm|mp4)$/.test(new URL(r.url()).pathname)) videoRequests.push(r.url());
+    if (/\.(webm|mp4)$/.test(new URL(r.url()).pathname))
+      videoRequests.push(r.url());
   });
   await page.goto("/work/");
   await page.waitForLoadState("networkidle");
@@ -16,7 +19,9 @@ test("clicking the facade loads and plays the video", async ({ page }) => {
   const video = page.locator("[data-video-facade] video");
   await expect(video).toBeVisible();
   await expect
-    .poll(() => video.evaluate((v: HTMLVideoElement) => v.readyState), { timeout: 20_000 })
+    .poll(() => video.evaluate((v: HTMLVideoElement) => v.readyState), {
+      timeout: 20_000,
+    })
     .toBeGreaterThan(0);
 });
 
@@ -33,7 +38,9 @@ test("credits Aker Solutions and links to the source", async ({ page }) => {
   await page.goto("/work/");
   await expect(page.getByText(/aker solutions/i).first()).toBeVisible();
   await expect(
-    page.locator("a[href*='akersolutions.com'][href*='verdal-production-site']"),
+    page.locator(
+      "a[href*='akersolutions.com'][href*='verdal-production-site']",
+    ),
   ).toHaveCount(1);
 });
 
@@ -46,16 +53,22 @@ test("prints no unsourced claims", async ({ page }) => {
   expect(body).not.toMatch(/since 2024/);
 });
 
-test("poster reserves its space so there is no layout shift", async ({ page }) => {
+test("poster reserves its space so there is no layout shift", async ({
+  page,
+}) => {
   await page.goto("/work/");
   const img = page.locator("[data-video-facade] img");
   expect(await img.getAttribute("width")).not.toBeNull();
   expect(await img.getAttribute("height")).not.toBeNull();
 });
 
-test("emits a VideoObject naming Aker as copyright holder", async ({ page }) => {
+test("emits a VideoObject naming Aker as copyright holder", async ({
+  page,
+}) => {
   await page.goto("/work/");
-  const blocks = await page.locator("script[type='application/ld+json']").allTextContents();
+  const blocks = await page
+    .locator("script[type='application/ld+json']")
+    .allTextContents();
   const nodes = blocks.flatMap((b) => JSON.parse(b)["@graph"]);
   const video = nodes.find((n: any) => n["@type"] === "VideoObject");
   expect(video).toBeTruthy();

@@ -1661,7 +1661,7 @@ test("the console is keyboard operable", async ({ page }) => {
 
 - [ ] **Step 7: Build world 02**
 
-Near-black terminal, IBM Plex Mono throughout, amber `--sig`, boxed readouts. The console shows two synchronized panes: raw JSON-RPC on `[data-mcp-wire]`, formatted result on `[data-mcp-result]`. Presets for `search_courses`, `compare_courses`, `check_timetable_conflicts`, `get_grade_distribution`, plus a free-text course code input. On any network or protocol failure, render the snapshot into `[data-mcp-fallback]` with a visible "snapshot, captured <date>" label.
+Near-black terminal, IBM Plex Mono throughout, amber `--sig`, boxed readouts. The console shows two synchronized panes: raw JSON-RPC on `[data-mcp-wire]`, formatted result on `[data-mcp-result]`. Presets for `search_courses`, `compare_courses`, `check_timetable_conflicts`, `get_grade_distribution`, plus a free-text course code input. On any network or protocol failure, render the snapshot into `[data-mcp-fallback]` with a visible `snapshot, captured <date>` label.
 
 - [ ] **Step 8: Run both suites to verify they pass**
 

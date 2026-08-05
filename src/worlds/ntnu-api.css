@@ -193,3 +193,13 @@
     border-top: var(--rule) solid var(--hair);
   }
 }
+
+/* A whole sentence set in uppercase mono is hard to read; the console's intro
+   is prose, not a label. */
+.mcp-intro {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 0;
+}

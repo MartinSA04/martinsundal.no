@@ -11,8 +11,12 @@ test("parses a single SSE frame", () => {
 });
 
 test("parses several frames in one chunk", () => {
-  const chunk = 'event: message\ndata: {"id":1}\n\nevent: message\ndata: {"id":2}\n\n';
-  assert.deepEqual(parseSseFrames(chunk).map((f: any) => f.id), [1, 2]);
+  const chunk =
+    'event: message\ndata: {"id":1}\n\nevent: message\ndata: {"id":2}\n\n';
+  assert.deepEqual(
+    parseSseFrames(chunk).map((f: any) => f.id),
+    [1, 2],
+  );
 });
 
 test("ignores keep-alive comments and blank lines", () => {
@@ -25,14 +29,19 @@ test("tolerates a data payload split across lines", () => {
 });
 
 test("tolerates a plain JSON body with no SSE framing", () => {
-  const frames = parseSseFrames('{"jsonrpc":"2.0","id":1,"result":{"ok":true}}');
+  const frames = parseSseFrames(
+    '{"jsonrpc":"2.0","id":1,"result":{"ok":true}}',
+  );
   assert.equal(frames.length, 1);
   assert.deepEqual((frames[0] as any).result, { ok: true });
 });
 
 test("skips unparseable data rather than throwing", () => {
-  const frames = parseSseFrames("data: not json\n\ndata: {\"id\":2}\n\n");
-  assert.deepEqual(frames.map((f: any) => f.id), [2]);
+  const frames = parseSseFrames('data: not json\n\ndata: {"id":2}\n\n');
+  assert.deepEqual(
+    frames.map((f: any) => f.id),
+    [2],
+  );
 });
 
 test("client sends the session id on calls after connecting", async () => {
@@ -78,7 +87,10 @@ test("a JSON-RPC error rejects rather than resolving with junk", async () => {
 
 test("an HTTP failure rejects with the status", async () => {
   const fetchStub = (async () =>
-    new Response("nope", { status: 503, statusText: "Service Unavailable" })) as unknown as typeof fetch;
+    new Response("nope", {
+      status: 503,
+      statusText: "Service Unavailable",
+    })) as unknown as typeof fetch;
   const c = new McpClient("https://example.test/mcp", fetchStub);
   await assert.rejects(() => c.connect(), /503/);
 });
@@ -109,7 +121,12 @@ test("records the wire traffic for display", async () => {
     if (body.method === "initialize") {
       return new Response(
         'event: message\ndata: {"jsonrpc":"2.0","id":1,"result":{}}\n\n',
-        { headers: { "mcp-session-id": "s", "content-type": "text/event-stream" } },
+        {
+          headers: {
+            "mcp-session-id": "s",
+            "content-type": "text/event-stream",
+          },
+        },
       );
     }
     return new Response(

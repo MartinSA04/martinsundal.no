@@ -17,7 +17,9 @@ const LABELS: Record<Theme, string> = {
 
 function current(): Theme {
   const attr = document.documentElement.dataset.theme;
-  return (THEMES as readonly string[]).includes(attr ?? "") ? (attr as Theme) : "light";
+  return (THEMES as readonly string[]).includes(attr ?? "")
+    ? (attr as Theme)
+    : "light";
 }
 
 function apply(theme: Theme, toggle: HTMLElement | null) {

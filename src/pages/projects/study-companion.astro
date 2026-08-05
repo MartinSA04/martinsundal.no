@@ -8,11 +8,15 @@ if (!entry) throw new Error("missing content: projects/study-companion");
 const { Content } = await render(entry);
 ---
 
-<ProjectShell entry={entry} centerpieceLabel="A course.yaml and what it renders">
+<ProjectShell
+  entry={entry}
+  centerpieceLabel="A course.yaml and what it renders"
+>
   <div slot="centerpiece" class="sc-split" data-sc-split>
     <div class="sc-pane">
       <span class="micro-label">content/course.yaml</span>
-      <pre class="sc-yaml"><code><span class="k">code</span>: <span class="s">TFY4104</span>
+      <pre
+        class="sc-yaml"><code><span class="k">code</span>: <span class="s">TFY4104</span>
 <span class="k">title</span>: <span class="s">Fysikk</span>
 <span class="k">accent</span>: <span class="s">"#8a5a2b"</span>
 
@@ -35,14 +39,18 @@ const { Content } = await render(entry);
       <span class="micro-label">rendered by the framework</span>
 
       <div class="sc-widget" data-sc-out="0">
-        <h4>Newtons 2. lov <span class="sc-badge">må pugges</span></h4>
-        {/* Bold upright for vectors: the combining arrow U+20D7 is not in the
-            subset webfont and renders as tofu. */}
+        <p class="sc-widget-title">
+          Newtons 2. lov <span class="sc-badge">må pugges</span>
+        </p>
+        {
+          /* Bold upright for vectors: the combining arrow U+20D7 is not in the
+            subset webfont and renders as tofu. */
+        }
         <div class="sc-formula"><b>F</b> = m<b>a</b></div>
       </div>
 
       <div class="sc-widget" data-sc-out="1">
-        <h4>Læringsmål</h4>
+        <p class="sc-widget-title">Læringsmål</p>
         <ul class="sc-goals">
           <li>Frilegemediagram</li>
           <li>Bevegelsesmengde</li>
@@ -51,7 +59,7 @@ const { Content } = await render(entry);
       </div>
 
       <div class="sc-widget" data-sc-out="2">
-        <h4>Eksamen</h4>
+        <p class="sc-widget-title">Eksamen</p>
         <p style="margin:0">4. desember 2026 · hjelpemiddelkode C</p>
       </div>
     </div>
@@ -75,7 +83,8 @@ const { Content } = await render(entry);
    */
   const split = document.querySelector("[data-sc-split]");
   const outputs = [...document.querySelectorAll<HTMLElement>("[data-sc-out]")];
-  const showAll = () => outputs.forEach((el) => el.setAttribute("data-shown", ""));
+  const showAll = () =>
+    outputs.forEach((el) => el.setAttribute("data-shown", ""));
 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 

@@ -3,8 +3,10 @@ import Rule from "../micro/Rule.astro";
 import Crosshair from "../micro/Crosshair.astro";
 ---
 
-{/* id="home" is load-bearing: rpg.js excludes descendants of #home from its
-    collision set, so without it the hero's own cards become walls. */}
+{
+  /* id="home" is load-bearing: rpg.js excludes descendants of #home from its
+    collision set, so without it the hero's own cards become walls. */
+}
 <section id="home" class="hero">
   <div class="wrap">
     <Rule label="Idx_00 / Trondheim · NO" />
@@ -14,18 +16,20 @@ import Crosshair from "../micro/Crosshair.astro";
       <span class="visually-hidden">Martin Sundal Aspås</span>
     </h1>
 
-    {/* The board converges to the word MARTIN around generation 277, which is
+    {
+      /* The board converges to the word MARTIN around generation 277, which is
         why it sits here instead of a heading: the name materialises out of the
         simulation. The mask feathers the top and bottom so cells still in
-        flight dissolve rather than colliding with the text. */}
+        flight dissolve rather than colliding with the text. */
+    }
     <div class="life-frame" aria-hidden="true">
       <canvas id="life-canvas" width="356" height="192"></canvas>
     </div>
 
     <p class="lead">
       I write software for things that move or compute. That covers robotics,
-      simulation and industrial software at Aker Solutions, plus a steady
-      stream of side projects.
+      simulation and industrial software at Aker Solutions, plus a steady stream
+      of side projects.
     </p>
 
     <div class="hero-meta">

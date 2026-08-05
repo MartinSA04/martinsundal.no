@@ -19,7 +19,9 @@ async function enterKonami(page: import("@playwright/test").Page) {
 
 test("konami code starts the RPG", async ({ page }) => {
   await page.goto("/");
-  await expect.poll(() => page.evaluate(() => Boolean(window.MSA_RPG))).toBe(true);
+  await expect
+    .poll(() => page.evaluate(() => Boolean(window.MSA_RPG)))
+    .toBe(true);
   await enterKonami(page);
   await expect(page.locator("html[data-rpg-active]")).toHaveCount(1);
   await expect(page.locator("canvas[data-rpg-canvas]")).toHaveCount(1);
@@ -27,7 +29,9 @@ test("konami code starts the RPG", async ({ page }) => {
 
 test("escape stops it again", async ({ page }) => {
   await page.goto("/");
-  await expect.poll(() => page.evaluate(() => Boolean(window.MSA_RPG))).toBe(true);
+  await expect
+    .poll(() => page.evaluate(() => Boolean(window.MSA_RPG)))
+    .toBe(true);
   await enterKonami(page);
   await expect(page.locator("html[data-rpg-active]")).toHaveCount(1);
   await page.keyboard.press("Escape");
@@ -53,7 +57,9 @@ test("the black hole easter egg target is present, sized, and still render.png",
   const box = await img.boundingBox();
   expect(box!.width).toBeGreaterThan(20);
   // rpg.js walks the .project-card that contains it.
-  await expect(page.locator(".project-card img[src*='render.png']")).toHaveCount(1);
+  await expect(
+    page.locator(".project-card img[src*='render.png']"),
+  ).toHaveCount(1);
 });
 
 test("the RPG does not load on project pages", async ({ page }) => {

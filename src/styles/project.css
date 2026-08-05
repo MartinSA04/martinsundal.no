@@ -10,6 +10,13 @@
   color: var(--ink);
   padding-block: var(--space-4) var(--space-7);
   min-height: 70vh;
+
+  /* Re-derived here, not inherited. Custom properties are substituted where
+     they are *declared*, so the :root --muted resolves against the root
+     theme's ink and substrate and then inherits down as a fixed colour — on a
+     dark world under the light theme that lands at ~3:1. Worlds set --hair
+     explicitly, which is why only --muted was affected. */
+  --muted: color-mix(in oklab, var(--ink) 72%, var(--sub));
 }
 
 [data-world] .crumbs {

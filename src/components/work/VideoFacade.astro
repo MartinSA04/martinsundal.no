@@ -22,7 +22,8 @@ const { poster, webm, mp4, width, height, label, posterAlt } = Astro.props;
   data-video-facade
   data-webm={webm}
   data-mp4={mp4}
-  style={`--ratio:${width} / ${height}`}>
+  style={`--ratio:${width} / ${height}`}
+>
   <button type="button" aria-label={label}>
     <img
       src={poster}
@@ -77,7 +78,9 @@ const { poster, webm, mp4, width, height, label, posterAlt } = Astro.props;
     backdrop-filter: blur(6px);
     border: var(--rule) solid var(--hair);
     color: var(--ink);
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease;
   }
 
   button:hover .play,
@@ -93,7 +96,9 @@ const { poster, webm, mp4, width, height, label, posterAlt } = Astro.props;
 </style>
 
 <script>
-  for (const facade of document.querySelectorAll<HTMLElement>("[data-video-facade]")) {
+  for (const facade of document.querySelectorAll<HTMLElement>(
+    "[data-video-facade]",
+  )) {
     const button = facade.querySelector("button");
     button?.addEventListener(
       "click",

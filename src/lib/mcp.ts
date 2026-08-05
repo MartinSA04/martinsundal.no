@@ -91,7 +91,10 @@ export class McpClient {
     return this.#session;
   }
 
-  async #post(body: object, expectReply: boolean): Promise<JsonRpcResponse | null> {
+  async #post(
+    body: object,
+    expectReply: boolean,
+  ): Promise<JsonRpcResponse | null> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       Accept: "application/json, text/event-stream",
@@ -115,7 +118,9 @@ export class McpClient {
     if (!expectReply) return null;
 
     const frames = parseSseFrames(await res.text()) as JsonRpcResponse[];
-    const reply = frames.find((f) => f.result !== undefined || f.error !== undefined);
+    const reply = frames.find(
+      (f) => f.result !== undefined || f.error !== undefined,
+    );
     if (!reply) throw new Error("MCP response contained no result");
     if (reply.error) throw new Error(reply.error.message);
     return reply;
@@ -137,7 +142,10 @@ export class McpClient {
     );
 
     // Notification: no id, no reply expected.
-    await this.#post({ jsonrpc: "2.0", method: "notifications/initialized" }, false);
+    await this.#post(
+      { jsonrpc: "2.0", method: "notifications/initialized" },
+      false,
+    );
   }
 
   async listTools(): Promise<Tool[]> {
@@ -148,7 +156,10 @@ export class McpClient {
     return ((reply?.result as { tools?: Tool[] })?.tools ?? []) as Tool[];
   }
 
-  async call(name: string, args: Record<string, unknown> = {}): Promise<CallResult> {
+  async call(
+    name: string,
+    args: Record<string, unknown> = {},
+  ): Promise<CallResult> {
     const request = {
       jsonrpc: "2.0",
       id: ++this.#id,
@@ -157,8 +168,9 @@ export class McpClient {
     };
 
     const reply = await this.#post(request, true);
-    const content = (reply?.result as { content?: { type: string; text?: string }[] })
-      ?.content;
+    const content = (
+      reply?.result as { content?: { type: string; text?: string }[] }
+    )?.content;
     const text = (content ?? [])
       .filter((c) => c.type === "text" && c.text)
       .map((c) => c.text)

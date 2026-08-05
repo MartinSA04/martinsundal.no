@@ -47,7 +47,10 @@ export interface TraceOptions {
   maxRadius?: number;
 }
 
-export function traceRay(impactParameter: number, opts: TraceOptions = {}): Ray {
+export function traceRay(
+  impactParameter: number,
+  opts: TraceOptions = {},
+): Ray {
   const { rs = 1, dphi = 0.02, maxSteps = 4000, maxRadius = 40 } = opts;
 
   const b = Math.abs(impactParameter);

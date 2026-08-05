@@ -55,7 +55,9 @@
   /* Derived, so every theme and every world gets a correct hairline for free
      from the two colours it already sets. */
   --hair: color-mix(in oklab, var(--ink) 24%, var(--sub));
-  --muted: color-mix(in oklab, var(--ink) 58%, var(--sub));
+  /* 72%, not 58%: against the near-black worlds a 58% mix lands at 3.1:1,
+     under AA for body text. Hierarchy comes from size and weight instead. */
+  --muted: color-mix(in oklab, var(--ink) 72%, var(--sub));
   --sig: #b3431a;
 
   --space-1: 0.5rem;

@@ -15,7 +15,11 @@ import { McpClient } from "../src/lib/mcp.ts";
 const URL = "https://ntnu-mcp.martinsundal.no/mcp";
 
 const PRESETS = [
-  { id: "search", tool: "search_courses", args: { year: 2026, query: "kvantemekanikk" } },
+  {
+    id: "search",
+    tool: "search_courses",
+    args: { year: 2026, query: "kvantemekanikk" },
+  },
   {
     id: "compare",
     tool: "compare_courses",
@@ -26,14 +30,22 @@ const PRESETS = [
     tool: "check_timetable_conflicts",
     args: { course_codes: ["TFY4205", "FY2045", "TMA4130"], year: 2026 },
   },
-  { id: "grades", tool: "get_grade_distribution", args: { course_code: "TDT4100" } },
+  {
+    id: "grades",
+    tool: "get_grade_distribution",
+    args: { course_code: "TDT4100" },
+  },
 ];
 
 const client = new McpClient(URL);
 await client.connect();
 console.log("connected, session", client.sessionId);
 
-const snapshot = { capturedAt: new Date().toISOString(), server: URL, presets: {} };
+const snapshot = {
+  capturedAt: new Date().toISOString(),
+  server: URL,
+  presets: {},
+};
 
 for (const preset of PRESETS) {
   try {
@@ -53,5 +65,8 @@ for (const preset of PRESETS) {
 }
 
 mkdirSync("src/data", { recursive: true });
-writeFileSync("src/data/mcp-snapshot.json", JSON.stringify(snapshot, null, 2) + "\n");
+writeFileSync(
+  "src/data/mcp-snapshot.json",
+  JSON.stringify(snapshot, null, 2) + "\n",
+);
 console.log("wrote src/data/mcp-snapshot.json");

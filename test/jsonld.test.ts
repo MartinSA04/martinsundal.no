@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { homeGraph, projectGraph, workGraph, personNode, SITE } from "../src/lib/jsonld.ts";
+import {
+  homeGraph,
+  projectGraph,
+  workGraph,
+  personNode,
+  SITE,
+} from "../src/lib/jsonld.ts";
 import type { Project } from "../src/lib/schema.ts";
 
 const p: Project = {
@@ -27,7 +33,10 @@ test("site constant has no trailing slash surprises", () => {
 });
 
 test("person node has a stable @id", () => {
-  assert.equal(personNode()["@id"], "https://martinsundal.no/#martin-sundal-aspas");
+  assert.equal(
+    personNode()["@id"],
+    "https://martinsundal.no/#martin-sundal-aspas",
+  );
 });
 
 test("person node keeps the employer and university links", () => {
@@ -39,18 +48,26 @@ test("person node keeps the employer and university links", () => {
 
 test("project graph carries WebPage, SoftwareSourceCode and BreadcrumbList", () => {
   const types = projectGraph(p, slugOf())["@graph"].map((n: any) => n["@type"]);
-  assert.deepEqual([...types].sort(), ["BreadcrumbList", "SoftwareSourceCode", "WebPage"]);
+  assert.deepEqual([...types].sort(), [
+    "BreadcrumbList",
+    "SoftwareSourceCode",
+    "WebPage",
+  ]);
 });
 
 test("project graph references the person by @id, never inlining a duplicate", () => {
   const json = JSON.stringify(projectGraph(p, slugOf()));
-  assert.ok(json.includes('"@id":"https://martinsundal.no/#martin-sundal-aspas"'));
+  assert.ok(
+    json.includes('"@id":"https://martinsundal.no/#martin-sundal-aspas"'),
+  );
   assert.equal((json.match(/"familyName"/g) ?? []).length, 0);
 });
 
 test("breadcrumb trail is Home then the project", () => {
   const graph = projectGraph(p, slugOf())["@graph"] as any[];
-  const crumbs = graph.find((n) => n["@type"] === "BreadcrumbList").itemListElement;
+  const crumbs = graph.find(
+    (n) => n["@type"] === "BreadcrumbList",
+  ).itemListElement;
   assert.equal(crumbs.length, 2);
   assert.equal(crumbs[0].name, "Home");
   assert.equal(crumbs[1].name, "Cipherbound");
@@ -61,19 +78,26 @@ test("award appears on the SoftwareSourceCode node", () => {
   const graph = projectGraph(p, slugOf())["@graph"] as any[];
   const code = graph.find((n) => n["@type"] === "SoftwareSourceCode");
   assert.equal(code.award, "Best Project, TDT4102, NTNU");
-  assert.equal(code.codeRepository, "https://github.com/MartinSA04/CipherBound");
+  assert.equal(
+    code.codeRepository,
+    "https://github.com/MartinSA04/CipherBound",
+  );
   assert.deepEqual(code.programmingLanguage, ["C++"]);
 });
 
 test("every url in a graph is absolute", () => {
   const json = JSON.stringify(projectGraph(p, slugOf()));
-  for (const m of json.matchAll(/"(url|item|contentUrl|thumbnailUrl)":"([^"]+)"/g)) {
+  for (const m of json.matchAll(
+    /"(url|item|contentUrl|thumbnailUrl)":"([^"]+)"/g,
+  )) {
     assert.ok(m[2].startsWith("https://"), `${m[1]} was not absolute: ${m[2]}`);
   }
 });
 
 test("home graph lists every project exactly once", () => {
-  const graph = homeGraph([{ data: p, id: "cipherbound" }] as any)["@graph"] as any[];
+  const graph = homeGraph([{ data: p, id: "cipherbound" }] as any)[
+    "@graph"
+  ] as any[];
   const list = graph.find((n) => n["@type"] === "ItemList");
   assert.equal(list.numberOfItems, 1);
   assert.equal(list.itemListElement.length, 1);
@@ -81,10 +105,15 @@ test("home graph lists every project exactly once", () => {
 });
 
 test("home graph carries Person, WebSite, ProfilePage and ItemList", () => {
-  const types = homeGraph([{ data: p, id: "cipherbound" }] as any)["@graph"].map(
-    (n: any) => n["@type"],
-  );
-  assert.deepEqual([...types].sort(), ["ItemList", "Person", "ProfilePage", "WebSite"]);
+  const types = homeGraph([{ data: p, id: "cipherbound" }] as any)[
+    "@graph"
+  ].map((n: any) => n["@type"]);
+  assert.deepEqual([...types].sort(), [
+    "ItemList",
+    "Person",
+    "ProfilePage",
+    "WebSite",
+  ]);
 });
 
 test("work graph omits VideoObject when no video metadata is supplied", () => {

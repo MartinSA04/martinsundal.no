@@ -1,7 +1,10 @@
 {
   "config": {
     // Line length is managed by the editor, not enforced.
-    "MD013": false
+    "MD013": false,
+    // Plans and specs use bold run-in labels ("**Files:**") directly above
+    // their lists; a blank line between them reads worse.
+    "MD032": false
   },
   "globs": ["docs/**/*.md"],
   "overrides": [

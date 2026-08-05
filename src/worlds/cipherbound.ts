@@ -32,7 +32,9 @@ if (box) {
 
   function draw() {
     textEl.textContent = dialogue.current();
-    pips.forEach((pip, i) => pip.toggleAttribute("data-on", i <= dialogue.index()));
+    pips.forEach((pip, i) =>
+      pip.toggleAttribute("data-on", i <= dialogue.index()),
+    );
     nextEl.hidden = dialogue.done();
     nextEl.setAttribute(
       "aria-label",

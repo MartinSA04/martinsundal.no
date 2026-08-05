@@ -57,11 +57,31 @@ const themeList = JSON.stringify(THEMES);
       })();
     </script>
 
-    <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)" />
+    <meta
+      name="theme-color"
+      content="#f4f1ea"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#0b0b0c"
+      media="(prefers-color-scheme: dark)"
+    />
 
-    <link rel="preload" href="/fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/plexmono-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link
+      rel="preload"
+      href="/fonts/archivo-var.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/plexmono-400.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
 
     <Seo
       title={title}
@@ -176,7 +196,9 @@ const themeList = JSON.stringify(THEMES);
         text-decoration: none;
         padding-block: 0.35rem;
         border-bottom: var(--rule) solid transparent;
-        transition: color 0.15s ease, border-color 0.15s ease;
+        transition:
+          color 0.15s ease,
+          border-color 0.15s ease;
       }
 
       .site-nav a:hover {
@@ -194,7 +216,9 @@ const themeList = JSON.stringify(THEMES);
         cursor: pointer;
         display: grid;
         place-items: center;
-        transition: color 0.15s ease, border-color 0.15s ease;
+        transition:
+          color 0.15s ease,
+          border-color 0.15s ease;
       }
 
       #theme-toggle:hover {

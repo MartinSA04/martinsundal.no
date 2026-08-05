@@ -114,7 +114,11 @@ if (canvas) {
       ctx!.textBaseline = "middle";
 
       const labelX = cx + 2.4 * RS * scale;
-      ctx!.fillText("r = 1.5 rs · photon sphere", labelX, cy - 1.9 * RS * scale);
+      ctx!.fillText(
+        "r = 1.5 rs · photon sphere",
+        labelX,
+        cy - 1.9 * RS * scale,
+      );
 
       ctx!.textAlign = "left";
       ctx!.fillText(

@@ -33,7 +33,9 @@ const worlds = [];
 for (const file of readdirSync(DIR).filter((f) => f.endsWith(".md"))) {
   const text = readFileSync(`${DIR}/${file}`, "utf8");
   const pick = (key) => {
-    const m = text.match(new RegExp(`^\\s+${key}:\\s*"(#[0-9a-fA-F]{6})"`, "m"));
+    const m = text.match(
+      new RegExp(`^\\s+${key}:\\s*"(#[0-9a-fA-F]{6})"`, "m"),
+    );
     if (!m) throw new Error(`${file}: no ${key} token`);
     return m[1];
   };

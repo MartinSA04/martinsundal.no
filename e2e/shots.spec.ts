@@ -29,10 +29,16 @@ for (const [name, path] of PAGES) {
     test(`shot ${name} ${theme}`, async ({ page }, info) => {
       const dir = `shots/${info.project.name}`;
       mkdirSync(dir, { recursive: true });
-      await page.addInitScript((t) => localStorage.setItem("msa-theme", t), theme);
+      await page.addInitScript(
+        (t) => localStorage.setItem("msa-theme", t),
+        theme,
+      );
       await page.goto(path);
       await page.waitForLoadState("networkidle");
-      await page.screenshot({ path: `${dir}/${name}-${theme}.png`, fullPage: true });
+      await page.screenshot({
+        path: `${dir}/${name}-${theme}.png`,
+        fullPage: true,
+      });
     });
   }
 }

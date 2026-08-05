@@ -23,7 +23,9 @@ test("persists the choice under the msa-theme key", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto("/");
   await page.locator("#theme-toggle").click();
-  expect(await page.evaluate(() => localStorage.getItem("msa-theme"))).toBe("dark");
+  expect(await page.evaluate(() => localStorage.getItem("msa-theme"))).toBe(
+    "dark",
+  );
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 });
@@ -34,7 +36,9 @@ test("applies the stored theme before first paint", async ({ page }) => {
   expect(await page.locator("html").getAttribute("data-theme")).toBe("dark");
 });
 
-test("follows the system preference when nothing is stored", async ({ page }) => {
+test("follows the system preference when nothing is stored", async ({
+  page,
+}) => {
   await page.emulateMedia({ colorScheme: "dark" });
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
@@ -54,7 +58,9 @@ test("keeps .site-header for the RPG", async ({ page }) => {
   await expect(page.locator(".site-header")).toHaveCount(1);
 });
 
-test("skip link is the first focusable element and targets main", async ({ page }) => {
+test("skip link is the first focusable element and targets main", async ({
+  page,
+}) => {
   await page.goto("/");
   await page.keyboard.press("Tab");
   const focused = page.locator(":focus");

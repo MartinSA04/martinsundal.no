@@ -9,10 +9,15 @@ const { Content } = await render(entry);
 const img = entry.data.image!;
 ---
 
-<ProjectShell entry={entry} centerpieceLabel="The render, and how the rays get there">
+<ProjectShell
+  entry={entry}
+  centerpieceLabel="The render, and how the rays get there"
+>
   <div slot="centerpiece">
-    {/* The C++ output leads. It is the artifact this page is about, and the
-        filename must stay render.png — the Konami RPG selects on it. */}
+    {
+      /* The C++ output leads. It is the artifact this page is about, and the
+        filename must stay render.png — the Konami RPG selects on it. */
+    }
     <figure class="bh-render">
       <img
         src={img.src}
