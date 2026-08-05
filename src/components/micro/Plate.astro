@@ -35,6 +35,8 @@ interface Props {
     | "lozenges"
     | "wedge"
     | "grid";
+  /** px. */
+  figureSize?: number;
   /** Rotated label running up the left edge. */
   edgeLeft?: string;
   /** Rotated label running down the right edge. */
@@ -51,6 +53,7 @@ const {
   id,
   title,
   figure,
+  figureSize = 44,
   edgeLeft,
   edgeRight,
   foot,
@@ -71,7 +74,7 @@ const hasHead = Boolean(id || title || figure);
     hasHead && (
       <div class="micro-plate-head">
         <span class="micro-plate-title">
-          {figure && <Figure name={figure} size={44} />}
+          {figure && <Figure name={figure} size={figureSize} />}
           {title && <span class="micro-label">{title}</span>}
         </span>
         {id && <span class="micro-plate-id micro-label">{id}</span>}

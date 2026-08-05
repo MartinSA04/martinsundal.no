@@ -82,12 +82,19 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
         </Plate>
 
         {
-          /* The fan spreads from the poster down onto the stage chain, so the
-            line reads as one process feeding five stations rather than as a
-            caption sitting under a photograph. */
+          /* The same composition the reference sheets build around CONFIG: an
+            axis rule with the fan's hub sitting on it, rays spreading down
+            onto the stations below. The rule runs out both sides and closes
+            on end caps, so the poster, the fan and the stage chain are one
+            interlocked unit rather than three stacked blocks. */
         }
         <div class="spray" aria-hidden="true">
-          <Fan rays={17} spread={126} accentEvery={8} size={80} />
+          <span class="spray-axis">
+            <span class="spray-cap"></span>
+            <span class="spray-rule"></span>
+            <span class="spray-cap"></span>
+          </span>
+          <Fan rays={19} spread={132} accentEvery={9} size={132} />
         </div>
 
         <ol class="flow">
@@ -168,11 +175,45 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
      nodes, which is what makes it a flow rather than a list of words. */
   /* The spray is a graphic join, not a spacer: it overlaps the gap between
      the poster and the chain so the two read as connected. */
+  /* The fan hangs from the axis rather than sitting under it: the Fan's hub
+     is at the top of its own box, so aligning the box top to the rule puts
+     the hub exactly on the line. */
   .spray {
+    position: relative;
     display: flex;
     justify-content: center;
-    margin-block: calc(var(--space-2) * -1) calc(var(--space-3) * -1);
+    margin-block: var(--space-3) 0;
+    block-size: 132px;
     color: var(--hair);
+  }
+
+  .spray-axis {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .spray-rule {
+    flex: 1;
+    block-size: var(--rule);
+    background: var(--hair);
+  }
+
+  .spray-cap {
+    inline-size: 5px;
+    block-size: 5px;
+    border: var(--rule) solid var(--hair);
+    border-radius: 50%;
+    flex: none;
+  }
+
+  /* The rays fade as they reach the stations, so the fan reads as spreading
+     onto the chain instead of stopping at an arbitrary line. */
+  .spray :global(.micro-fan) {
+    position: relative;
+    mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
   }
 
   .flow {

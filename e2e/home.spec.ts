@@ -194,7 +194,7 @@ test("the contact lattice is marked at its centre", async ({ page }) => {
   // Two columns, so the grid has a centre intersection to mark.
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("/");
-  const mark = page.locator("#contact [data-micro='crosshair']");
+  const mark = page.locator("[data-lattice-mark]");
   await expect(mark).toBeVisible();
 
   const box = await mark.boundingBox();
@@ -205,14 +205,20 @@ test("the contact lattice is marked at its centre", async ({ page }) => {
   expect(
     Math.abs(box!.y + box!.height / 2 - (grid!.y + grid!.height / 2)),
   ).toBeLessThan(2);
+
+  // The figure is structural, not a sticker: its crosshair arms have to reach
+  // the lattice rules they continue. If a cell's padding ever shrinks below
+  // the figure's radius the target starts covering a handle instead.
+  const cell = await page.locator("#contact li a").first().boundingBox();
+  expect(box!.width / 2).toBeLessThan(cell!.height / 2);
 });
 
 test("the lattice mark is gone once the grid is one column", async ({
   page,
 }) => {
-  // Below 40rem there is no intersection, so a crosshair would be a mark on
+  // Below 40rem there is no intersection, so the target would be a mark on
   // nothing.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await expect(page.locator("#contact [data-micro='crosshair']")).toBeHidden();
+  await expect(page.locator("[data-lattice-mark]")).toBeHidden();
 });

@@ -2,7 +2,7 @@
 import Mark from "../micro/Mark.astro";
 import Icon from "../micro/Icon.astro";
 import Tag from "../micro/Tag.astro";
-import Crosshair from "../micro/Crosshair.astro";
+import Figure from "../micro/Figure.astro";
 
 const links = [
   {
@@ -44,7 +44,7 @@ const links = [
     {
       /* The grid is a real hairline lattice — a --rule gap over a --hair
         background — and its centre is the one intersection the page makes on
-        purpose. Marking it is what the crosshair primitive is for. */
+        purpose. */
     }
     <div class="lattice">
       <ul>
@@ -68,7 +68,16 @@ const links = [
           ))
         }
       </ul>
-      <span class="lattice-mark"><Crosshair size={18} /></span>
+      {
+        /* A registration target sized to the lattice, not a mark laid on top
+          of it. Its crosshair arms run out past the ring and land exactly on
+          the two hairline gaps, so the grid reads as continuing through the
+          figure — the graphic is the intersection rather than a sticker over
+          it. */
+      }
+      <span class="lattice-mark" data-lattice-mark
+        ><Figure name="target" size={64} /></span
+      >
     </div>
   </div>
 </section>
@@ -82,14 +91,9 @@ const links = [
     position: relative;
   }
 
-  /* Sits on the intersection the two hairline gaps already make. A wrapper
-     rather than a class on <Crosshair>: scoped styles are keyed to elements
-     this template declares, and a child component's root is not one.
-
-     The substrate padding is load-bearing. The crosshair draws in --hair and
-     so does the lattice, so laid straight over the intersection it is exactly
-     invisible. Punching a hole in the lines and setting the mark inside it is
-     what makes it read as a registration mark rather than as nothing. */
+  /* A wrapper rather than a class on <Figure>: scoped styles are keyed to
+     elements this template declares, and a child component's root is not
+     one. */
   .lattice-mark {
     position: absolute;
     left: 50%;
@@ -97,8 +101,15 @@ const links = [
     translate: -50% -50%;
     display: block;
     line-height: 0;
-    padding: 0.55rem;
+    /* The substrate disc is load-bearing. The figure and the lattice both
+       draw in hairline weight, so laid flat over the intersection the ring
+       would vanish into the lines it crosses. Punching a round hole and
+       setting the target inside it is what makes the arms read as continuing
+       the grid instead of colliding with it. */
+    padding: 0.5rem;
     background: var(--sub);
+    border-radius: 50%;
+    color: var(--ink);
     pointer-events: none;
   }
 
@@ -124,7 +135,10 @@ const links = [
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
     gap: var(--space-2);
-    padding: var(--space-3);
+    /* Generous, and load-bearing: the registration target sits on the shared
+       corner of all four cells, so the content has to clear its radius or the
+       figure lands on top of a handle. */
+    padding: var(--space-3) var(--space-4) var(--space-4);
     text-decoration: none;
     transition: background 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   }

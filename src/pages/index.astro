@@ -7,6 +7,7 @@ import Contact from "../components/home/Contact.astro";
 import Mark from "../components/micro/Mark.astro";
 import Plate from "../components/micro/Plate.astro";
 import Readout from "../components/micro/Readout.astro";
+import Figure from "../components/micro/Figure.astro";
 import { orderedProjects } from "../lib/content.ts";
 import { homeGraph, SITE } from "../lib/jsonld.ts";
 
@@ -40,8 +41,19 @@ const description =
           registered, with the context beside it as readouts rather than as a
           second paragraph of prose. */
       }
+      {
+        /* Lozenge stacks as the walls of the block, the way the reference
+          sheets bracket a text cluster: the figures are the container rather
+          than decoration sitting inside one. Mirrored, so the pair reads as a
+          single bracket instead of two loose marks. */
+      }
       <Plate variant="corners" edgeLeft="Notes 2026_MSA_04">
         <div class="cols">
+          <div class="wall" aria-hidden="true">
+            <Figure name="lozenges" size={68} />
+            <Figure name="lozenges" size={44} />
+          </div>
+
           <p class="statement">
             I build software for the physical world, where geometry and motion
             drive the design, and for the systems that have to keep running
@@ -59,6 +71,11 @@ const description =
               { label: "Renderer", value: "Geometry, taught by bending light" },
             ]}
           />
+
+          <div class="wall" data-mirror aria-hidden="true">
+            <Figure name="lozenges" size={44} />
+            <Figure name="lozenges" size={68} />
+          </div>
         </div>
       </Plate>
     </div>
@@ -76,9 +93,23 @@ const description =
 
   .cols {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1.35fr) minmax(0, 1fr) auto;
     gap: var(--space-4);
-    align-items: start;
+    align-items: center;
+  }
+
+  /* The walls run vertically, so the lozenges are turned onto their side and
+     stacked — the same figure the section mark uses, rotated into a bracket. */
+  .wall {
+    display: grid;
+    justify-items: center;
+    gap: 0.4rem;
+    rotate: 90deg;
+    color: var(--hair);
+  }
+
+  .wall[data-mirror] {
+    rotate: -90deg;
   }
 
   /* Reading scale, not display scale. The sentence carries weight from being
@@ -95,6 +126,10 @@ const description =
     .cols {
       grid-template-columns: 1fr;
       gap: var(--space-3);
+    }
+    /* The walls need horizontal room the phone layout does not have. */
+    .wall {
+      display: none;
     }
   }
 </style>

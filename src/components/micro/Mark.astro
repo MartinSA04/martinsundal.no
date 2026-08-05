@@ -1,21 +1,22 @@
 ---
 /**
- * The composite section header, and the direct replacement for a bare
- * "IDX_02 / PROJECTS" over a hairline.
+ * The section composition — built the way the reference sheets build the
+ * CONFIG cluster, not as a bullet in a header slot.
  *
- * In the references a heading is never one element: a geometric figure
- * anchors it, the number and name sit beside it, a rule runs out to the
- * margin, and a row of ticks closes it off. Assembling that here means every
- * section gets the full mark instead of each call site rebuilding a partial
- * one — and the five figures, read down the page, form a column of marks
- * that carries the sheet.
+ * The figure does not sit beside the heading. It straddles an axis rule that
+ * runs the full measure and continues out both sides of it, terminating in
+ * end caps. The numeral sits directly beneath the figure on the same vertical
+ * centre line, the label runs off it, and the note closes the far end. Figure,
+ * rule and type are one interlocked unit: move any part and the rest is
+ * visibly wrong, which is what makes the graphic structural rather than
+ * decorative.
  */
 import Figure from "./Figure.astro";
 
 interface Props {
   n: number;
   label: string;
-  /** The anchor figure. Each section should own a distinct one. */
+  /** Straddles the axis. Each section should own a distinct one. */
   figure:
     | "starburst"
     | "quadrant"
@@ -29,94 +30,121 @@ interface Props {
     | "lozenges"
     | "wedge"
     | "grid";
-  /** Printed at the far right of the rule, e.g. a count or a status. */
+  /** Closes the far end of the axis, e.g. a count or a status. */
   note?: string;
+  /** px. The numeral below is centred on this. */
+  size?: number;
   class?: string;
 }
 
-const { n, label, figure, note, class: className } = Astro.props;
-
-/* A short run of ticks that steps down in height, closing the rule the way
-   the reference sheets close theirs. */
-const ticks = [10, 7, 5, 4, 3];
+const { n, label, figure, note, size = 72, class: className } = Astro.props;
 ---
 
-<div class:list={["micro-mark", className]} data-micro="mark">
-  <Figure name={figure} size={44} />
+<div
+  class:list={["micro-mark", className]}
+  data-micro="mark"
+  style={`--fig:${size}px`}
+>
+  <div class="micro-mark-axis" aria-hidden="true">
+    <span class="micro-mark-cap" data-at="start"></span>
+    <span class="micro-mark-rule"></span>
+    <span class="micro-mark-cap" data-at="end"></span>
+    <span class="micro-mark-fig"><Figure name={figure} size={size} /></span>
+  </div>
 
-  <span class="micro-mark-id">
-    <span class="micro-mark-n">{String(n).padStart(2, "0")}</span>
-    <span class="micro-mark-label">{label}</span>
-  </span>
-
-  <span class="micro-mark-rule" aria-hidden="true"></span>
+  <span class="micro-mark-n">{String(n).padStart(2, "0")}</span>
+  <span class="micro-mark-label">{label}</span>
   {note && <span class="micro-mark-note micro-label">{note}</span>}
-  <span class="micro-mark-ticks" aria-hidden="true">
-    {ticks.map((h) => <i style={`--h:${h}px`} />)}
-  </span>
 </div>
 
 <style>
   .micro-mark {
+    display: grid;
+    grid-template-columns: var(--fig) minmax(0, 1fr) auto;
+    grid-template-areas:
+      "axis  axis  axis"
+      "n     label note";
+    column-gap: var(--space-2);
+    row-gap: 0.55rem;
+    align-items: baseline;
+    margin-block-end: var(--space-4);
+  }
+
+  /* The axis is a real row with the figure's own height, so the rule sits on
+     the figure's centre line rather than being nudged there. */
+  .micro-mark-axis {
+    grid-area: axis;
+    position: relative;
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-    margin-block-end: var(--space-3);
-  }
-
-  .micro-mark-id {
-    display: grid;
-    gap: 0.15rem;
-  }
-
-  /* The number is set as a numeral, not as part of the label string, so the
-     figure and the digits read as one stacked identifier. */
-  .micro-mark-n {
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: var(--step-1);
-    line-height: 1;
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
-    color: var(--ink);
-  }
-
-  .micro-mark-label {
-    font-family: var(--font-mono);
-    font-size: var(--step--1);
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--muted);
-    white-space: nowrap;
-    line-height: 1;
+    gap: 0;
+    block-size: var(--fig);
   }
 
   .micro-mark-rule {
     flex: 1;
     block-size: var(--rule);
     background: var(--hair);
-    min-inline-size: var(--space-3);
   }
 
-  .micro-mark-note {
-    white-space: nowrap;
-  }
-
-  .micro-mark-ticks {
-    display: flex;
-    align-items: flex-end;
-    gap: 2px;
-    block-size: 10px;
+  /* End caps, as the references close a run of axis: a small open circle at
+     each end rather than a line that simply stops. */
+  .micro-mark-cap {
+    inline-size: 5px;
+    block-size: 5px;
+    border: var(--rule) solid var(--hair);
+    border-radius: 50%;
     flex: none;
   }
 
-  .micro-mark-ticks > i {
-    inline-size: var(--rule);
-    block-size: var(--h);
+  .micro-mark-cap[data-at="end"] {
     background: var(--hair);
   }
 
+  /* Overlaid, not inlined: the rule runs behind the figure and reappears the
+     other side, so the two read as one axis passing through a hub. */
+  .micro-mark-fig {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    translate: 0 -50%;
+    display: block;
+    color: var(--ink);
+  }
+
+  /* Centred under the figure. The shared centre line is the whole point of
+     the composition. */
+  .micro-mark-n {
+    grid-area: n;
+    justify-self: center;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--step-2);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+
+  .micro-mark-label {
+    grid-area: label;
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .micro-mark-note {
+    grid-area: note;
+    white-space: nowrap;
+  }
+
   @media (max-width: 46rem) {
+    .micro-mark {
+      --fig: 52px;
+    }
     .micro-mark-note {
       display: none;
     }
