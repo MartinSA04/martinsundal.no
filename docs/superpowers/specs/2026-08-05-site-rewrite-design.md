@@ -8,8 +8,11 @@
 
 Replace the single hand-written `index.html` with an Astro-built static site
 where each of the five projects gets its own page and its own visual world,
-under one shared "micrographics" design language. Full SEO and rich-results
+under one shared "micrographics" design language, plus a `/work` page about
+the paid engineering work at Aker Solutions. Full SEO and rich-results
 treatment. Extreme polish.
+
+Seven pages: home, `/work`, and five project pages.
 
 ## Design language
 
@@ -43,12 +46,13 @@ src/
   content.config.ts             zod schema for the collection
   pages/
     index.astro
+    work.astro                  the role, with VPL as centerpiece
     projects/[slug].astro       shell that mounts the right world
     og/[slug].png.ts            build-time OG image endpoint
     404.astro
   styles/kernel.css             tokens + micrographics primitives only
-  worlds/<slug>.css             one per project, loaded only on that page
-  worlds/<slug>.ts              one per project, loaded only on that page
+  worlds/<slug>.css             one per world, loaded only on that page
+  worlds/<slug>.ts              one per world, loaded only on that page
   scripts/                      life.ts (hero sim), theme.ts, rpg.ts
 public/                         CNAME, robots.txt, favicons, images, sprites
 .github/workflows/deploy.yml
@@ -153,31 +157,108 @@ If the worker is cold, erroring, or unreachable, the console falls back to a
 baked snapshot of genuine responses captured at build time, visibly labelled
 as a snapshot. Fabricated data is never shown.
 
+## The work page (`/work`)
+
+The one page about paid engineering work rather than side projects. It
+describes the role — robotics, welding automation, scanning, robot control,
+industrial data — with the Verdal Production Line as the flagship example.
+
+World: industrial. Safety yellow as `--sig` against a graphite substrate,
+hazard-stripe rules, ISO-style pictograms drawn in the micrographics kit,
+and a stations-and-flow schematic as structural ornament.
+
+### Confidentiality constraint
+
+This is Aker Solutions' work, not Martin's repository. The page is built
+**only** from material Aker has already published. Specifically excluded, and
+not to be read or referenced during implementation:
+
+```
+~/weldstack  ~/weldstack_new  ~/autoweld  ~/.autoweld
+~/aw_archive/*.npy            (real VPL scan data)
+~/repos/vpl_mqtt  vpl_fabunit  scanAutoWeld  weldlogger  post_weld_gui
+~/Profiles/ABB_VPL  VPL_production  VPL_test_more_points
+~/vm_share_2/weldlog*         ~/.ssh/id_gt_vpl_integration*
+~/Downloads/'Weld bead modeller Gitlab repo copy'
+~/Downloads/'Aker Solutions logo primary navy orange.svg'
+```
+
+No internal throughput figures, no process detail, no internal tooling
+screenshots, no scan data, and no Aker logo (naming the employer in text is
+fine; reproducing their mark implies endorsement). Martin's own description
+of his skills and domain is his to write and is not subject to this.
+
+### Published facts (verified 2026-08-05)
+
+Usable, sourced from Aker's own
+[Verdal production site page](https://www.akersolutions.com/what-we-do/renewable-energy-solutions/aquaculture/verdal-production-site/)
+and the captions baked into their own highlights video:
+
+- Capacity up to one closed cage floater per week.
+- Automates welding, sandblasting, and painting of steel structures.
+- Robots scan and create 3D models of components before production.
+- Applies surface treatments and protective coatings.
+- Covers cutting, welding, surface treatment, coating, mechanical completion.
+- Robotic welding of tubular sections.
+
+**Not usable without a primary source.** Search results claim "opened 2024"
+(some say 10 September 2024) and "up to 10x faster than traditional
+methods". Neither appears on Aker's own page. Either find a primary Aker
+source or omit them. Do not print them on the strength of a search snippet.
+
+### Centerpiece — the VPL highlights video
+
+Source: `akersolutions.com/globalassets/videos/vpl-web-highlights.mp4`,
+1920×1080 h264, 69.5 s, 39.0 MB at 4.5 Mbps. Public, no auth.
+
+Self-hosted after transcode, credited to Aker Solutions with a link back to
+their page:
+
+| File | Codec | Size |
+| --- | --- | --- |
+| `public/vpl/highlights.webm` | AV1, 720p, `libsvtav1 -crf 40 -preset 4` | 8.6 MB |
+| `public/vpl/highlights.mp4` | H.264, 720p, `libx264 -crf 26 -preset slow` | 12.4 MB |
+| `public/vpl/poster.avif` | AVIF still, q82 | 116 KB |
+
+Measured, not estimated: SSIM stays above 0.98 across the whole CRF sweep,
+and the baked-in captions remain crisp well past CRF 44. `preload="none"`
+with a poster and click-to-play, so the video costs zero bytes on page load
+and never enters the performance budget.
+
+Secondary content: the stations-and-flow schematic, animated on scroll,
+drawn only from the published facts above.
+
 ### Degradation
 
 Every centerpiece degrades, and the page is complete without it:
 
 - No WebGL → world 04 shows the existing `render.png` with its annotations.
-- JS disabled → all five pages render their full content statically.
+- JS disabled → all seven pages render their full content statically; the
+  work page's `<video>` still plays from its native controls.
 - `prefers-reduced-motion` → every centerpiece holds on a representative
-  still frame; nothing autoplays.
+  still frame; nothing autoplays. The VPL video never autoplays regardless.
 - Network failure → world 02 falls back as described; nothing else fetches.
 
 ## Home page
 
-Sections: hero, project index, about, contact.
+Sections: hero, work, project index, about, contact.
 
 The hero keeps the Game of Life canvas that converges to "MARTIN" around
 generation 277, with the `visually-hidden` "Martin" for screen readers and
 the mask feather that dissolves stray cells. This is the best thing on the
 site and its behaviour is preserved exactly; only its framing is redrawn.
 
+Below the hero, a single wide band for the day job — one sentence on the
+role, the VPL poster frame, and a link to `/work`. It sits above the project
+index because it is the most substantial work on the site.
+
 The project index replaces today's card grid with five spec-sheet rows, each
 carrying its world's `--sig` and a small live preview of that world, linking
 to its page.
 
 **Cut:** the "What I work on" section. Five generic cards that say less than
-one sharp sentence; the project rows now do that job and lead somewhere.
+one sharp sentence; the work band and the project rows now do that job, and
+both lead somewhere.
 
 ## Preserved behaviour
 
@@ -206,13 +287,24 @@ frontmatter.
 - `sitemap.xml` generated by `@astrojs/sitemap`; the hand-maintained file is
   deleted.
 - `robots.txt` retained, sitemap reference updated.
-- Visible breadcrumbs on project pages, matching the `BreadcrumbList`.
+- Visible breadcrumbs on project and work pages, matching the `BreadcrumbList`.
+
+The work page emits `WebPage` + `BreadcrumbList` + a `VideoObject` for the
+VPL video (name, description, thumbnail, `duration: PT1M9S`,
+`copyrightHolder` Aker Solutions), and references the existing `Person`
+node's `worksFor` rather than duplicating employer data. It does **not** use
+`SoftwareSourceCode` — it is not a repository.
+
+`VideoObject.uploadDate` is required by Google for video rich results. Aker's
+CDN reports `last-modified: Mon, 18 Aug 2025 12:39:37 GMT`, so use
+`2025-08-18` — the date the asset was published, which is what `uploadDate`
+means. Do not invent a production date for the footage itself.
 
 URLs are purely additive — only `/` exists today — so no redirects are
-needed. Project URLs are `/projects/<slug>/`.
+needed. Project URLs are `/projects/<slug>/`; the work page is `/work/`.
 
 Validation before merge: Google Rich Results Test and the schema.org
-validator on the home page and all five project pages.
+validator on all seven pages.
 
 ## Navigation
 
@@ -234,7 +326,7 @@ from the repo.
 
 ## Quality bar
 
-- Lighthouse ≥ 98 performance and 100 accessibility on mobile, all six pages.
+- Lighthouse ≥ 98 performance and 100 accessibility on mobile, all seven pages.
 - Zero cumulative layout shift; all media carry explicit dimensions.
 - WCAG AA contrast in every world, in both light and dark states.
 - Complete keyboard path including every centerpiece; visible focus rings.
@@ -245,8 +337,8 @@ from the repo.
 ## Verification plan
 
 1. `astro build` clean, no warnings.
-2. Lighthouse CI against the built output for all six pages.
-3. CDP screenshots at 390px and 1440px, light and dark, all six pages.
+2. Lighthouse CI against the built output for all seven pages.
+3. CDP screenshots at 390px and 1440px, light and dark, all seven pages.
 4. The hero Game of Life verified converging to "MARTIN" by stepping the
    simulation synchronously in a throwaway copy, since rAF does not advance
    under headless virtual time.
@@ -254,12 +346,19 @@ from the repo.
    `render.png` black-hole easter egg both confirmed working.
 6. World 02 exercised against the live worker, then again with the worker
    blocked, to confirm the labelled snapshot fallback.
-7. Rich Results Test and schema.org validator on all six pages.
+7. Rich Results Test and schema.org validator on all seven pages.
 8. Links checked, including every external project link.
+9. Work page audited against the confidentiality constraint: every factual
+   claim traced to a published Aker source, no excluded path referenced, no
+   Aker mark reproduced.
+10. VPL video verified: zero bytes transferred before click, plays in
+    Chromium (AV1) and in a WebKit engine (H.264 fallback), poster sized to
+    prevent layout shift.
 
 ## Out of scope
 
 - Any change to the five project repositories themselves.
+- Any use of Aker-internal material; see the confidentiality constraint.
 - Norwegian translation. `og:locale:alternate` stays, but no `nb` pages.
 - A blog or writing section.
 - Changes to `ntnu-mcp`'s Worker; the site adapts to the server as deployed.
