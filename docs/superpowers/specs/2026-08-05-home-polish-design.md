@@ -18,7 +18,7 @@ A new member of the micrographics kit, subject to the same rule as every other
 one: it draws only in terms of the four world tokens, by inheriting
 `currentColor`.
 
-```
+```ts
 interface Props {
   name: "arrow-right" | "caret-down" | "theme-light" | "theme-dark" | "theme-deep-space";
   size?: number;   // px, default 16
@@ -132,7 +132,7 @@ anything.
 Fix: a `micro-label` readout on the frame's bottom edge, ticking with the
 simulation:
 
-```
+```text
 GEN 041 · B3/S23 · 356×192
 ```
 
