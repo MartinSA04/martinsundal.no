@@ -1,0 +1,109 @@
+---
+/**
+ * A routed rule whose labels cut it.
+ *
+ * The reference sheets' NODE → B43 → ○ device. The labels are not placed on
+ * a rule; the rule is broken to make room for them, terminals sit at every
+ * break, and the run ends in an arrowhead. Because the breaks are the labels
+ * themselves, the segments between are simply whatever is left — the copy
+ * sets the rhythm, not a spacing value.
+ *
+ * Built in flow rather than in SVG so the segments are elastic and the whole
+ * chain wraps on a narrow screen instead of overflowing.
+ */
+interface Props {
+  items: string[];
+  /** Index of the entry to mark active; -1 for none. */
+  active?: number;
+  class?: string;
+}
+
+const { items, active = -1, class: className } = Astro.props;
+---
+
+<ol class:list={["micro-chain", className]} data-micro="chain">
+  {
+    items.map((item, i) => (
+      <li data-active={i === active ? "" : undefined}>
+        <span class="micro-chain-seg" aria-hidden="true" />
+        <span class="micro-chain-label">{item}</span>
+        <span class="micro-chain-node" aria-hidden="true" />
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .micro-chain {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: 0.4rem;
+  }
+
+  .micro-chain > li {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    /* The segment before each label is the elastic part, so the labels keep
+       their own widths and the rule absorbs the difference. */
+    flex: 1 1 auto;
+    min-inline-size: 0;
+  }
+
+  .micro-chain-seg {
+    flex: 1 1 1.5rem;
+    min-inline-size: 0.75rem;
+    block-size: var(--rule);
+    background: var(--hair);
+  }
+
+  .micro-chain-label {
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+    flex: none;
+  }
+
+  .micro-chain-node {
+    inline-size: 5px;
+    block-size: 5px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex: none;
+  }
+
+  /* The active station is fenced by the rule it interrupts. */
+  .micro-chain > li[data-active] .micro-chain-label {
+    color: var(--sig);
+    border: var(--rule) solid var(--sig);
+    border-radius: 999px;
+    padding: 0.28em 0.7em;
+  }
+
+  .micro-chain > li[data-active] .micro-chain-node {
+    background: var(--sig);
+  }
+
+  /* The run terminates rather than stopping: a triangle on the last node. */
+  .micro-chain > li:last-child .micro-chain-node {
+    inline-size: 0;
+    block-size: 0;
+    border-radius: 0;
+    background: none;
+    border-block: 4px solid transparent;
+    border-inline-start: 7px solid var(--muted);
+  }
+
+  @media (max-width: 46rem) {
+    .micro-chain > li {
+      flex: 1 1 100%;
+    }
+  }
+</style>

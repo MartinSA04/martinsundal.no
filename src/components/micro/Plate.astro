@@ -149,9 +149,9 @@ const hasHead = Boolean(id || title || figure);
     padding: var(--plate-pad);
   }
 
-  .micro-plate[data-variant="framed"] .micro-plate-body {
-    border: var(--rule) solid var(--hair);
-  }
+  /* No framed variant any more. A rectangle drawn round content is a box,
+     not a mark — the corner registration alone says "this is a plate", which
+     is what the reference sheets actually do. */
 
   /* Corner marks overhang the frame by a pixel so they read as registration
      crosses sitting on the boundary, not as a thicker corner of the box. */

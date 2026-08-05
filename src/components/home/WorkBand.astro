@@ -9,7 +9,7 @@
  */
 import Plate from "../micro/Plate.astro";
 import Mark from "../micro/Mark.astro";
-import Node from "../micro/Node.astro";
+import Chain from "../micro/Chain.astro";
 import Fan from "../micro/Fan.astro";
 import Tag from "../micro/Tag.astro";
 import Readout from "../micro/Readout.astro";
@@ -110,20 +110,7 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
           <Fan rays={19} spread={132} accentEvery={9} size={132} />
         </div>
 
-        <ol class="flow">
-          {
-            stages.map((stage, i) => (
-              <li>
-                <Node
-                  label={stage}
-                  glyph={String(i + 1)}
-                  active={i === 1}
-                  size={16}
-                />
-              </li>
-            ))
-          }
-        </ol>
+        <Chain items={stages} active={1} />
       </div>
     </div>
   </div>
@@ -192,74 +179,6 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
     border-top: var(--rule) solid var(--hair);
     border-right: var(--rule) solid var(--hair);
     line-height: 1;
-  }
-
-  /* The stage chain reads left to right with a hairline running between the
-     nodes, which is what makes it a flow rather than a list of words. */
-  /* The spray is a graphic join, not a spacer: it overlaps the gap between
-     the poster and the chain so the two read as connected. */
-  /* The fan hangs from the axis rather than sitting under it: the Fan's hub
-     is at the top of its own box, so aligning the box top to the rule puts
-     the hub exactly on the line. */
-  .spray {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    margin-block: var(--space-3) 0;
-    block-size: 132px;
-    color: var(--hair);
-  }
-
-  .spray-axis {
-    position: absolute;
-    inset-inline: 0;
-    top: 0;
-    display: flex;
-    align-items: center;
-  }
-
-  .spray-rule {
-    flex: 1;
-    block-size: var(--rule);
-    background: var(--hair);
-  }
-
-  .spray-cap {
-    inline-size: 5px;
-    block-size: 5px;
-    border: var(--rule) solid var(--hair);
-    border-radius: 50%;
-    flex: none;
-  }
-
-  /* The rays fade as they reach the stations, so the fan reads as spreading
-     onto the chain instead of stopping at an arbitrary line. */
-  .spray :global(.micro-fan) {
-    position: relative;
-    mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
-  }
-
-  .flow {
-    list-style: none;
-    margin: var(--space-3) 0 0;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0 var(--space-2);
-  }
-
-  .flow li {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-
-  .flow li:not(:last-child)::after {
-    content: "";
-    inline-size: var(--space-3);
-    block-size: var(--rule);
-    background: var(--hair);
   }
 
   .cta {

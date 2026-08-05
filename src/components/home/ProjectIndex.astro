@@ -84,17 +84,19 @@ const FIGURES = {
                     tokens, so five rows read as five identities rather than
                     five strips. Two projects have a real image and it fills
                     the plate; the rest get the world's texture. */}
-                <span class="plate" data-motif={entry.id} aria-hidden="true">
-                  {p.image ? (
-                    <img
-                      src={p.image.src}
-                      alt=""
-                      width={p.image.width}
-                      height={p.image.height}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  ) : null}
+                <span class="shot" aria-hidden="true">
+                  <span class="plate" data-motif={entry.id}>
+                    {p.image ? (
+                      <img
+                        src={p.image.src}
+                        alt=""
+                        width={p.image.width}
+                        height={p.image.height}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : null}
+                  </span>
                 </span>
 
                 {/* Wrapped, not classed. A class handed to a component lands
@@ -294,13 +296,47 @@ const FIGURES = {
     aspect-ratio: 16 / 10;
     overflow: hidden;
     background: var(--w-sub);
-    border: var(--rule) solid var(--hair);
+  }
+
+  /* Corner registration lives on a wrapper, because .plate's own ::before is
+     the world motif and its overflow:hidden is what keeps the glider on its
+     grid. Two marks, not four, so the thumbnail is registered rather than
+     boxed. */
+  .shot {
+    position: relative;
+    display: block;
+    flex: none;
+  }
+
+  .shot::before,
+  .shot::after {
+    content: "";
+    position: absolute;
+    inline-size: 10px;
+    block-size: 10px;
+    border: 0 solid var(--hair);
     transition: border-color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .row:hover .plate,
-  .row:focus-visible .plate {
-    border-color: var(--w-hair);
+  .shot::before {
+    top: -4px;
+    left: -4px;
+    border-top-width: var(--rule);
+    border-left-width: var(--rule);
+  }
+
+  .shot::after {
+    bottom: -4px;
+    right: -4px;
+    border-bottom-width: var(--rule);
+    border-right-width: var(--rule);
+  }
+
+  .row:hover .shot::before,
+  .row:hover .shot::after,
+  .row:focus-visible .shot::before,
+  .row:focus-visible .shot::after {
+    border-color: var(--w-sig);
   }
 
   .plate img {
@@ -430,11 +466,14 @@ const FIGURES = {
     }
     /* The plate keeps its box, but stops competing with the name on a narrow
        screen. */
-    .plate {
+    .shot {
       grid-column: 2;
       width: 100%;
       max-width: 11rem;
       margin-top: var(--space-1);
+    }
+    .plate {
+      width: 100%;
     }
   }
 </style>

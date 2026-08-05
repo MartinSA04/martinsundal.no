@@ -18,11 +18,10 @@ import { parsePlan, step, countLive } from "../../lib/life.ts";
 import Plate from "../micro/Plate.astro";
 import Dial from "../micro/Dial.astro";
 import Trace from "../micro/Trace.astro";
-import Tag from "../micro/Tag.astro";
 import Readout from "../micro/Readout.astro";
 import Ruler from "../micro/Ruler.astro";
 import Node from "../micro/Node.astro";
-import Figure from "../micro/Figure.astro";
+import Racetrack from "../micro/Racetrack.astro";
 import SpecBlock from "../micro/SpecBlock.astro";
 
 const planPath = fileURLToPath(
@@ -142,14 +141,18 @@ const BOARD = `${plan.width}×${plan.height}`;
         </div>
 
         {
-          /* The settle annunciator, drawn as the references draw a status
-            bar: a solid capsule with the label set into it, rather than
-            another line of hairline type. It is the one filled mass in the
-            hero, so the board reaching a still life actually registers. */
+          /* The settle state is a track cut to its own word, with the run's
+            readouts leaving the outline on leaders — the container and its
+            labels are one object, so nothing here is a caption sitting near
+            a badge. */
         }
         <span class="instruments-state" data-life-state>
-          <Figure name="capsule" size={52} signal />
-          <Tag signal>Settled</Tag>
+          <Racetrack
+            label="Settled"
+            top={`Gen ${settledGen}`}
+            bottom={BOARD}
+            signal
+          />
         </span>
       </div>
     </Plate>
@@ -228,7 +231,6 @@ const BOARD = `${plan.width}×${plan.height}`;
     width: 100%;
     aspect-ratio: 4;
     overflow: hidden;
-    border-inline: var(--rule) solid var(--hair);
     mask-image: linear-gradient(
       to bottom,
       transparent 0%,
