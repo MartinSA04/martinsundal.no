@@ -1,0 +1,129 @@
+---
+import Base from "../layouts/Base.astro";
+import Breadcrumbs from "../components/seo/Breadcrumbs.astro";
+import Rule from "../components/micro/Rule.astro";
+import SpecBlock from "../components/micro/SpecBlock.astro";
+import VideoFacade from "../components/work/VideoFacade.astro";
+import LineSchematic from "../components/work/LineSchematic.astro";
+import { workGraph, workTrail, SITE } from "../lib/jsonld.ts";
+import "../worlds/work.css";
+
+/**
+ * CONFIDENTIALITY: this page is built only from material Aker Solutions has
+ * already published — their Verdal production site page and the captions in
+ * their own highlights video. Nothing here comes from internal repositories,
+ * scan data, or tooling. The "10x faster" and "opened 2024" claims that appear
+ * in search results are deliberately absent: neither is on Aker's own page.
+ */
+const AKER_PAGE =
+  "https://www.akersolutions.com/what-we-do/renewable-energy-solutions/aquaculture/verdal-production-site/";
+
+const video = {
+  name: "Verdal Production Line highlights",
+  description:
+    "Aker Solutions' published highlights from the Verdal Production Line: robotic welding, sandblasting, painting, and assembly of steel structures.",
+  thumbnailUrl: `${SITE}/vpl/poster.avif`,
+  // From the last-modified header on Aker's own CDN copy.
+  uploadDate: "2025-08-18",
+  duration: "PT1M9S",
+  contentUrl: `${SITE}/vpl/highlights.mp4`,
+};
+
+const title = "Work | Martin Sundal Aspås";
+const description =
+  "Robotics and industrial software at Aker Solutions, with the robotised Verdal Production Line as the flagship: welding automation, scanning, and robot control.";
+---
+
+<Base
+  title={title}
+  description={description}
+  canonicalPath="/work/"
+  ogImage={`${SITE}/og/work.png`}
+  graph={workGraph(video)}>
+  <article data-world="work">
+    <div class="wrap">
+      <Breadcrumbs trail={workTrail()} />
+
+      <Rule label="Idx_01 / Aker Solutions · Verdal" variant="hazard" />
+
+      <h1>Software for a robotised production line</h1>
+
+      <p class="lede">
+        I work on the robotics and industrial software behind the Verdal
+        Production Line, where steel structures are welded, blasted and painted
+        by robots rather than by hand.
+      </p>
+
+      <div class="video-block">
+        <VideoFacade
+          poster="/vpl/poster.avif"
+          webm="/vpl/highlights.webm"
+          mp4="/vpl/highlights.mp4"
+          width={1280}
+          height={720}
+          label="Play the Verdal Production Line highlights video"
+          posterAlt="A robot arm working on a steel structure inside the Verdal Production Line hall"
+        />
+        <p class="credit">
+          <span class="micro-label">Video © Aker Solutions</span>
+          <a href={AKER_PAGE} rel="noopener">Verdal production site &rarr;</a>
+        </p>
+      </div>
+
+      <h2>What the line does</h2>
+      <p>
+        Aker Solutions describes the line as handling every stage of
+        manufacturing, from cutting and welding through surface treatment and
+        coating to mechanical completion, with robots scanning components and
+        building 3D models of them before production starts.
+      </p>
+
+      <LineSchematic />
+
+      <h2>The engineering side</h2>
+      <p>
+        A robotised line is only as good as the software steering it. Geometry
+        has to survive the trip from model to scan to robot program, motion has
+        to be planned around a structure that is never quite where the drawing
+        says it is, and everything the line does has to come back as data you
+        can act on.
+      </p>
+
+      <div class="role">
+        <SpecBlock
+          rows={[
+            { label: "Robotics", value: "Robot control and motion for welding cells" },
+            { label: "Scanning", value: "Geometry capture feeding the robot programs" },
+          ]}
+        />
+        <SpecBlock
+          rows={[
+            { label: "Industrial data", value: "Process data off the line, made usable" },
+            { label: "Architecture", value: "How the pieces stay reliable together" },
+          ]}
+        />
+      </div>
+
+      <h2>Published figures</h2>
+      <dl class="facts">
+        <div class="fact">
+          <dt>Capacity</dt>
+          <dd>Up to one closed cage floater per week</dd>
+        </div>
+        <div class="fact">
+          <dt>Automated</dt>
+          <dd>Welding, sandblasting, painting</dd>
+        </div>
+        <div class="fact">
+          <dt>Before production</dt>
+          <dd>Robots scan and build 3D models</dd>
+        </div>
+      </dl>
+      <p>
+        Those are Aker's own published numbers, and they are the only ones on
+        this page. Everything else about how the line runs is theirs to publish,
+        not mine.
+      </p>
+    </div>
+  </article>
+</Base>

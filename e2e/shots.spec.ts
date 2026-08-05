@@ -11,6 +11,12 @@ import { mkdirSync } from "node:fs";
 
 const PAGES: [name: string, path: string][] = [
   ["home", "/"],
+  ["work", "/work/"],
+  ["study-companion", "/projects/study-companion/"],
+  ["ntnu-api", "/projects/ntnu-api/"],
+  ["cipherbound", "/projects/cipherbound/"],
+  ["black-hole", "/projects/black-hole/"],
+  ["game-of-life", "/projects/game-of-life/"],
   ["kitchen-sink", "/kitchen-sink/"],
 ];
 

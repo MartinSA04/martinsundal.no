@@ -1,0 +1,96 @@
+/* World: industrial. Graphite substrate, safety yellow signal. */
+[data-world="work"] {
+  --sub: #16181b;
+  --ink: #eceef0;
+  --hair: #3c4046;
+  --muted: #a2a8b0;
+  --sig: #f2c200;
+
+  background: var(--sub);
+  color: var(--ink);
+  display: block;
+  padding-block: var(--space-5) var(--space-7);
+}
+
+[data-world="work"] .crumbs {
+  margin-bottom: var(--space-3);
+}
+
+[data-world="work"] .facts + p {
+  margin-top: var(--space-4);
+}
+
+[data-world="work"] h1 {
+  font-size: var(--step-4);
+  letter-spacing: -0.03em;
+  margin-block: var(--space-3) var(--space-2);
+  max-width: 16ch;
+}
+
+[data-world="work"] h2 {
+  font-size: var(--step-2);
+  margin-block: var(--space-5) var(--space-2);
+}
+
+[data-world="work"] .lede {
+  font-size: var(--step-1);
+  line-height: 1.45;
+  max-width: 52ch;
+  color: var(--ink);
+}
+
+[data-world="work"] p {
+  max-width: 62ch;
+  color: var(--muted);
+}
+
+[data-world="work"] .video-block {
+  margin-block: var(--space-5);
+}
+
+[data-world="work"] .credit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem var(--space-2);
+  align-items: baseline;
+  margin-top: var(--space-2);
+}
+
+[data-world="work"] .credit a {
+  color: var(--sig);
+  text-decoration-color: color-mix(in oklab, var(--sig) 50%, transparent);
+}
+
+[data-world="work"] .facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+[data-world="work"] .fact {
+  border-top: 2px solid var(--sig);
+  padding-top: var(--space-2);
+}
+
+[data-world="work"] .fact dt {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+[data-world="work"] .fact dd {
+  margin: 0;
+  font-size: var(--step-1);
+  line-height: 1.25;
+}
+
+[data-world="work"] .role {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+}

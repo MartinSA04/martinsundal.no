@@ -1,0 +1,125 @@
+---
+/**
+ * Click-to-load video. The poster is the only thing fetched on page load; the
+ * <video> element is not created until activation, so the page transfers zero
+ * video bytes unless someone asks for it. e2e/work.spec.ts asserts that.
+ */
+interface Props {
+  poster: string;
+  webm: string;
+  mp4: string;
+  width: number;
+  height: number;
+  label: string;
+  posterAlt: string;
+}
+
+const { poster, webm, mp4, width, height, label, posterAlt } = Astro.props;
+---
+
+<div
+  class="facade"
+  data-video-facade
+  data-webm={webm}
+  data-mp4={mp4}
+  style={`--ratio:${width} / ${height}`}>
+  <button type="button" aria-label={label}>
+    <img
+      src={poster}
+      alt={posterAlt}
+      width={width}
+      height={height}
+      decoding="async"
+    />
+    <span class="play" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+        <path d="M8 5v14l11-7z"></path>
+      </svg>
+      <span class="micro-label">Play · 1:09</span>
+    </span>
+  </button>
+</div>
+
+<style>
+  .facade {
+    position: relative;
+    aspect-ratio: var(--ratio);
+    border: var(--rule) solid var(--hair);
+    background: var(--sub);
+  }
+
+  button {
+    all: unset;
+    display: block;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  img,
+  :global([data-video-facade] video) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .play {
+    position: absolute;
+    left: var(--space-2);
+    bottom: var(--space-2);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.9rem;
+    background: color-mix(in srgb, var(--sub) 82%, transparent);
+    backdrop-filter: blur(6px);
+    border: var(--rule) solid var(--hair);
+    color: var(--ink);
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  button:hover .play,
+  button:focus-visible .play {
+    border-color: var(--sig);
+    color: var(--sig);
+  }
+
+  button:focus-visible {
+    outline: 2px solid var(--sig);
+    outline-offset: 3px;
+  }
+</style>
+
+<script>
+  for (const facade of document.querySelectorAll<HTMLElement>("[data-video-facade]")) {
+    const button = facade.querySelector("button");
+    button?.addEventListener(
+      "click",
+      () => {
+        const video = document.createElement("video");
+        video.controls = true;
+        video.autoplay = true;
+        video.playsInline = true;
+        video.preload = "metadata";
+
+        // webm (AV1) first; the mp4 is the fallback for engines without it.
+        for (const [src, type] of [
+          [facade.dataset.webm, "video/webm"],
+          [facade.dataset.mp4, "video/mp4"],
+        ] as const) {
+          if (!src) continue;
+          const source = document.createElement("source");
+          source.src = src;
+          source.type = type;
+          video.appendChild(source);
+        }
+
+        button.replaceWith(video);
+        video.focus();
+      },
+      { once: true },
+    );
+  }
+</script>
