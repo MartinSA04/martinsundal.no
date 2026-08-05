@@ -1,0 +1,76 @@
+---
+/**
+ * Bracket syntax. The references never print a status bare — it is always
+ * fenced: [ACTIVATED], (ANALOG), <16:9>. The brackets are drawn as pseudo
+ * elements rather than typed, so they letter-space with the content and stay
+ * on the mono baseline instead of drifting with the font's own bracket
+ * metrics.
+ */
+interface Props {
+  variant?: "square" | "round" | "angle" | "none";
+  /** Paints the content and the brackets in --sig. */
+  signal?: boolean;
+  class?: string;
+}
+
+const { variant = "square", signal = false, class: className } = Astro.props;
+---
+
+<span
+  class:list={["micro-tag", className]}
+  data-micro="tag"
+  data-variant={variant}
+  data-signal={signal ? "" : undefined}
+>
+  <slot />
+</span>
+
+<style>
+  .micro-tag {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .micro-tag[data-signal] {
+    color: var(--sig);
+  }
+
+  .micro-tag::before,
+  .micro-tag::after {
+    /* The bracket pair sits a touch off the content so the fence reads as a
+       container rather than as two more glyphs in the word. */
+    opacity: 0.75;
+  }
+
+  .micro-tag[data-variant="square"]::before {
+    content: "[";
+    padding-inline-end: 0.35em;
+  }
+  .micro-tag[data-variant="square"]::after {
+    content: "]";
+    padding-inline-start: 0.2em;
+  }
+
+  .micro-tag[data-variant="round"]::before {
+    content: "(";
+    padding-inline-end: 0.35em;
+  }
+  .micro-tag[data-variant="round"]::after {
+    content: ")";
+    padding-inline-start: 0.2em;
+  }
+
+  .micro-tag[data-variant="angle"]::before {
+    content: "\003c";
+    padding-inline-end: 0.35em;
+  }
+  .micro-tag[data-variant="angle"]::after {
+    content: "\003e";
+    padding-inline-start: 0.2em;
+  }
+</style>

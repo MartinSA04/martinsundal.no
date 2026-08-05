@@ -1,7 +1,7 @@
 ---
 /**
  * The kit's only pictorial primitive. Everything else here is a rule, a box or
- * a strip; these are the five marks that genuinely need a path.
+ * a strip; these are the four marks that genuinely need a path.
  *
  * Authored on a 24-unit grid at stroke-width 1.5, so at the default 16px a
  * stroke lands on 1px and matches --rule. Painted in currentColor only: an
@@ -9,12 +9,7 @@
  * the same contract every other primitive keeps with the four tokens.
  */
 interface Props {
-  name:
-    | "arrow-right"
-    | "caret-down"
-    | "theme-light"
-    | "theme-dark"
-    | "theme-deep-space";
+  name: "arrow-right" | "caret-down" | "theme-light" | "theme-dark";
   /** px, applied to both axes. */
   size?: number;
   class?: string;
@@ -60,17 +55,6 @@ const { name, size = 16, class: className } = Astro.props;
       agree at 16px and they do not. */
     name === "theme-dark" && (
       <path d="M20 14.5A9 9 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" />
-    )
-  }
-  {
-    /* The theme is named after the black hole world; the mark echoes it. A
-      filled disc, not an outlined one: a ring around a ring is an eye, which
-      is what the first version of this read as. */
-    name === "theme-deep-space" && (
-      <>
-        <ellipse cx="12" cy="12" rx="10" ry="3" />
-        <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
-      </>
     )
   }
 </svg>

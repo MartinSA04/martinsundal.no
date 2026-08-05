@@ -1,0 +1,162 @@
+---
+/**
+ * Arc gauge — the most identifiable shape in the references, and the hero's
+ * generation counter.
+ *
+ * Deliberately NOT a gauge library. svg-gauge, JustGage and gaugestan all
+ * construct their SVG in the browser, which leaves an empty box when script
+ * is off and costs a layout pass when it is on. This uses the standard
+ * progress-ring technique instead: stroke-dasharray is the circle's
+ * circumference and stroke-dashoffset walks the stroke back.
+ *
+ * r = 15.9155 is chosen so 2*PI*r == 100.00, which makes the offset the
+ * percentage directly — no circumference arithmetic at runtime, and the
+ * value can be driven by writing a single attribute.
+ *
+ * The arc renders at its true value server-side, so the dial is correct
+ * before any script runs and never animates up from a false zero.
+ */
+import Tag from "./Tag.astro";
+
+interface Props {
+  value: number;
+  max: number;
+  /** Small caps caption under the numeral. */
+  label?: string;
+  /** Replaces the numeral once the value is final, e.g. SETTLED. */
+  state?: string;
+  /** Addressable by script: data-dial="<key>" on the root. */
+  key?: string;
+  /** px. */
+  size?: number;
+  class?: string;
+}
+
+const {
+  value,
+  max,
+  label,
+  state,
+  key,
+  size = 104,
+  class: className,
+} = Astro.props;
+
+const R = 15.9155; /* circumference == 100 */
+const pct = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
+const offset = 100 - pct;
+---
+
+<div
+  class:list={["micro-dial", className]}
+  data-micro="dial"
+  data-dial={key}
+  style={`--dial-size:${size}px`}
+>
+  <svg viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+    <circle class="micro-dial-track" cx="20" cy="20" r={R}></circle>
+    <circle
+      class="micro-dial-arc"
+      cx="20"
+      cy="20"
+      r={R}
+      stroke-dasharray="100"
+      stroke-dashoffset={offset}
+      data-dial-arc></circle>
+  </svg>
+
+  <span class="micro-dial-readout">
+    <span class="micro-dial-value" data-dial-value>
+      {String(value).padStart(3, "0")}
+    </span>
+    {
+      label && (
+        <span class="micro-dial-label micro-label" data-dial-label>
+          {label}
+        </span>
+      )
+    }
+  </span>
+
+  {
+    state && (
+      <span class="micro-dial-state" data-dial-state hidden>
+        <Tag signal>{state}</Tag>
+      </span>
+    )
+  }
+</div>
+
+<style>
+  .micro-dial {
+    position: relative;
+    inline-size: var(--dial-size);
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+
+  .micro-dial svg {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    /* Start the arc at twelve o'clock rather than three. */
+    rotate: -90deg;
+  }
+
+  .micro-dial circle {
+    fill: none;
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .micro-dial-track {
+    stroke: var(--hair);
+  }
+
+  .micro-dial-arc {
+    stroke: var(--sig);
+    /* Only the offset transitions, and only when the visitor allows motion. */
+    transition: stroke-dashoffset 180ms linear;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .micro-dial-arc {
+      transition: none;
+    }
+  }
+
+  /* Stacked and centred as one unit rather than pinning the caption to the
+     bottom edge, where it landed on the ring's own stroke. */
+  .micro-dial-readout {
+    display: grid;
+    justify-items: center;
+    gap: 0.25em;
+    line-height: 1;
+  }
+
+  .micro-dial-value {
+    font-family: var(--font-mono);
+    font-size: var(--step-1);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    color: var(--ink);
+  }
+
+  .micro-dial-label {
+    font-size: var(--step--2);
+    line-height: 1;
+  }
+
+  .micro-dial-state {
+    position: absolute;
+    bottom: 0.55em;
+  }
+
+  .micro-dial-state[hidden] {
+    display: none;
+  }
+</style>

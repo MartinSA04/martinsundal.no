@@ -20,7 +20,7 @@ const PAGES: [name: string, path: string][] = [
   ["kitchen-sink", "/kitchen-sink/"],
 ];
 
-const THEMES = ["light", "dark", "deep-space"] as const;
+const THEMES = ["light", "dark"] as const;
 
 test.skip(process.env.SHOTS !== "1", "set SHOTS=1 to capture");
 

@@ -1,0 +1,85 @@
+---
+/**
+ * The composite section header, and the direct replacement for a bare
+ * "IDX_02 / PROJECTS" over a hairline.
+ *
+ * In the references a heading is never one element: it is a ringed numeral,
+ * the name, a rule that runs out to the margin, and a row of ticks closing
+ * it off. Assembling that here means every section gets the full mark
+ * instead of each call site rebuilding a partial one.
+ */
+import Numeral from "./Numeral.astro";
+
+interface Props {
+  n: number;
+  label: string;
+  /** Printed at the far right of the rule, e.g. a count or a status. */
+  note?: string;
+  class?: string;
+}
+
+const { n, label, note, class: className } = Astro.props;
+
+/* A short run of ticks that steps down in height, closing the rule the way
+   the reference sheets close theirs. */
+const ticks = [10, 7, 5, 4, 3];
+---
+
+<div class:list={["micro-mark", className]} data-micro="mark">
+  <Numeral n={n} ring />
+  <span class="micro-mark-label">{label}</span>
+  <span class="micro-mark-rule" aria-hidden="true"></span>
+  {note && <span class="micro-mark-note micro-label">{note}</span>}
+  <span class="micro-mark-ticks" aria-hidden="true">
+    {ticks.map((h) => <i style={`--h:${h}px`} />)}
+  </span>
+</div>
+
+<style>
+  .micro-mark {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block-end: var(--space-3);
+  }
+
+  .micro-mark-label {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  .micro-mark-rule {
+    flex: 1;
+    block-size: var(--rule);
+    background: var(--hair);
+    min-inline-size: var(--space-3);
+  }
+
+  .micro-mark-note {
+    white-space: nowrap;
+  }
+
+  .micro-mark-ticks {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    block-size: 10px;
+    flex: none;
+  }
+
+  .micro-mark-ticks > i {
+    inline-size: var(--rule);
+    block-size: var(--h);
+    background: var(--hair);
+  }
+
+  @media (max-width: 46rem) {
+    .micro-mark-note {
+      display: none;
+    }
+  }
+</style>

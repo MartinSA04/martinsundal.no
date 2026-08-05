@@ -10,7 +10,7 @@ const PAGES = [
   "/projects/game-of-life/",
 ];
 
-const THEMES = ["light", "dark", "deep-space"] as const;
+const THEMES = ["light", "dark"] as const;
 
 /**
  * Measures the worst contrast among the page's real text, in the browser,

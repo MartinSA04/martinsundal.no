@@ -83,7 +83,6 @@ test("every icon renders as an svg that inherits currentColor", async ({
     "caret-down",
     "theme-light",
     "theme-dark",
-    "theme-deep-space",
   ]) {
     expect(names).toContain(name);
   }

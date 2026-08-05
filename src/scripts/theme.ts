@@ -1,20 +1,25 @@
 /**
- * Three-state theme cycle. The *initial* theme is applied by a blocking
+ * Two-state theme toggle. The *initial* theme is applied by a blocking
  * inline script in Base.astro before first paint — this module only handles
  * the toggle afterwards, so it can be deferred safely.
  */
 
-export const THEMES = ["light", "dark", "deep-space"] as const;
+export const THEMES = ["light", "dark"] as const;
 export type Theme = (typeof THEMES)[number];
 
 export const STORAGE_KEY = "msa-theme";
 
 const LABELS: Record<Theme, string> = {
   light: "Theme: light. Switch to dark.",
-  dark: "Theme: dark. Switch to deep space.",
-  "deep-space": "Theme: deep space. Switch to light.",
+  dark: "Theme: dark. Switch to light.",
 };
 
+/**
+ * Anything unrecognised resolves to light. This is what retires a theme: a
+ * visitor still holding the removed `deep-space` in localStorage lands on
+ * light and has the key rewritten on their first toggle, with no migration
+ * code. The inline boot script validates against this same list.
+ */
 function current(): Theme {
   const attr = document.documentElement.dataset.theme;
   return (THEMES as readonly string[]).includes(attr ?? "")
@@ -38,7 +43,6 @@ export function initTheme(): void {
   if (!toggle) return;
 
   toggle.addEventListener("click", () => {
-    const next = THEMES[(THEMES.indexOf(current()) + 1) % THEMES.length]!;
-    apply(next, toggle);
+    apply(current() === "light" ? "dark" : "light", toggle);
   });
 }

@@ -6,7 +6,7 @@ test("defaults to light with no stored preference", async ({ page }) => {
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
-test("cycles light -> dark -> deep-space -> light", async ({ page }) => {
+test("toggles light -> dark -> light", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto("/");
   const html = page.locator("html");
@@ -14,9 +14,25 @@ test("cycles light -> dark -> deep-space -> light", async ({ page }) => {
   await toggle.click();
   await expect(html).toHaveAttribute("data-theme", "dark");
   await toggle.click();
-  await expect(html).toHaveAttribute("data-theme", "deep-space");
-  await toggle.click();
   await expect(html).toHaveAttribute("data-theme", "light");
+});
+
+/* A visitor who used the site before deep-space was removed still has it in
+   localStorage. Both the blocking boot script and theme.ts validate against
+   the THEMES list, so the stale value resolves to light instead of leaving
+   the page on an undefined substrate. */
+test("falls back to light for a retired stored theme", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.addInitScript(() =>
+    localStorage.setItem("msa-theme", "deep-space"),
+  );
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+
+  await page.locator("#theme-toggle").click();
+  expect(await page.evaluate(() => localStorage.getItem("msa-theme"))).toBe(
+    "dark",
+  );
 });
 
 test("persists the choice under the msa-theme key", async ({ page }) => {
@@ -78,8 +94,6 @@ test("the toggle shows the active theme's own mark", async ({ page }) => {
   expect(await shown()).toEqual(["theme-light"]);
   await page.locator("#theme-toggle").click();
   expect(await shown()).toEqual(["theme-dark"]);
-  await page.locator("#theme-toggle").click();
-  expect(await shown()).toEqual(["theme-deep-space"]);
   await page.locator("#theme-toggle").click();
   expect(await shown()).toEqual(["theme-light"]);
 });
