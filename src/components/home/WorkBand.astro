@@ -9,7 +9,6 @@
  */
 import Mark from "../micro/Mark.astro";
 import Chain from "../micro/Chain.astro";
-import Pill from "../micro/Pill.astro";
 import Tag from "../micro/Tag.astro";
 import Readout from "../micro/Readout.astro";
 import Icon from "../micro/Icon.astro";
@@ -36,17 +35,10 @@ const stages = ["Cutting", "Welding", "Surface", "Coating", "Completion"];
           </span>
         </div>
 
-        {
-          /* The pills sit in the lowercase band on the sentence's own
-            baseline, so the statuses are set into the copy rather than
-            captioned beside it. */
-        }
         <p class="body">
           I work on the robotics and industrial software behind the Verdal
-          Production Line — a <Pill>robotised</Pill> line that welds, blasts and paints
-          steel structures, and scans components into <Pill signal
-            >3D models</Pill
-          > before they are built.
+          Production Line, a robotised line that welds, blasts and paints steel
+          structures, and scans components into 3D models before they are built.
         </p>
 
         <Readout

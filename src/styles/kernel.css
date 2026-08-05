@@ -95,7 +95,9 @@
   --sub: #0b0b0c;
   --ink: #f4f1ea;
   --sig: #e2703a;
-  --life-cell: #7af595;
+  /* The board is the page's own ink, not a phosphor colour. The signal is
+     the only chroma on the site and it is spent on state, not on cells. */
+  --life-cell: #f4f1ea;
 }
 
 /* --- reset ---------------------------------------------------------------- */

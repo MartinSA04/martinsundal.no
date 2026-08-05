@@ -24,10 +24,10 @@ const { projects } = Astro.props;
    the renderer, and a live glider on its own grid for the automaton. */
 const FIGURES = {
   "study-companion": "concentric",
-  "ntnu-api": "spoke",
+  "ntnu-api": "starburst",
   cipherbound: "quadrant",
   "black-hole": "eclipse",
-  "game-of-life": "grid",
+  "game-of-life": "target",
 } as const;
 ---
 
@@ -53,17 +53,18 @@ const FIGURES = {
           return (
             <li class="project-card card" style={style}>
               <a class="row" href={`/projects/${entry.id}/`}>
-                <span class="gutter" aria-hidden="true">
-                  <span class="n">{String(p.index).padStart(2, "0")}</span>
-                  <span class="motif">
+                <span class="body">
+                  {/* The mark is the figure and its number as one object, and
+                      it floats in the copy rather than standing in a column
+                      beside it. The name and the sentence are displaced by the
+                      circle; remove it and the whole block re-rags. */}
+                  <span class="motif" aria-hidden="true">
                     <Figure
                       name={FIGURES[entry.id as keyof typeof FIGURES]}
-                      size={92}
+                      size={132}
                     />
+                    <span class="n">{String(p.index).padStart(2, "0")}</span>
                   </span>
-                </span>
-
-                <span class="body">
                   {/* The name, its rule and its stack are one object. The
                       wrapper is max-content, so the rule can only ever be the
                       name's width. */}
@@ -125,7 +126,7 @@ const FIGURES = {
 
   .row {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: center;
     gap: var(--space-3);
     padding-block: var(--space-3);
@@ -168,38 +169,48 @@ const FIGURES = {
 
   /* A structural column: the figure is 92px and the column is sized to it, so
      the five marks form a load-bearing band down the left of the sheet. */
-  .gutter {
-    display: grid;
-    justify-items: center;
-    gap: 0.5rem;
-    align-self: start;
-    inline-size: 92px;
-  }
-
-  /* The numeral keeps its own box and its own cap correction. Cap tops, not
-     box tops: the cap sits (ascent - cap-height) below each box top, which is
-     a fixed fraction of that element's own font size — measured at 0.157 for
-     Archivo at line-height 1.05 and 0.168 for Plex Mono at line-height 1.
-     e2e/home.spec.ts asserts the result at eight widths. */
+  /* Straddling the ring, in a counter punched from the substrate. Every
+     figure in the set has a busy centre — a filled disc, a hub, a quadrant —
+     so a numeral laid over the middle is unreadable. Setting it on the
+     shoulder gives it a hole of its own and keeps mark and number one
+     object. */
   .n {
+    position: absolute;
+    left: 0;
+    top: 4%;
+    inline-size: 2.1em;
+    block-size: 2.1em;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--sub);
     font-family: var(--font-mono);
-    font-size: var(--step-3);
+    font-size: var(--step-0);
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
     line-height: 1;
-    color: var(--muted);
-    align-self: start;
-    translate: 0 calc(var(--step-2) * 0.157 - var(--step-3) * 0.168);
-    transition: color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    color: var(--ink);
+    transition:
+      color 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+      background 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .row:hover .n,
   .row:focus-visible .n {
+    background: var(--w-sub);
     color: var(--w-sig);
   }
 
+  /* Every figure in this set is drawn inside its own circle, so one circular
+     wrap fits all five and the copy hugs the silhouette rather than a box. */
   .motif {
+    position: relative;
+    float: left;
     display: block;
+    inline-size: 132px;
+    block-size: 132px;
+    shape-outside: circle(50%);
+    shape-margin: 14px;
+    margin-inline-end: 4px;
     color: var(--muted);
     transition: color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
@@ -212,20 +223,27 @@ const FIGURES = {
   /* Top-aligned: the 92px figure makes the gutter the tallest thing in the
      row, so a centred body would sink and the numeral would stop sitting
      beside the name it numbers. */
+  /* Flow, not grid: a float only displaces inline content in normal flow, so
+     a grid here would leave the figure sitting in a cell of its own — which is
+     exactly the row-marker layout this replaces. */
   .body {
-    display: grid;
-    gap: 0.4rem;
     align-self: start;
-    /* A grid item's automatic minimum is its content, so without this the
-       max-content nameplate widens the whole track and the row overflows. */
     min-inline-size: 0;
   }
 
+  .body > * + * {
+    margin-block-start: 0.4rem;
+  }
+
+  /* A grid is a block formatting context, so it will not overlap the float —
+     but only if it is allowed to shrink. Forced to 100% it sits on top of the
+     mark and the name renders over the circle. fit-content both cuts the rule
+     to the name and keeps the block clear of the figure at every width. */
   .nameplate {
     display: grid;
-    inline-size: max-content;
-    max-inline-size: 100%;
     gap: 0.4rem;
+    inline-size: fit-content;
+    max-inline-size: 100%;
   }
 
   .name {
@@ -249,11 +267,12 @@ const FIGURES = {
     display: flex;
     flex-wrap: wrap;
     gap: 0.1rem 0.9rem;
+    padding-top: 0.2rem;
   }
 
   .tagline {
+    display: block;
     color: var(--muted);
-    max-width: 52ch;
     font-size: var(--step-0);
   }
 
@@ -418,39 +437,37 @@ const FIGURES = {
     color: var(--w-sig);
   }
 
-  @media (max-width: 52rem) {
+  @media (max-width: 60rem) {
+    /* The columns follow the new structure: copy, thumbnail, arrow. */
     .row {
-      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) auto;
       gap: var(--space-2) var(--space-3);
     }
     .go {
       display: none;
     }
-    /* Both are --step-2 from here down, so the cap correction collapses to the
-       difference between the two fonts' own constants. */
-    .n {
-      font-size: var(--step-2);
-      translate: 0 calc(var(--step-2) * -0.011);
-    }
-    .gutter {
-      inline-size: 64px;
-    }
-    /* Below this the name is most of the measure, so cutting the rule to it
-       gains nothing and costs a horizontal scrollbar. */
-    .nameplate {
-      inline-size: 100%;
-    }
   }
 
-  @media (max-width: 34rem) {
+  @media (max-width: 46rem) {
+    /* The mark keeps floating — it is the layout — but at a size that still
+       leaves a readable measure beside it on a phone. */
+    .motif {
+      inline-size: 84px;
+      block-size: 84px;
+      shape-margin: 10px;
+    }
+    .n {
+      font-size: var(--step--1);
+    }
     .row {
-      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr);
+      padding-block: var(--space-3);
     }
     .shot {
-      grid-column: 2;
-      width: 100%;
-      max-width: 11rem;
-      margin-top: var(--space-1);
+      justify-self: start;
+      inline-size: 100%;
+      max-inline-size: 13rem;
+      margin-top: var(--space-2);
     }
     .plate {
       width: 100%;

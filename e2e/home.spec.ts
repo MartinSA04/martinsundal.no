@@ -141,51 +141,41 @@ test("the settled word is not clipped by the frame", async ({ page }) => {
 });
 
 /**
- * Screen y of an element's cap top, from font metrics. Comparing bounding
- * boxes cannot see this: `.n` and `.name` start on the same line by
- * construction, so their box tops always agree while the glyphs inside them
- * sit at different heights.
+ * The project mark used to be a numeral in its own column, cap-aligned with
+ * the name beside it, and that alignment was asserted at eight widths. The
+ * numeral now lives inside the figure and the pair floats in the copy, so the
+ * old assertion has no subject. What replaces it is the property the redesign
+ * actually depends on: the figure displaces the text rather than sitting in a
+ * column next to it.
  */
-function capTopDelta() {
-  const probe = document.createElement("canvas").getContext("2d")!;
-  const capTop = (el: Element, sample: string) => {
-    const cs = getComputedStyle(el);
-    probe.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-    const m = probe.measureText(sample);
-    const fontH = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent;
-    const lh =
-      cs.lineHeight === "normal" ? fontH : Number.parseFloat(cs.lineHeight);
-    const box = el.getBoundingClientRect();
-    const baseline =
-      box.top +
-      Number.parseFloat(cs.paddingTop) +
-      (lh - fontH) / 2 +
-      m.fontBoundingBoxAscent;
-    return baseline - m.actualBoundingBoxAscent;
-  };
-  return [...document.querySelectorAll(".project-card .row")].map(
-    (row) =>
-      capTop(row.querySelector(".n")!, "01") -
-      capTop(row.querySelector(".name")!, "S"),
-  );
-}
-
-test("the project index numerals cap-align with their names at every width", async ({
-  page,
-}) => {
-  // The correction is derived from both type steps, and --step-2 and --step-3
-  // clamp at different widths, so one viewport proves nothing. Before it, the
-  // numeral sagged 5.9px to 9.6px depending on where you measured.
-  for (const width of [390, 560, 760, 900, 1100, 1280, 1600, 1920]) {
+test("each project mark displaces its own copy", async ({ page }) => {
+  for (const width of [760, 1100, 1280, 1600]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
-    const deltas = await page.evaluate(capTopDelta);
-    expect(deltas).toHaveLength(5);
-    for (const d of deltas) {
-      expect(
-        Math.abs(d),
-        `cap delta ${d.toFixed(2)}px at ${width}px`,
-      ).toBeLessThan(2);
+
+    const rows = await page.evaluate(() => {
+      return [...document.querySelectorAll(".project-card .row")].map((row) => {
+        const motif = row.querySelector(".motif")!.getBoundingClientRect();
+        const name = row.querySelector(".name")!.getBoundingClientRect();
+        const n = row.querySelector(".n")!.getBoundingClientRect();
+        return {
+          floated: getComputedStyle(row.querySelector(".motif")!).cssFloat,
+          wrapped: getComputedStyle(row.querySelector(".motif")!).shapeOutside,
+          // The name has to start clear of the circle, which is what proves
+          // the copy is being displaced and not merely placed beside it.
+          clears: name.left >= motif.right - 2,
+          // The numeral is part of the mark, so it must stay on it.
+          onMark: n.left >= motif.left - 2 && n.top >= motif.top - 2,
+        };
+      });
+    });
+
+    expect(rows).toHaveLength(5);
+    for (const r of rows) {
+      expect(r.floated, `float at ${width}px`).toBe("left");
+      expect(r.wrapped, `wrap at ${width}px`).toContain("circle");
+      expect(r.clears, `name clears the mark at ${width}px`).toBe(true);
+      expect(r.onMark, `numeral sits on the mark at ${width}px`).toBe(true);
     }
   }
 });

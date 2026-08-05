@@ -22,7 +22,6 @@ import Readout from "../micro/Readout.astro";
 import Ruler from "../micro/Ruler.astro";
 import Racetrack from "../micro/Racetrack.astro";
 import Aperture from "../micro/Aperture.astro";
-import Pill from "../micro/Pill.astro";
 
 const planPath = fileURLToPath(
   new URL("../../../public/martin_plan.txt", import.meta.url),
@@ -144,13 +143,15 @@ const BOARD = `${plan.width}×${plan.height}`;
       paragraph is the shape rather than sitting inside one. */
   }
   <div class="wrap lead-band">
-    <Aperture variant="chamfer" aspect={0.17} cut={0.16} minHalf={0.5}>
+    <Aperture variant="chamfer" aspect={0.2} cut={0.15} minHalf={0.46}>
       <p class="lead">
-        I write software for things that move or compute. That covers <Pill
-          >robotics</Pill
-        > and simulation at Aker Solutions, plus a steady stream of side projects.
-        Alongside it I study <Pill signal>applied physics</Pill> and mathematics at
-        NTNU.
+        I write software for things that move or compute. At Aker Solutions that
+        means the robotics and industrial software behind a production line —
+        robot control, scanning, and the data that has to keep flowing while
+        steel is being welded. Away from it I study applied physics and
+        mathematics at NTNU, and I write the kind of side project that only pays
+        off if you finish it: a game engine, a renderer that bends light, an
+        automaton that spells its own name.
       </p>
     </Aperture>
   </div>
