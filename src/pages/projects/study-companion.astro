@@ -1,0 +1,97 @@
+---
+import { getEntry, render } from "astro:content";
+import ProjectShell from "../../components/project/ProjectShell.astro";
+import "../../worlds/study-companion.css";
+
+const entry = await getEntry("projects", "study-companion");
+if (!entry) throw new Error("missing content: projects/study-companion");
+const { Content } = await render(entry);
+---
+
+<ProjectShell entry={entry} centerpieceLabel="A course.yaml and what it renders">
+  <div slot="centerpiece" class="sc-split" data-sc-split>
+    <div class="sc-pane">
+      <span class="micro-label">content/course.yaml</span>
+      <pre class="sc-yaml"><code><span class="k">code</span>: <span class="s">TFY4104</span>
+<span class="k">title</span>: <span class="s">Fysikk</span>
+<span class="k">accent</span>: <span class="s">"#8a5a2b"</span>
+
+<mark data-sc-src="0"><span class="k">formulas</span>:
+  - <span class="k">id</span>: <span class="s">newton-2</span>
+    <span class="k">tex</span>: <span class="s">"\\vec F = m\\vec a"</span>
+    <span class="k">memorize</span>: <span class="s">true</span></mark>
+
+<mark data-sc-src="1"><span class="k">goals</span>:
+  - <span class="s">Frilegemediagram</span>
+  - <span class="s">Bevegelsesmengde</span>
+  - <span class="s">Energibevaring</span></mark>
+
+<mark data-sc-src="2"><span class="k">exam</span>:
+  <span class="k">date</span>: <span class="s">2026-12-04</span>
+  <span class="k">aids</span>: <span class="s">C</span></mark></code></pre>
+    </div>
+
+    <div class="sc-pane">
+      <span class="micro-label">rendered by the framework</span>
+
+      <div class="sc-widget" data-sc-out="0">
+        <h4>Newtons 2. lov <span class="sc-badge">må pugges</span></h4>
+        {/* Bold upright for vectors: the combining arrow U+20D7 is not in the
+            subset webfont and renders as tofu. */}
+        <div class="sc-formula"><b>F</b> = m<b>a</b></div>
+      </div>
+
+      <div class="sc-widget" data-sc-out="1">
+        <h4>Læringsmål</h4>
+        <ul class="sc-goals">
+          <li>Frilegemediagram</li>
+          <li>Bevegelsesmengde</li>
+          <li>Energibevaring</li>
+        </ul>
+      </div>
+
+      <div class="sc-widget" data-sc-out="2">
+        <h4>Eksamen</h4>
+        <p style="margin:0">4. desember 2026 · hjelpemiddelkode C</p>
+      </div>
+    </div>
+  </div>
+
+  <Content />
+</ProjectShell>
+
+<script>
+  /**
+   * Builds the rendered widgets in source order once the split comes into
+   * view, so the two panes read as cause and effect.
+   *
+   * Keyed to the container, not to each source block: source and output sit
+   * side by side at the same height, so observing the sources individually
+   * just fades things in — and on a short viewport the later ones sit below
+   * the fold and never fire at all.
+   *
+   * Purely additive. Every widget is in the DOM without JS, and reduced
+   * motion shows them all at once.
+   */
+  const split = document.querySelector("[data-sc-split]");
+  const outputs = [...document.querySelectorAll<HTMLElement>("[data-sc-out]")];
+  const showAll = () => outputs.forEach((el) => el.setAttribute("data-shown", ""));
+
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (reduced || !split || !("IntersectionObserver" in window)) {
+    showAll();
+  } else {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        observer.disconnect();
+        outputs.forEach((el, i) => {
+          window.setTimeout(() => el.setAttribute("data-shown", ""), i * 240);
+        });
+      },
+      { threshold: 0.15 },
+    );
+    observer.observe(split);
+  }
+</script>

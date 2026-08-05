@@ -1,0 +1,195 @@
+/* World 02 — terminal. Mono throughout, amber signal, boxed readouts. */
+@import "../styles/project.css";
+
+[data-world="ntnu-api"] :is(h1, h2, h3, .lede, .prose p, .prose li) {
+  font-family: var(--font-mono);
+}
+
+[data-world="ntnu-api"] .head h1 {
+  font-size: var(--step-3);
+  letter-spacing: -0.02em;
+  max-width: 22ch;
+}
+
+[data-world="ntnu-api"] .lede {
+  font-size: var(--step-0);
+  line-height: 1.6;
+  color: var(--sig);
+}
+
+[data-world="ntnu-api"] .prose p,
+[data-world="ntnu-api"] .prose li {
+  font-size: var(--step--1);
+  line-height: 1.75;
+}
+
+[data-world="ntnu-api"] .prose h2::before {
+  content: "// ";
+  color: var(--sig);
+}
+
+/* --- console -------------------------------------------------------------- */
+
+.mcp {
+  border: var(--rule) solid var(--hair);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+}
+
+.mcp-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding: var(--space-2);
+  border-bottom: var(--rule) solid var(--hair);
+}
+
+.mcp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hair);
+  flex: none;
+}
+
+.mcp-dot[data-state="live"] {
+  background: var(--sig);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--sig) 25%, transparent);
+}
+
+.mcp-dot[data-state="error"] {
+  background: #e2483d;
+}
+
+.mcp-presets {
+  display: flex;
+  gap: 0;
+  flex-wrap: wrap;
+  border-bottom: var(--rule) solid var(--hair);
+}
+
+.mcp-presets button {
+  background: none;
+  border: 0;
+  border-right: var(--rule) solid var(--hair);
+  color: var(--ink);
+  font: inherit;
+  letter-spacing: 0.06em;
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.mcp-presets button:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--sig) 14%, transparent);
+  color: var(--sig);
+}
+
+.mcp-presets button[aria-pressed="true"] {
+  background: var(--sig);
+  color: var(--sub);
+}
+
+.mcp-presets button:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.mcp-panes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.mcp-pane {
+  min-width: 0;
+  padding: var(--space-2);
+  max-height: 26rem;
+  overflow: auto;
+}
+
+.mcp-pane + .mcp-pane {
+  border-left: var(--rule) solid var(--hair);
+}
+
+.mcp-pane > .micro-label {
+  display: block;
+  position: sticky;
+  top: 0;
+  background: var(--sub);
+  padding-bottom: 0.4rem;
+  z-index: 1;
+}
+
+.mcp-pane pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: var(--step--2);
+  line-height: 1.6;
+  color: color-mix(in oklab, var(--ink) 78%, var(--sub));
+}
+
+/* Formatted result: a course list rather than raw JSON. */
+.mcp-rows {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.mcp-row {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  gap: var(--space-2);
+  padding-block: 0.35rem;
+  border-bottom: var(--rule) solid var(--hair);
+  align-items: baseline;
+}
+
+.mcp-row code {
+  color: var(--sig);
+}
+
+.mcp-row span {
+  color: color-mix(in oklab, var(--ink) 82%, var(--sub));
+  overflow-wrap: anywhere;
+}
+
+.mcp-bars {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.mcp-barrow {
+  display: grid;
+  grid-template-columns: 3rem 1fr 3.5rem;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.mcp-bar-fill {
+  height: 10px;
+  background: var(--sig);
+  min-width: 1px;
+}
+
+.mcp-bar-track {
+  background: color-mix(in oklab, var(--hair) 60%, transparent);
+}
+
+.mcp-fallback {
+  padding: var(--space-2);
+  border-top: var(--rule) solid var(--hair);
+  color: #ffcf70;
+  background: color-mix(in oklab, #ffcf70 8%, transparent);
+  line-height: 1.6;
+}
+
+@media (max-width: 52rem) {
+  .mcp-panes {
+    grid-template-columns: 1fr;
+  }
+  .mcp-pane + .mcp-pane {
+    border-left: 0;
+    border-top: var(--rule) solid var(--hair);
+  }
+}

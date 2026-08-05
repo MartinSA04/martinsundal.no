@@ -1,0 +1,174 @@
+/* ---------------------------------------------------------------------------
+   Structure shared by every project page. Colour and character come entirely
+   from the world's four tokens; this file only sets rhythm and layout, so a
+   world can override any of it without fighting.
+   --------------------------------------------------------------------------- */
+
+[data-world] {
+  display: block;
+  background: var(--sub);
+  color: var(--ink);
+  padding-block: var(--space-4) var(--space-7);
+  min-height: 70vh;
+}
+
+[data-world] .crumbs {
+  margin-bottom: var(--space-4);
+}
+
+[data-world] .head h1 {
+  font-size: var(--step-4);
+  margin-block: var(--space-3) var(--space-2);
+  max-width: 18ch;
+}
+
+[data-world] .lede {
+  font-size: var(--step-1);
+  line-height: 1.45;
+  max-width: 54ch;
+  color: var(--ink);
+}
+
+[data-world] .centerpiece {
+  margin-block: var(--space-5);
+}
+
+[data-world] .columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+  gap: var(--space-6);
+  align-items: start;
+  margin-top: var(--space-5);
+}
+
+[data-world] .prose > :is(h2, h3) {
+  font-size: var(--step-2);
+  margin-block: var(--space-5) var(--space-2);
+}
+
+[data-world] .prose > :is(h2, h3):first-child {
+  margin-top: 0;
+}
+
+[data-world] .prose p {
+  max-width: 62ch;
+  margin-block: var(--space-2);
+  color: color-mix(in oklab, var(--ink) 82%, var(--sub));
+}
+
+[data-world] .prose strong {
+  color: var(--ink);
+}
+
+[data-world] .prose a {
+  color: var(--sig);
+}
+
+[data-world] .prose code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  border: var(--rule) solid var(--hair);
+  padding: 0.1em 0.35em;
+}
+
+[data-world] .prose pre {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  border: var(--rule) solid var(--hair);
+  padding: var(--space-2);
+  overflow-x: auto;
+  margin-block: var(--space-3);
+}
+
+[data-world] .prose pre code {
+  border: 0;
+  padding: 0;
+}
+
+[data-world] .prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-block: var(--space-3);
+  font-size: var(--step--1);
+}
+
+[data-world] .prose :is(th, td) {
+  text-align: left;
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: var(--rule) solid var(--hair);
+  vertical-align: top;
+}
+
+[data-world] .prose th {
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: var(--step--2);
+  color: var(--muted, currentColor);
+}
+
+[data-world] .prose ul {
+  padding-left: 1.1rem;
+  margin-block: var(--space-2);
+}
+
+[data-world] .prose li {
+  margin-block: 0.35rem;
+  color: color-mix(in oklab, var(--ink) 82%, var(--sub));
+}
+
+/* --- sidebar -------------------------------------------------------------- */
+
+[data-world] .side {
+  position: sticky;
+  top: 5rem;
+  display: grid;
+  gap: var(--space-3);
+}
+
+[data-world] .links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+[data-world] .links a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: 0.7rem;
+  border-bottom: var(--rule) solid var(--hair);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.08em;
+  transition: color 0.15s ease;
+}
+
+[data-world] .links a[data-primary] {
+  color: var(--sig);
+}
+
+[data-world] .links a:hover {
+  color: var(--sig);
+}
+
+[data-world] .award {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  line-height: 1.5;
+  border-left: 2px solid var(--sig);
+  padding-left: var(--space-2);
+  color: var(--ink);
+}
+
+@media (max-width: 56rem) {
+  [data-world] .columns {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+  [data-world] .side {
+    position: static;
+  }
+}

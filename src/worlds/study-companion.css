@@ -1,0 +1,179 @@
+/* World 01 — academic paper. Serif display, wide margins, KaTeX as ornament. */
+@import "../styles/project.css";
+
+[data-world="study-companion"] {
+  --paper-line: color-mix(in oklab, var(--hair) 55%, var(--sub));
+  /* Faint ruled paper, the way a lecture pad is ruled. */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 calc(2rem - 1px),
+    var(--paper-line) calc(2rem - 1px) 2rem
+  );
+  background-position: 0 var(--space-4);
+}
+
+[data-world="study-companion"] :is(h1, h2, h3) {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+
+[data-world="study-companion"] .head h1 {
+  font-size: var(--step-5);
+  line-height: 0.98;
+}
+
+[data-world="study-companion"] .lede {
+  font-family: var(--font-serif);
+  font-size: var(--step-2);
+  line-height: 1.35;
+  font-style: italic;
+}
+
+[data-world="study-companion"] .prose p {
+  font-family: var(--font-serif);
+  font-size: var(--step-1);
+  line-height: 2rem; /* sits on the ruled lines */
+}
+
+[data-world="study-companion"] .prose li {
+  font-family: var(--font-serif);
+  font-size: var(--step-1);
+  line-height: 2rem;
+}
+
+/* --- the centerpiece: data on the left, what it renders on the right ------ */
+
+.sc-split {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+  gap: 0;
+  border: var(--rule) solid var(--hair);
+  background: color-mix(in oklab, var(--ink) 3%, var(--sub));
+}
+
+.sc-pane {
+  padding: var(--space-3);
+  min-width: 0;
+}
+
+.sc-pane + .sc-pane {
+  border-left: var(--rule) solid var(--hair);
+  background: var(--sub);
+}
+
+.sc-pane > .micro-label {
+  display: block;
+  margin-bottom: var(--space-2);
+}
+
+.sc-yaml {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  line-height: 1.7;
+  margin: 0;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.sc-yaml .k {
+  color: var(--sig);
+}
+
+.sc-yaml .s {
+  color: color-mix(in oklab, var(--ink) 70%, var(--sub));
+}
+
+.sc-yaml mark {
+  background: color-mix(in oklab, var(--sig) 18%, transparent);
+  color: inherit;
+  border-radius: 2px;
+}
+
+/* Each rendered widget fades up as its source lines scroll into view. */
+.sc-widget {
+  border: var(--rule) solid var(--hair);
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
+  background: var(--sub);
+  opacity: 0.25;
+  transform: translateY(6px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.sc-widget[data-shown] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-widget {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+.sc-widget h4 {
+  font-family: var(--font-serif);
+  font-size: var(--step-1);
+  font-weight: 400;
+  margin-bottom: 0.35rem;
+}
+
+.sc-formula {
+  font-family: var(--font-serif);
+  font-size: var(--step-2);
+  font-style: italic;
+  text-align: center;
+  padding-block: var(--space-2);
+}
+
+/* Vectors set bold upright, as they are in print. */
+.sc-formula b {
+  font-style: normal;
+  font-weight: 600;
+}
+
+.sc-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: var(--rule) solid var(--sig);
+  color: var(--sig);
+  padding: 0.1rem 0.4rem;
+}
+
+.sc-goals {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-family: var(--font-serif);
+}
+
+.sc-goals li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  padding-block: 0.25rem;
+}
+
+.sc-goals li::before {
+  content: "□";
+  color: var(--sig);
+}
+
+@media (max-width: 46rem) {
+  .sc-split {
+    grid-template-columns: 1fr;
+  }
+  .sc-pane + .sc-pane {
+    border-left: 0;
+    border-top: var(--rule) solid var(--hair);
+  }
+  [data-world="study-companion"] {
+    background-image: none;
+  }
+}
