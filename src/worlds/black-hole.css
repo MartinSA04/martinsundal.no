@@ -1,4 +1,4 @@
-/* World 04 — the void. Thin display serif, readouts floating in space. */
+/* World 04 — the void. Thin display serif, technical annotation over dark. */
 @import "../styles/project.css";
 
 [data-world="black-hole"] {
@@ -31,84 +31,97 @@
   line-height: 1.65;
 }
 
-/* --- the lensing canvas --------------------------------------------------- */
+/* --- the render: the actual artifact, leading --------------------------- */
 
-.bh-stage {
+.bh-render {
   position: relative;
-  aspect-ratio: 16 / 10;
-  background: #000;
   border: var(--rule) solid var(--hair);
-  overflow: hidden;
+  background: #000;
 }
 
-.bh-canvas,
-.bh-fallback {
+.bh-render img {
   width: 100%;
-  height: 100%;
+  height: auto;
   display: block;
-  object-fit: cover;
 }
 
-.bh-canvas {
-  cursor: grab;
-  touch-action: none;
-}
-
-.bh-canvas:active {
-  cursor: grabbing;
-}
-
-.bh-canvas:focus-visible {
-  outline: 2px solid var(--sig);
-  outline-offset: -2px;
-}
-
-/* Readouts sit over the void, the way instrument overlays do. */
-.bh-readouts {
-  position: absolute;
-  inset: auto var(--space-2) var(--space-2) var(--space-2);
+.bh-caption {
   display: flex;
-  gap: var(--space-3);
   flex-wrap: wrap;
-  pointer-events: none;
-}
-
-.bh-readout {
-  display: grid;
-  gap: 0.1rem;
-}
-
-.bh-readout dt {
-  font-family: var(--font-mono);
-  font-size: var(--step--2);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: color-mix(in oklab, var(--ink) 55%, transparent);
-}
-
-.bh-readout dd {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--step--1);
-  color: var(--sig);
-  font-variant-numeric: tabular-nums;
-}
-
-.bh-hint {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  font-family: var(--font-mono);
-  font-size: var(--step--2);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: color-mix(in oklab, var(--ink) 45%, transparent);
-}
-
-.bh-note {
+  gap: 0.5rem var(--space-3);
   margin-top: var(--space-2);
   font-family: var(--font-mono);
   font-size: var(--step--2);
-  letter-spacing: 0.08em;
-  color: color-mix(in oklab, var(--ink) 50%, var(--sub));
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--ink) 52%, var(--sub));
+}
+
+/* --- the diagram: how the rays get there --------------------------------- */
+
+.bh-diagram {
+  margin-top: var(--space-6);
+  border-top: var(--rule) solid var(--hair);
+  padding-top: var(--space-3);
+}
+
+.bh-diagram-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: baseline;
+  margin-bottom: var(--space-2);
+}
+
+.bh-diagram figure {
+  margin: 0;
+}
+
+.bh-canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 1;
+  display: block;
+  background: color-mix(in oklab, var(--ink) 4%, var(--sub));
+  border: var(--rule) solid var(--hair);
+}
+
+.bh-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--ink) 58%, var(--sub));
+}
+
+.bh-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bh-key::before {
+  content: "";
+  width: 18px;
+  height: 2px;
+  background: currentColor;
+}
+
+.bh-key[data-key="escaped"] {
+  color: var(--sig);
+}
+
+.bh-key[data-key="captured"] {
+  color: color-mix(in oklab, var(--ink) 45%, var(--sub));
+}
+
+.bh-key[data-key="photon"]::before {
+  background: none;
+  border-top: 2px dashed currentColor;
+  height: 0;
 }

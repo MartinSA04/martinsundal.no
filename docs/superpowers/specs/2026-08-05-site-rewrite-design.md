@@ -133,7 +133,7 @@ layout proportions and one signature centerpiece.
 | 01 | `study-companion` | Bone paper, academic serif, KaTeX as ornament, wide marginalia | `course.yaml` scrolls on the left while the widget it produces builds on the right |
 | 02 | `ntnu-api` | Near-black terminal, mono throughout, amber signal, boxed readouts | Live MCP client — see below |
 | 03 | `cipherbound` | GBA-era: pixel type, CRT scanlines, framed panels, chiptune palette | Trailer video plus a working dialogue box that advances the page's content, sprite walking the margin |
-| 04 | `black-hole` | Void black, thin display serif, physics readouts floating in space | Real-time WebGL Schwarzschild lensing, mouse orbit |
+| 04 | `black-hole` | Void black, thin display serif, technical annotation | The C++ render, plus a 2D geodesic diagram of the method (see below) |
 | 05 | `game-of-life` | Graph-paper grid, monospace, plotter-line aesthetic | Canvas running a real glider synthesis that settles into a word, with a generation scrubber |
 
 ### World 02 — the page is an MCP client
@@ -227,6 +227,28 @@ and never enters the performance budget.
 
 Secondary content: the stations-and-flow schematic, animated on scroll,
 drawn only from the published facts above.
+
+### World 04 — why there is no live renderer
+
+The original design called for a real-time WebGL lensing shader. It was built,
+and then removed, for two reasons found during implementation.
+
+**It undermined the project it was meant to showcase.** The page exists to make
+the case for a C++ offline renderer. A draggable real-time version sitting
+above it answers "why build the C++ one?" with "no reason" — which is false
+(the C++ renderer can afford dense sampling, redshift and Doppler beaming that
+a 300-step browser approximation cannot) but is the conclusion any visitor
+would draw.
+
+**It was expensive on phones.** Roughly 1.8 GFLOP per frame at 390px, running
+continuously. Fine on a flagship, 2-5fps on a midrange Android, and a battery
+drain on everything.
+
+What ships instead: `render.png` — the actual artifact — leads the page, and
+the centerpiece is a 2D cross-section diagram tracing a fan of null geodesics
+past the hole, showing the capture threshold at b = 2.598 rs. It explains the
+method rather than competing with the output, and costs a few milliseconds on
+a 2D canvas with nothing running afterwards.
 
 ### Degradation
 

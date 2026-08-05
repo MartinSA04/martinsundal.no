@@ -61,14 +61,18 @@ none of these are effects. They are what the integration returns.
 That is the appeal. You do not model the appearance; you model the geometry,
 and the appearance is a consequence.
 
-## On this page
+## The equation it all comes down to
 
-The canvas above is not the C++ renderer. It is the same physics rewritten as
-a WebGL2 fragment shader, integrating
+In the Schwarzschild metric a photon's path obeys
 
 ```text
 d²u/dφ² = -u + (3/2) rs u²      where u = 1/r
 ```
 
-per pixel, in real time, so you can drag the camera around it. Without WebGL2
-the page falls back to a frame from the original C++ renderer.
+Drop the second term and you get a straight line. Keep it and you get every
+bend in the image above.
+
+The diagram under the render traces that equation for a fan of rays. It shows
+the threshold that makes the shadow: light aimed within
+**b = 2.598 r<sub>s</sub>** spirals in and never comes back, and everything
+outside it escapes, however sharply it is bent.
