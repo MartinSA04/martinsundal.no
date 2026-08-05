@@ -62,3 +62,24 @@ test("skip link is the first focusable element and targets main", async ({
   await expect(focused).toHaveAttribute("href", "#main");
   await expect(page.locator("#main")).toHaveCount(1);
 });
+
+test("the toggle shows the active theme's own mark", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/");
+
+  const shown = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll("#theme-toggle [data-icon]")]
+        .filter((e) => getComputedStyle(e).display !== "none")
+        .map((e) => e.getAttribute("data-icon")),
+    );
+
+  // Exactly one mark at a time, and it names the theme in effect.
+  expect(await shown()).toEqual(["theme-light"]);
+  await page.locator("#theme-toggle").click();
+  expect(await shown()).toEqual(["theme-dark"]);
+  await page.locator("#theme-toggle").click();
+  expect(await shown()).toEqual(["theme-deep-space"]);
+  await page.locator("#theme-toggle").click();
+  expect(await shown()).toEqual(["theme-light"]);
+});

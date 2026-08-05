@@ -127,9 +127,22 @@ if (canvas) {
         h - 12 * dpr,
       );
 
-      // Light arrives from the left in this mirrored view.
+      // Light arrives from the left in this mirrored view. The arrowhead is
+      // drawn rather than typed: this is a diagram made of lines, so the mark
+      // belongs to the diagram and not to whichever font resolves.
       ctx!.fillStyle = sig;
-      ctx!.fillText("light in →", 10 * dpr, 14 * dpr);
+      ctx!.fillText("light in", 10 * dpr, 14 * dpr);
+      const ax = 10 * dpr + ctx!.measureText("light in").width + 6 * dpr;
+      const ay = 14 * dpr;
+      ctx!.strokeStyle = sig;
+      ctx!.lineWidth = dpr;
+      ctx!.beginPath();
+      ctx!.moveTo(ax, ay);
+      ctx!.lineTo(ax + 9 * dpr, ay);
+      ctx!.moveTo(ax + 5 * dpr, ay - 4 * dpr);
+      ctx!.lineTo(ax + 9 * dpr, ay);
+      ctx!.lineTo(ax + 5 * dpr, ay + 4 * dpr);
+      ctx!.stroke();
     }
 
     draw();

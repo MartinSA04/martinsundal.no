@@ -4,6 +4,7 @@ import ProjectShell from "../../components/project/ProjectShell.astro";
 import ProjectHead from "../../components/project/ProjectHead.astro";
 import ProjectLinks from "../../components/project/ProjectLinks.astro";
 import SpecBlock from "../../components/micro/SpecBlock.astro";
+import Icon from "../../components/micro/Icon.astro";
 import VideoFacade from "../../components/work/VideoFacade.astro";
 import "../../worlds/cipherbound.css";
 
@@ -50,7 +51,7 @@ const { Content } = await render(entry);
       </p>
       <div class="cb-progress" data-cb-pips aria-hidden="true"></div>
       <button class="cb-next" type="button" data-cb-next aria-label="Next line">
-        Next
+        Next <Icon name="caret-down" size={14} />
       </button>
     </div>
 

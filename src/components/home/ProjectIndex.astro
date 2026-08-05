@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from "astro:content";
 import Rule from "../micro/Rule.astro";
+import Icon from "../micro/Icon.astro";
 
 interface Props {
   projects: CollectionEntry<"projects">[];
@@ -57,9 +58,7 @@ const { projects } = Astro.props;
                   ) : null}
                 </span>
 
-                <span class="go" aria-hidden="true">
-                  &rarr;
-                </span>
+                <Icon name="arrow-right" class="go" size={20} />
               </a>
             </li>
           );
@@ -293,7 +292,6 @@ const { projects } = Astro.props;
   }
 
   .go {
-    font-size: var(--step-1);
     color: var(--muted);
     transition:
       transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),

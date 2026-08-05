@@ -3,6 +3,7 @@ import "../styles/kernel.css";
 import Seo from "../components/seo/Seo.astro";
 import JsonLd from "../components/seo/JsonLd.astro";
 import Barcode from "../components/micro/Barcode.astro";
+import Icon from "../components/micro/Icon.astro";
 import { STORAGE_KEY, THEMES } from "../scripts/theme.ts";
 
 interface Props {
@@ -145,7 +146,9 @@ const worldStyle = world
             <span class="chrome-tag micro-label">{chromeTag}</span>
           ) : (
             <button id="theme-toggle" type="button" aria-label="Toggle theme">
-              <span aria-hidden="true">◐</span>
+              <Icon name="theme-light" size={15} />
+              <Icon name="theme-dark" size={15} />
+              <Icon name="theme-deep-space" size={15} />
             </button>
           )
         }
@@ -256,6 +259,29 @@ const worldStyle = world
       #theme-toggle:hover {
         color: var(--ink);
         border-color: var(--ink);
+      }
+
+      /* All three marks ship in the markup and CSS paints one. The blocking
+         script in <head> sets data-theme before first paint, so the mark is
+         right on the first frame without waiting for theme.ts to load.
+
+         :global() on both ends is required: Astro scopes these styles by
+         hashing elements declared in *this* file, and neither <html> nor the
+         <svg> inside Icon.astro is one of them. */
+      #theme-toggle :global(.micro-icon) {
+        display: none;
+      }
+
+      :global([data-theme="light"])
+        #theme-toggle
+        :global([data-icon="theme-light"]),
+      :global([data-theme="dark"])
+        #theme-toggle
+        :global([data-icon="theme-dark"]),
+      :global([data-theme="deep-space"])
+        #theme-toggle
+        :global([data-icon="theme-deep-space"]) {
+        display: block;
       }
 
       .chrome-tag {

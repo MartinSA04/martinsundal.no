@@ -238,9 +238,15 @@
   padding-block: 0.25rem;
 }
 
+/* A hairline box drawn by the same mechanism as every other hairline here,
+   rather than a □ at whatever weight the fallback font gives it. */
 .sc-goals li::before {
-  content: "□";
-  color: var(--sig);
+  content: "";
+  width: 0.62em;
+  height: 0.62em;
+  border: var(--rule) solid var(--sig);
+  flex: none;
+  translate: 0 0.1em;
 }
 
 @media (max-width: 46rem) {

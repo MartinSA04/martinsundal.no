@@ -1,5 +1,6 @@
 ---
 import Rule from "../micro/Rule.astro";
+import Icon from "../micro/Icon.astro";
 
 const links = [
   {
@@ -38,9 +39,7 @@ const links = [
             >
               <span class="micro-label">{l.label}</span>
               <span class="value">{l.value}</span>
-              <span class="arrow" aria-hidden="true">
-                &rarr;
-              </span>
+              <Icon name="arrow-right" class="arrow" />
             </a>
           </li>
         ))

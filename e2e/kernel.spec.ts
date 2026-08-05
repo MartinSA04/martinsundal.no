@@ -112,3 +112,45 @@ test("every icon renders as an svg that inherits currentColor", async ({
     }
   }
 });
+
+// The characters that used to stand in for icons. Middots, ©, // and $ are
+// typography and are deliberately absent from this list.
+const ICON_GLYPHS = ["→", "▼", "□", "◐", "♥", "♡"];
+
+for (const path of [
+  "/",
+  "/work/",
+  "/projects/study-companion/",
+  "/projects/ntnu-api/",
+  "/projects/cipherbound/",
+  "/projects/black-hole/",
+  "/projects/game-of-life/",
+]) {
+  test(`no glyph stands in for an icon on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    // Rendered text plus generated content, since two of these lived in CSS
+    // ::before rules where textContent would never see them.
+    const found = await page.evaluate((glyphs) => {
+      const hits: string[] = [];
+      const check = (s: string, where: string) => {
+        for (const g of glyphs)
+          if (s.includes(g)) hits.push(`${g} in ${where}`);
+      };
+      check(document.body.innerText, "text");
+      const walk = document.createTreeWalker(
+        document.body,
+        NodeFilter.SHOW_ELEMENT,
+      );
+      let node: Element | null = document.body;
+      while (node) {
+        for (const pseudo of ["::before", "::after"]) {
+          const c = getComputedStyle(node, pseudo).content;
+          if (c && c !== "none") check(c, `${node.tagName}${pseudo}`);
+        }
+        node = walk.nextNode() as Element | null;
+      }
+      return hits;
+    }, ICON_GLYPHS);
+    expect(found).toEqual([]);
+  });
+}

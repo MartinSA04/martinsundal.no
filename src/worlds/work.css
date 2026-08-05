@@ -55,6 +55,9 @@
 }
 
 [data-world="work"] .credit a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   color: var(--sig);
   text-decoration-color: color-mix(in oklab, var(--sig) 50%, transparent);
 }

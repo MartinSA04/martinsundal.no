@@ -165,13 +165,8 @@
   padding: 0.4rem 0.2rem;
 }
 
-.cb-next::after {
-  content: "\25bc";
-  display: inline-block;
-}
-
 @media (prefers-reduced-motion: no-preference) {
-  .cb-next::after {
+  .cb-next .micro-icon {
     animation: cb-bob 1s steps(2, end) infinite;
   }
   @keyframes cb-bob {

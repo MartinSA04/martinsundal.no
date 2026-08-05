@@ -3,6 +3,7 @@ import Base from "../layouts/Base.astro";
 import Breadcrumbs from "../components/seo/Breadcrumbs.astro";
 import Rule from "../components/micro/Rule.astro";
 import SpecBlock from "../components/micro/SpecBlock.astro";
+import Icon from "../components/micro/Icon.astro";
 import VideoFacade from "../components/work/VideoFacade.astro";
 import LineSchematic from "../components/work/LineSchematic.astro";
 import { workGraph, workTrail, SITE } from "../lib/jsonld.ts";
@@ -79,7 +80,9 @@ const description =
         />
         <p class="credit">
           <span class="micro-label">Video © Aker Solutions</span>
-          <a href={AKER_PAGE} rel="noopener">Verdal production site &rarr;</a>
+          <a href={AKER_PAGE} rel="noopener"
+            >Verdal production site <Icon name="arrow-right" /></a
+          >
         </p>
       </div>
 
