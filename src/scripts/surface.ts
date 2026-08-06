@@ -68,7 +68,6 @@ if (band) {
     at(phiLabel, "y", b.phiLabel[1]);
     at(stateLabel, "x", b.stateLabel[0]);
     at(stateLabel, "y", b.stateLabel[1]);
-    stateLabel?.setAttribute("text-anchor", b.stateAnchor);
   };
 
   const tick = (now: number) => {

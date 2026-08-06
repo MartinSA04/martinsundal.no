@@ -407,23 +407,61 @@ export function blochState(seconds: number): readonly [number, number, number] {
 const polyline = (pts: readonly (readonly [number, number])[]) =>
   pts.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
 
-/** A short arrowhead at `tip`, pointing away from `from`. */
-function head(
-  from: readonly [number, number],
-  tip: readonly [number, number],
-  size = 6,
+/**
+ * The arrowhead, as a cone in three dimensions rather than a triangle in two.
+ *
+ * This has to be 3D or it breaks, and it broke. Built from the projected vector
+ * — apex at the tip, base offset back along the screen-space direction — the
+ * head is fine until the state points at the viewer. There the projected vector
+ * has no length, its direction is undefined, and the head spins through half a
+ * turn between one frame and the next. The state's path crosses the view
+ * direction, so it happened every cycle.
+ *
+ * A cone has no such degeneracy. Its apex sits at the tip and its base is a
+ * circle of `radius` a distance `length` back along the true 3D direction; both
+ * are projected, and the silhouette is the apex fanned to the projected base.
+ * Pointing sideways that fan is a triangle; pointing at the viewer the base
+ * ellipse opens out to a circle and the apex falls inside it, so the head reads
+ * as a disc — which is what a cone aimed at you looks like. Nothing flips,
+ * because nothing is ever inferred from a direction that has collapsed.
+ *
+ * `at` is how far out along `dir` the apex sits, in sphere radii.
+ */
+function cone(
+  dir: readonly [number, number, number],
+  at: number,
+  length = 0.15,
+  radius = 0.052,
 ): string {
-  const dx = tip[0] - from[0];
-  const dy = tip[1] - from[1];
-  const len = Math.hypot(dx, dy) || 1;
-  const ux = dx / len;
-  const uy = dy / len;
-  const w = size * 0.42;
-  return polyline([
-    [tip[0], tip[1]],
-    [tip[0] - ux * size - uy * w, tip[1] - uy * size + ux * w],
-    [tip[0] - ux * size + uy * w, tip[1] - uy * size - ux * w],
-  ]);
+  const [dx, dy, dz] = dir;
+
+  /* Any vector not parallel to dir, to seed the perpendicular basis. */
+  const seed: readonly [number, number, number] =
+    Math.abs(dz) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+  let ux = dy * seed[2] - dz * seed[1];
+  let uy = dz * seed[0] - dx * seed[2];
+  let uz = dx * seed[1] - dy * seed[0];
+  const ul = Math.hypot(ux, uy, uz) || 1;
+  ux /= ul;
+  uy /= ul;
+  uz /= ul;
+  const vx = dy * uz - dz * uy;
+  const vy = dz * ux - dx * uz;
+  const vz = dx * uy - dy * ux;
+
+  const base = at - length;
+  const rim = Array.from({ length: 20 }, (_, i) => {
+    const t = (i / 20) * 2 * Math.PI;
+    const c = Math.cos(t) * radius;
+    const s = Math.sin(t) * radius;
+    return blochProject(
+      dx * base + ux * c + vx * s,
+      dy * base + uy * c + vy * s,
+      dz * base + uz * c + vz * s,
+    );
+  });
+
+  return polyline([blochProject(dx * at, dy * at, dz * at), ...rim]);
 }
 
 const axis = (
@@ -432,11 +470,12 @@ const axis = (
   Z: number,
   label: readonly [number, number],
 ) => {
+  const at = Math.hypot(X, Y, Z);
   const tip = blochProject(X, Y, Z);
   return {
     x2: tip[0],
     y2: tip[1],
-    head: head([BCX, BCY], tip),
+    head: cone([X / at, Y / at, Z / at], at),
     lx: tip[0] + label[0],
     ly: tip[1] + label[1],
   };
@@ -501,10 +540,8 @@ export interface BlochFrame {
   /** Where to hang the two angle labels. */
   thetaLabel: readonly [number, number];
   phiLabel: readonly [number, number];
-  /** Where to hang the state label, pushed clear of the vector. */
+  /** Where to hang the state label. */
   stateLabel: readonly [number, number];
-  /** Which side of that point the label runs, so it never crosses the figure. */
-  stateAnchor: "start" | "end";
   /** The state's polar angle and azimuth, in radians. */
   theta: number;
   phi: number;
@@ -543,11 +580,6 @@ export function blochFrame(seconds: number): BlochFrame {
     }),
   );
 
-  /* Unit vector from the centre of the sphere out through the tip. */
-  const outLen = Math.hypot(tip[0] - BCX, tip[1] - BCY) || 1;
-  const outX = (tip[0] - BCX) / outLen;
-  const outY = (tip[1] - BCY) / outLen;
-
   const thetaMid = blochProject(
     AR * 1.28 * Math.sin(theta / 2) * Math.cos(phi),
     AR * 1.28 * Math.sin(theta / 2) * Math.sin(phi),
@@ -562,21 +594,18 @@ export function blochFrame(seconds: number): BlochFrame {
   return {
     tip,
     foot,
-    head: head([BCX, BCY], tip),
+    head: cone([X, Y, Z], 1),
     thetaArc,
     phiArc,
     thetaLabel: [thetaMid[0] - 3, thetaMid[1] + 3] as const,
     phiLabel: [phiMid[0] - 3, phiMid[1] + 9] as const,
-    /* Pushed out along the vector's own direction, past the tip, so it never
-       lands on the vector, the tip, or the polar arc. It also runs outward from
-       the sphere rather than always rightward, so on the left of the figure it
-       is set right-aligned and reads away from the state instead of back
-       across it. */
-    stateLabel: [
-      tip[0] + outX * 13 + (tip[0] >= BCX ? 4 : -4),
-      tip[1] + outY * 13 + 3,
-    ] as const,
-    stateAnchor: tip[0] >= BCX ? "start" : "end",
+    /* A fixed offset up and to the right of the tip, exactly as the canonical
+       figure sets it. Anything derived from the vector's direction jumps when
+       that direction is ill-defined — an earlier version flipped the label to
+       the other side of the tip as it crossed the centre line, which is the
+       same degeneracy that used to spin the arrowhead. A constant offset simply
+       cannot. */
+    stateLabel: [tip[0] + 9, tip[1] - 7] as const,
     theta,
     phi,
   };

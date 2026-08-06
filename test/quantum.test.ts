@@ -312,6 +312,47 @@ test("the trajectory closes, because both turn counts are whole", () => {
   assert.equal(gcd(NUTATIONS, PRECESSIONS), 1);
 });
 
+test("the state passes straight through the view direction", () => {
+  /* The premise of the arrowhead test below: if the path never pointed at the
+     viewer there would be nothing to guard against. */
+  let best = -1;
+  for (let k = 0; k < 4000; k++) {
+    const [X, Y, Z] = blochState((k / 4000) * BLOCH_PERIOD);
+    best = Math.max(best, blochDepth(X, Y, Z));
+  }
+  assert.ok(best > 0.995, `the state only gets to depth ${best} of the viewer`);
+});
+
+test("the arrowhead never flips, even pointing at the viewer", () => {
+  /* It used to. Built from the projected vector, the head's direction comes
+     from a 2D vector whose length goes to zero as the state turns towards the
+     camera — so it spun through half a turn in one frame, every cycle. Drawn as
+     a projected cone there is no direction to lose. Guarded as continuity: no
+     single step may move any vertex of the head more than a hair. */
+  const verts = (t: number) =>
+    blochFrame(t)
+      .head.split(" ")
+      .map((p) => p.split(",").map(Number) as [number, number]);
+  let worst = 0;
+  const steps = 4000;
+  let prev = verts(0);
+  for (let k = 1; k <= steps; k++) {
+    const now = verts((k / steps) * BLOCH_PERIOD);
+    assert.equal(now.length, prev.length);
+    for (let i = 0; i < now.length; i++) {
+      worst = Math.max(
+        worst,
+        Math.hypot(now[i]![0] - prev[i]![0], now[i]![1] - prev[i]![1]),
+      );
+    }
+    prev = now;
+  }
+  assert.ok(
+    worst < 1.5,
+    `the arrowhead jumped ${worst.toFixed(2)} units in one step`,
+  );
+});
+
 test("the state passes both behind and in front", () => {
   const depths = Array.from({ length: 400 }, (_, k) => {
     const [X, Y, Z] = blochState((k / 400) * BLOCH_PERIOD);
