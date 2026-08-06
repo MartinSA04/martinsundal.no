@@ -62,6 +62,17 @@ export function personNode() {
       sameAs:
         "https://en.wikipedia.org/wiki/Norwegian_University_of_Science_and_Technology",
     },
+    /* alumniOf alone reads as finished. The degree is in progress, so the
+       enrolment is stated separately as the programme itself. */
+    affiliation: { "@id": "https://www.ntnu.edu/#organization" },
+    hasCredential: {
+      "@type": "EducationalOccupationalCredential",
+      name: "Integrated MSc, Applied Physics and Mathematics",
+      credentialCategory: "degree",
+      educationalLevel: "Master",
+      about: "Quantum Technology",
+      recognizedBy: { "@id": "https://www.ntnu.edu/#organization" },
+    },
     worksFor: {
       "@type": "Organization",
       "@id": "https://www.akersolutions.com/#organization",
@@ -83,6 +94,9 @@ export function personNode() {
       "System architecture",
       "Physics",
       "Mathematics",
+      "Quantum technology",
+      "Quantum computing",
+      "Quantum mechanics",
     ],
     sameAs: [
       "https://linkedin.com/in/martinsa04",
@@ -168,7 +182,7 @@ export function homeGraph(projects: ProjectEntry[]) {
         url: `${SITE}/`,
         name: "Martin Sundal Aspås | Software Engineer, Robotics & Simulation",
         description:
-          "Software engineer in Trondheim. I build robotics, simulation and industrial software at Aker Solutions, and study Applied Physics and Mathematics at NTNU.",
+          "Software engineer in Trondheim. Robotics and simulation at Aker Solutions; Applied Physics and Mathematics at NTNU, specializing in quantum technology.",
         inLanguage: "en",
         dateCreated: "2025-02-15",
         dateModified: new Date().toISOString().slice(0, 10),

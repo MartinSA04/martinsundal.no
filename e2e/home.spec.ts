@@ -380,3 +380,105 @@ test("the contact channels are all reachable", async ({ page }) => {
     await expect(page.locator(`#contact a[href='${href}']`)).toHaveCount(1);
   }
 });
+
+/**
+ * Fig. 05. The surface is rendered on the server from src/lib/quantum.ts and
+ * then advanced by src/scripts/surface.ts, so there are two separate things to
+ * hold: that the served frame is a real surface, and that it moves.
+ */
+test("the studies band states the specialization", async ({ page }) => {
+  await page.goto("/");
+  const band = page.locator("[data-surface]");
+
+  await expect(
+    page.getByRole("heading", { name: /Fig\. 05 — Studies/ }),
+  ).toHaveCount(1);
+  await expect(band).toContainText("Quantum Technology");
+  await expect(band).toContainText("Fysikk og matematikk");
+  await expect(band).toContainText("2024");
+  await expect(band).toContainText("2029");
+
+  // Contact moved down to make room for it.
+  await expect(
+    page.getByRole("heading", { name: /Fig\. 06 — Contact/ }),
+  ).toHaveCount(1);
+});
+
+test("the wavefunction surface is served whole and then advances", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const lines = page.locator(".mesh polyline");
+
+  // Both families, every line, present before any script runs on them.
+  await expect(lines).toHaveCount(42);
+
+  await page.locator("[data-surface]").scrollIntoViewIfNeeded();
+
+  // psi vanishes on the walls for all time, so the first line of a family sits
+  // flat on the floor of the plot. Flat means collinear, not constant-y: the
+  // projection sends a floor line to a diagonal, so it is the absence of any
+  // bend that carries the boundary condition through to the screen.
+  const pts = (await lines.first().getAttribute("points"))!
+    .split(" ")
+    .map((p) => p.split(",").map(Number) as [number, number]);
+  const [ax, ay] = pts[0]!;
+  const [bx, by] = pts[pts.length - 1]!;
+  const bend = Math.max(
+    ...pts.map(([x, y]) =>
+      Math.abs((bx - ax) * (y - ay) - (by - ay) * (x - ax)),
+    ),
+  );
+  expect(
+    bend,
+    "the wall line bends — psi is not zero on the boundary",
+  ).toBeLessThan(1);
+
+  // A line through the middle of the mesh is not flat, and does not stay put.
+  const mid = lines.nth(10);
+  const before = (await mid.getAttribute("points"))!;
+  expect(
+    new Set(before.split(" ").map((p) => p.split(",")[1])).size,
+  ).toBeGreaterThan(3);
+  await expect
+    .poll(() => mid.getAttribute("points"), { timeout: 5000 })
+    .not.toBe(before);
+});
+
+test("the bloch vector precesses", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("[data-surface]").scrollIntoViewIfNeeded();
+
+  const tip = page.locator("[data-tip]");
+  const x0 = await tip.getAttribute("cx");
+  await expect
+    .poll(() => tip.getAttribute("cx"), { timeout: 5000 })
+    .not.toBe(x0);
+});
+
+test("the studies figures are whole without JavaScript, and still under reduced motion", async ({
+  browser,
+  page,
+}) => {
+  // Served, not built: the tau = 0 frame comes out of the server render, so a
+  // visitor with no JavaScript gets a correct surface rather than an empty box.
+  const ctx = await browser.newContext({ javaScriptEnabled: false });
+  const p = await ctx.newPage();
+  await p.goto("/");
+  await expect(p.locator(".mesh polyline")).toHaveCount(42);
+  await expect(p.locator("[data-tip]")).toHaveCount(1);
+  await expect(p.locator("[data-surface]")).toContainText("Quantum Technology");
+  await ctx.close();
+
+  // Reduced motion never starts the loop at all, so the same frame just stays.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await page.locator("[data-surface]").scrollIntoViewIfNeeded();
+  const mid = page.locator(".mesh polyline").nth(10);
+  const before = await mid.getAttribute("points");
+  await page.waitForTimeout(1200);
+  expect(
+    await mid.getAttribute("points"),
+    "the surface moved under reduce",
+  ).toBe(before);
+});

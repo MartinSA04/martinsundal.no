@@ -102,8 +102,13 @@ Constants:
 | c      | 0.30  | φ₁₃, the fast asymmetric ripple                   |
 | T      | 24 s  | one full τ ∈ [0, 2π)                              |
 
-Panel: `clamp(220px, 24vw, 320px)` square, viewBox 300 × 300. The Bloch sphere
-is `clamp(104px, 11vw, 148px)`, viewBox 140 × 140.
+Panel: `clamp(230px, 25vw, 336px)` square, viewBox 300 × 300. The Bloch sphere
+is `clamp(128px, 13vw, 178px)`, viewBox 140 × 140.
+
+Projection scales are PLAN 148 and RISE 60, giving a drawn extent of 256 × 268
+inside the 300 panel. Both were raised from a first pass at 138 and 46, which
+left a third of the panel's height unused and flattened the saddle into a
+mound — on a surface plot the height budget is most of the reading.
 
 Heights are normalised by the maximum \|Re ψ\| over a full period, computed once
 numerically in `quantum.ts` rather than guessed, so the surface fills its panel
@@ -166,7 +171,9 @@ specialization `MTFYMAKVANTE24`.
 > read.
 
 **Course index**, the track's third year, in the manner of the node map's path
-index — code, title, term:
+index. Grouped into two columns by term rather than flowed, so the index says
+something the flow order could not — which half of the year each course sits
+in:
 
 | code    | title                            | term |
 | ------- | -------------------------------- | ---- |
@@ -209,7 +216,9 @@ collapses its animations.
 **Edits elsewhere:**
 
 - `src/pages/index.astro` — mount `Studies` between `About` and `Contact`;
-  meta description gains the specialization.
+  meta description gains the specialization. Adding it to the old sentence put
+  the description at 190 characters against a 160 limit, so the day-job clause
+  gives up "industrial software" rather than the studies giving up the point.
 - `src/components/home/Contact.astro` — Fig. 05 → Fig. 06.
 - `src/lib/jsonld.ts` — profile description gains the specialization;
   `knowsAbout` gains quantum technology and quantum computing; the person node

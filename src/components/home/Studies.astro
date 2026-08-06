@@ -1,0 +1,428 @@
+---
+/**
+ * FIG. 05 — Studies.
+ *
+ * Three columns: the wavefunction surface, the readout, the Bloch sphere. Both
+ * figures are computed in src/lib/quantum.ts rather than drawn, and the maths
+ * for each is documented there.
+ *
+ * The τ = 0 frame is rendered here, on the server. src/scripts/surface.ts then
+ * takes over the same elements and advances them — so the figures are correct
+ * with JavaScript off, and correct but still under prefers-reduced-motion,
+ * which is the contract the masthead's node map keeps too.
+ *
+ * Every fact in the readout is from the NTNU catalogue: programme MTFYMA,
+ * cohort 2024, specialization MTFYMAKVANTE24. The course index is that
+ * specialization's third year, which is the year this cohort is entering.
+ */
+import {
+  BLOCH_GEOMETRY,
+  BLOCH_PANEL,
+  BLOCH_PERIOD,
+  PANEL,
+  PERIOD,
+  blochFrame,
+  meshPoints,
+} from "../../lib/quantum.ts";
+
+const mesh = meshPoints(0);
+const bloch = blochFrame(0);
+const { cx, cy, r, orbit, equator, pole } = BLOCH_GEOMETRY;
+
+/* The third year of the quantum technology track. H is autumn, V is spring —
+   the catalogue's own terms, kept rather than translated. */
+const terms = [
+  {
+    label: "Autumn · H",
+    courses: [
+      { code: "FY2045", title: "Kvantemekanikk I" },
+      { code: "TFY4220", title: "Faste stoffers fysikk" },
+      { code: "TFE4146", title: "Halvlederkomponenter" },
+      { code: "TFY4345", title: "Klassisk mekanikk" },
+    ],
+  },
+  {
+    label: "Spring · V",
+    courses: [
+      { code: "TFY4355", title: "Kvanteinformasjon og -beregninger" },
+      { code: "TFE4169", title: "Nanoelektronikk" },
+      { code: "TFE4181", title: "Videregående optikk og fotonikk" },
+    ],
+  },
+];
+
+const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
+---
+
+<section
+  class="zone studies"
+  aria-labelledby="stu-h"
+  data-surface
+  data-period={PERIOD}
+  data-bloch-period={BLOCH_PERIOD}
+>
+  <div class="sec-head">
+    <h2 id="stu-h" class="p-u p-u--lg p-u--ink zh">Fig. 05 — Studies</h2>
+    <span class="p-u p-tag">Year 03 / 05</span>
+    <span class="p-scale" aria-hidden="true"></span>
+  </div>
+
+  <div class="band">
+    <!-- 05a — the surface. -->
+    <figure class="fig surf-fig">
+      <div class="surf ins" aria-hidden="true">
+        <svg viewBox={`0 0 ${PANEL} ${PANEL}`}>
+          <!-- Reference axes, overrunning the field on all four sides. -->
+          <path
+            class="h ax"
+            d={`M6 ${PANEL / 2}h${PANEL - 12}M${PANEL / 2} 6v${PANEL - 12}`}
+          ></path>
+
+          <!-- The mesh: two families of polylines, family A then family B, in
+               the order src/lib/quantum.ts emits them. -->
+          <g class="mesh">
+            {mesh.map((points) => <polyline points={points} />)}
+          </g>
+
+          <!-- Corner handles, one filled, per the reference sheet. -->
+          <g class="handles">
+            <rect class="i" x="8" y="8" width="7" height="7"></rect>
+            <rect class="i" x={PANEL - 15} y="8" width="7" height="7"></rect>
+            <rect class="i" x="8" y={PANEL - 15} width="7" height="7"></rect>
+            <rect class="f" x={PANEL - 15} y={PANEL - 15} width="7" height="7"
+            ></rect>
+          </g>
+        </svg>
+      </div>
+      <figcaption class="p-u cap">
+        Fig. 05a · Wavefunction<br />
+        <span class="sym">Re ψ(x,y,t) · 2D box · 04 modes · T {PERIOD}s</span>
+      </figcaption>
+    </figure>
+
+    <!-- The readout. -->
+    <div class="read">
+      <div class="p-stack">
+        <p class="p-u p-u--hair">Institution</p>
+        <p class="p-u p-u--ink">NTNU · Trondheim</p>
+      </div>
+
+      <p class="prog">Fysikk og matematikk</p>
+      <p class="p-u p-u--n prog-en">
+        Applied Physics and Mathematics · integrated MSc · 5 years
+      </p>
+
+      <div class="p-rule" style="margin-top:16px"></div>
+
+      <div class="spec">
+        <p class="p-u">Specialization · from year 03</p>
+        <p class="spec-name">Quantum Technology</p>
+        <p class="p-u">Kvanteteknologi · MTFYMAKVANTE24</p>
+      </div>
+
+      <p class="lead">
+        Five years of physics and mathematics at NTNU, and from the third year
+        the quantum technology track. It is the corner of engineering where the
+        mathematics is not a description of the device, it is the device — a
+        qubit is a two-state vector before it is anything you can point at, and
+        the two figures in this band are not pictures of that, they are it,
+        evaluated. The rest of this page is simulators. This is where the
+        physics they simulate gets read.
+      </p>
+
+      <div class="p-chain" style="margin-top:20px" aria-hidden="true">
+        <span class="p-u p-pill">2024</span>
+        <span class="p-u p-pill">2029</span>
+      </div>
+    </div>
+
+    <!-- 05b — the sphere. -->
+    <figure class="fig bloch-fig">
+      <div class="bloch ins" aria-hidden="true">
+        <svg viewBox={`0 0 ${BLOCH_PANEL} ${BLOCH_PANEL}`}>
+          <!-- Silhouette, equator, and the z axis through the poles. -->
+          <circle class="h" cx={cx} cy={cy} r={r}></circle>
+          <ellipse class="d" cx={cx} cy={cy} rx={equator.rx} ry={equator.ry}
+          ></ellipse>
+          <path class="h" d={`M${cx} ${cy - pole - 9}v${2 * pole + 18}`}></path>
+
+          <!-- The circle of latitude the tip is confined to. -->
+          <ellipse
+            class="d orbit"
+            cx={cx}
+            cy={orbit.cy}
+            rx={orbit.rx}
+            ry={orbit.ry}></ellipse>
+
+          <!-- The state vector, its drop to the equatorial plane, and its tip.
+               These four are what surface.ts rewrites each frame. -->
+          <line
+            class="d"
+            data-drop
+            x1={bloch.tip[0]}
+            y1={bloch.tip[1]}
+            x2={bloch.foot[0]}
+            y2={bloch.foot[1]}></line>
+          <line
+            class="i vec"
+            data-vec
+            data-behind={bloch.behind ? "" : undefined}
+            x1={cx}
+            y1={cy}
+            x2={bloch.tip[0]}
+            y2={bloch.tip[1]}></line>
+          <circle class="f" cx={cx} cy={cy} r="1.8"></circle>
+          <circle
+            class="f tip"
+            data-tip
+            data-behind={bloch.behind ? "" : undefined}
+            cx={bloch.tip[0]}
+            cy={bloch.tip[1]}
+            r="3.2"></circle>
+
+          <text class="t-ink" x={cx + 6} y={cy - pole - 3}>|0&#x27E9;</text>
+          <text class="t-ink" x={cx + 6} y={cy + pole + 11}>|1&#x27E9;</text>
+        </svg>
+      </div>
+      <figcaption class="p-u cap">
+        Fig. 05b · Bloch<br />
+        <span class="sym">θ = 55° · T {BLOCH_PERIOD}s</span>
+      </figcaption>
+    </figure>
+  </div>
+
+  <!-- The course index, in the manner of the node map's path index. -->
+  <div class="idx-wrap">
+    <p class="p-u idx-head">
+      Third year · quantum technology · {String(courseCount).padStart(2, "0")} courses
+    </p>
+    <div class="idx-cols">
+      {
+        terms.map((t) => (
+          <div class="term">
+            <p class="p-u p-u--ink term-h">{t.label}</p>
+            <ul class="idx">
+              {t.courses.map((c) => (
+                <li>
+                  <span class="p-u p-u--ink">{c.code}</span>
+                  <span class="p-u p-u--n">{c.title}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<script>
+  import "../../scripts/surface.ts";
+</script>
+
+<style>
+  .studies {
+    margin-bottom: var(--loose);
+  }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .sec-head .p-scale {
+    flex: 1 1 60px;
+    min-width: 40px;
+    align-self: center;
+    position: relative;
+    top: -2px;
+  }
+
+  /* Surface · readout · sphere. The readout takes the slack, so both figures
+     hold the size they were drawn for instead of stretching with the page. */
+  .band {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: clamp(24px, 3.4vw, 58px);
+    align-items: start;
+    margin-top: 26px;
+  }
+
+  .fig {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .cap {
+    line-height: 1.55;
+  }
+
+  /* The captions carry ψ and θ, and .p-u uppercases — which turns θ into Θ and
+     reads as a zero. Anything with a symbol in it opts out. */
+  .sym {
+    text-transform: none;
+    /* A shade larger than the label above it, because 9.5px mono renders θ
+       close enough to a zero to be misread. */
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+  }
+
+  .surf {
+    width: clamp(230px, 25vw, 336px);
+    aspect-ratio: 1;
+  }
+
+  .bloch {
+    width: clamp(128px, 13vw, 178px);
+    aspect-ratio: 1;
+  }
+
+  /* The caption is wider than the sphere, so without this the column sizes to
+     the text and pushes the figure into the plate's right margin. */
+  .bloch-fig {
+    max-width: clamp(128px, 13vw, 178px);
+  }
+
+  .surf svg,
+  .bloch svg {
+    width: 100%;
+    height: auto;
+  }
+
+  /* The axes locate the figure, they are not part of it — same weighting the
+     node map gives its own. */
+  .surf .ax {
+    opacity: 0.5;
+  }
+
+  /* No hidden-line removal: the reference mesh is transparent too. What keeps
+     it from reading as a grey wash is that the stroke stays a true hairline at
+     every size, so the density comes from the line count rather than the ink. */
+  .mesh polyline {
+    fill: none;
+    stroke: var(--hair);
+    stroke-width: 1;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .handles rect {
+    stroke-width: 1;
+  }
+
+  /* Behind the sphere, the vector and its tip drop to the hairline — the one
+     depth cue in a figure with no shading. */
+  .vec {
+    stroke-width: 1.4;
+  }
+
+  .vec[data-behind] {
+    stroke: var(--hair);
+    stroke-width: 1;
+  }
+
+  .tip[data-behind] {
+    fill: var(--hair);
+  }
+
+  .orbit {
+    opacity: 0.7;
+  }
+
+  /* --- the readout -------------------------------------------------------- */
+
+  .prog {
+    font-weight: 500;
+    font-size: clamp(22px, 2.2vw, 31px);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    margin-top: 14px;
+  }
+
+  .prog-en {
+    margin-top: 8px;
+  }
+
+  .spec {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .spec-name {
+    font-weight: 500;
+    font-size: clamp(17px, 1.5vw, 21px);
+    letter-spacing: -0.015em;
+    line-height: 1.1;
+  }
+
+  .lead {
+    font-size: clamp(15px, 1.15vw, 17px);
+    line-height: 1.52;
+    max-width: 42em;
+    margin-top: 20px;
+    letter-spacing: -0.004em;
+    color: var(--muted);
+  }
+
+  /* --- the course index --------------------------------------------------- */
+
+  .idx-wrap {
+    margin-top: clamp(26px, 3vw, 44px);
+    border-top: var(--rule) solid var(--hair);
+    padding-top: 10px;
+  }
+
+  /* Grouped by term rather than flowed, so the index says something the flow
+     order could not: which half of the year each course sits in. */
+  .idx-cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(288px, 1fr));
+    gap: 24px clamp(24px, 4vw, 72px);
+    margin-top: 14px;
+  }
+
+  .term-h {
+    padding-bottom: 7px;
+    border-bottom: var(--rule) solid var(--hair);
+  }
+
+  .idx {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .idx li {
+    display: grid;
+    grid-template-columns: 8ch minmax(0, 1fr);
+    gap: 12px;
+    align-items: baseline;
+    border-bottom: var(--rule) solid var(--whisper);
+    padding: 7px 0;
+  }
+
+  .idx li .p-u--n {
+    text-transform: none;
+    color: var(--muted);
+  }
+
+  @media (max-width: 67rem) {
+    .band {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 34px;
+      justify-items: start;
+    }
+    .surf {
+      width: min(320px, 78vw);
+    }
+    .bloch {
+      width: min(148px, 34vw);
+    }
+  }
+</style>

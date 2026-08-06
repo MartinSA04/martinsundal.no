@@ -5,6 +5,7 @@ import Masthead from "../components/home/Masthead.astro";
 import Board from "../components/home/Board.astro";
 import WorkField from "../components/home/WorkField.astro";
 import About from "../components/home/About.astro";
+import Studies from "../components/home/Studies.astro";
 import Contact from "../components/home/Contact.astro";
 import { orderedProjects } from "../lib/content.ts";
 import { homeGraph, SITE } from "../lib/jsonld.ts";
@@ -13,8 +14,11 @@ const projects = await orderedProjects();
 const graph = homeGraph(projects.map((e) => ({ id: e.id, data: e.data })));
 
 const title = "Martin Sundal Aspås | Software Engineer, Robotics & Simulation";
+/* Kept under the 160 chars a search result will show — adding the
+   specialization to the old sentence put it at 190, so the day-job clause
+   loses "industrial software" rather than the studies losing the point. */
 const description =
-  "Software engineer in Trondheim. I build robotics, simulation and industrial software at Aker Solutions, and study Applied Physics and Mathematics at NTNU.";
+  "Software engineer in Trondheim. Robotics and simulation at Aker Solutions; Applied Physics and Mathematics at NTNU, specializing in quantum technology.";
 ---
 
 <Base
@@ -32,6 +36,7 @@ const description =
     <Board />
     <WorkField projects={projects} />
     <About />
+    <Studies />
     <Contact />
   </div>
 </Base>
