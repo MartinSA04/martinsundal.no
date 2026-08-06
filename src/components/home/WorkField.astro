@@ -1,0 +1,664 @@
+---
+/**
+ * FIG. 02 — Selected work, plotted.
+ *
+ * The projects are placed on a real field: X is runtime, from systems C++ to
+ * scripted TypeScript; Y is subject, from tooling and data up to geometry and
+ * motion. Position means something, so the arrangement is an argument rather
+ * than an ordering.
+ *
+ * Each point is called out into the plot's own margin on its own leader, which
+ * is what makes the field readable on its own. The callout says which project a
+ * point IS and where it sits; the description belongs to the specimen below and
+ * is not repeated up here.
+ *
+ * The callouts are labels on a diagram, so they are aria-hidden — the navigable
+ * entry for every project is its specimen, which carries the same coordinate.
+ *
+ * Placement lives here rather than in frontmatter: where a project sits on this
+ * particular field is presentation, and the content has no business carrying it.
+ */
+import type { CollectionEntry } from "astro:content";
+import ProjectFigure from "./ProjectFigure.astro";
+
+interface Props {
+  projects: CollectionEntry<"projects">[];
+}
+
+const { projects } = Astro.props;
+
+/* Plot geometry. The box is small inside a wide viewBox on purpose: the margins
+   are where the callouts live. */
+const L = 330;
+const R = 700;
+const T = 90;
+const B = 430;
+const px = (v: number) => L + v * (R - L);
+const py = (v: number) => B - v * (B - T);
+
+type Placement = {
+  /** 0 = systems / C++, 1 = scripted / TS */
+  x: number;
+  /** 0 = tooling & data, 1 = geometry & motion */
+  y: number;
+  /** Leader from the point out to its callout, in plot coordinates. */
+  leader: string;
+  /** Where the callout sits over the field. */
+  co: string;
+  /** Weight on the sheet. The specimens are deliberately not uniform. */
+  size: "xl" | "lg" | "md" | "sm";
+  /** Placement on the 12-column specimen field. */
+  cell: string;
+};
+
+const PLACE: Record<string, Placement> = {
+  "black-hole": {
+    x: 0.1,
+    y: 0.92,
+    leader: "M367 117.2 L338 90 H300",
+    co: "right:72.4%;top:11.6%;width:26%;text-align:right",
+    size: "xl",
+    cell: "grid-column:3/10;grid-row:2;margin-top:var(--loose)",
+  },
+  cipherbound: {
+    x: 0.18,
+    y: 0.62,
+    leader: "M396.6 219.2 L366 252 H300",
+    co: "right:72.4%;top:36.9%;width:26%;text-align:right",
+    size: "md",
+    cell: "grid-column:1/5;grid-row:3;margin-top:calc(var(--loose) * .5)",
+  },
+  "game-of-life": {
+    x: 0.7,
+    y: 0.78,
+    leader: "M589 164.8 L660 120 H730",
+    co: "left:73.6%;top:16.3%;width:26%",
+    size: "sm",
+    cell: "grid-column:10/13;grid-row:3;margin-top:calc(var(--loose) * .9)",
+  },
+  "study-companion": {
+    x: 0.8,
+    y: 0.24,
+    leader: "M626 348.4 L672 316 H730",
+    co: "left:73.6%;top:46.9%;width:26%",
+    size: "lg",
+    cell: "grid-column:9/13;grid-row:1;margin-top:96px",
+  },
+  "ntnu-api": {
+    x: 0.88,
+    y: 0.1,
+    leader: "M655.6 396 L690 440 H730",
+    co: "left:73.6%;top:66.3%;width:26%",
+    size: "xl",
+    cell: "grid-column:1/8;grid-row:1",
+  },
+};
+
+const ordered = projects
+  .map((entry) => ({ entry, p: PLACE[entry.id]! }))
+  .filter((r) => r.p)
+  .sort((a, b) => a.entry.data.index - b.entry.data.index)
+  .map((r) => ({
+    ...r,
+    n: String(r.entry.data.index).padStart(2, "0"),
+    X: px(r.p.x),
+    Y: py(r.p.y),
+  }));
+
+const ticks = Array.from({ length: 21 }, (_, n) => ({
+  v: n / 20,
+  major: n % 5 === 0,
+}));
+const dots = Array.from({ length: 19 }, (_, x) =>
+  Array.from({ length: 17 }, (_, y) => ({
+    cx: L + ((R - L) * x) / 18,
+    cy: T + ((B - T) * y) / 16,
+  })),
+).flat();
+const fan = Array.from({ length: 15 }, (_, i) => {
+  const a = ((i + 1) / 16) * (Math.PI / 2);
+  return { x2: L + Math.cos(a) * 470, y2: B - Math.sin(a) * 470 };
+});
+---
+
+<section id="projects" class="zone work" aria-labelledby="work-h">
+  <div class="sec-head">
+    <h2 id="work-h" class="p-u p-u--lg p-u--ink zh">
+      Fig. 02 — Selected work, plotted
+    </h2>
+    <span class="p-u p-tag">{ordered.length} specimens · not uniform</span>
+    <span class="p-scale" aria-hidden="true"></span>
+  </div>
+
+  <p class="p-u p-u--n work-note">
+    Each project is placed by runtime along X and by subject along Y, then
+    called out with its coordinate. The same coordinate is printed under every
+    specimen below — hover either and the other lights.
+  </p>
+
+  <div class="field-map">
+    <svg
+      class="plot"
+      viewBox="0 0 1000 640"
+      role="img"
+      aria-label="A scatter field. Five projects are plotted by runtime on the horizontal axis, from systems C++ to scripted TypeScript, and by subject on the vertical axis, from tooling and data up to geometry and motion."
+    >
+      <defs>
+        <clipPath id="plot-box">
+          <rect x={L} y={T} width={R - L} height={B - T}></rect>
+        </clipPath>
+      </defs>
+
+      <g class="pdots">
+        {dots.map((d) => <circle cx={d.cx} cy={d.cy} r="0.9" />)}
+      </g>
+
+      <g class="texture" clip-path="url(#plot-box)">
+        {fan.map((f) => <line x1={L} y1={B} x2={f.x2} y2={f.y2} />)}
+        {
+          [90, 170, 250, 330].map((r) => (
+            <path d={`M${L + r} ${B} A${r} ${r} 0 0 0 ${L} ${B - r}`} />
+          ))
+        }
+      </g>
+
+      <path class="axis" d={`M${L} ${B} H${R}`}></path>
+      <path class="axis" d={`M${L} ${B} V${T}`}></path>
+      <path
+        class="axis"
+        d={`M${L} ${T + 22} V${T} H${L + 22} M${R - 22} ${T} H${R} V${T + 22} M${R} ${B - 22} V${B}`}
+      ></path>
+
+      <g class="atk">
+        {
+          ticks.map((t) => (
+            <>
+              <line
+                x1={px(t.v)}
+                y1={B}
+                x2={px(t.v)}
+                y2={B + (t.major ? 9 : 4)}
+              />
+              <line
+                x1={L}
+                y1={py(t.v)}
+                x2={L - (t.major ? 9 : 4)}
+                y2={py(t.v)}
+              />
+            </>
+          ))
+        }
+      </g>
+
+      <g class="guide">
+        {
+          ordered.map((r) => (
+            <>
+              <path d={`M${r.X} ${r.Y} V${B}`} />
+              <path d={`M${r.X} ${r.Y} H${L}`} />
+            </>
+          ))
+        }
+      </g>
+
+      <g class="leaders">
+        {ordered.map((r) => <path d={r.p.leader} data-leader={r.entry.id} />)}
+      </g>
+
+      <g class="pts">
+        {
+          ordered.map((r) => (
+            <g
+              class="pt"
+              data-point={r.entry.id}
+              transform={`translate(${r.X},${r.Y})`}
+            >
+              <circle class="ring2" r="21" />
+              <circle class="halo" r="14" />
+              <circle class="core" r="4.2" />
+              <path class="halo" d="M-22 0H-17M17 0h5M0 -22v5M0 17v5" />
+              <text x="20" y="-14">
+                {r.n}
+              </text>
+            </g>
+          ))
+        }
+      </g>
+
+      <g class="labels">
+        <text x={L} y={B + 22}>Systems / C++</text>
+        <text x={R} y={B + 22} text-anchor="end">Scripted / TS</text>
+        <text x={(L + R) / 2} y={B + 40} text-anchor="middle">
+          Axis X — runtime
+        </text>
+        <text transform={`translate(${L - 12},${B}) rotate(-90)`}>
+          Tooling &amp; data
+        </text>
+        <text
+          transform={`translate(${L - 12},${T}) rotate(-90)`}
+          text-anchor="end"
+        >
+          Geometry &amp; motion
+        </text>
+        <text
+          transform={`translate(${L - 28},${(T + B) / 2}) rotate(-90)`}
+          text-anchor="middle"
+        >
+          Axis Y — subject
+        </text>
+      </g>
+    </svg>
+
+    {
+      ordered.map((r) => (
+        <p
+          class="co"
+          style={r.p.co}
+          data-callout={r.entry.id}
+          aria-hidden="true"
+        >
+          <span class="co-n p-u">
+            <b>[{r.n}]</b>
+            <span>
+              X {r.p.x.toFixed(2)} / Y {r.p.y.toFixed(2)}
+            </span>
+          </span>
+          <span class="co-name">{r.entry.data.name}</span>
+        </p>
+      ))
+    }
+  </div>
+
+  <div class="field">
+    {
+      ordered.map(({ entry, p, n }) => (
+        <article
+          class={`spec spec--${p.size}`}
+          style={p.cell}
+          data-spec={entry.id}
+        >
+          <figure>
+            <ProjectFigure slug={entry.id} />
+          </figure>
+          <p class="idx" aria-hidden="true">
+            {n}
+          </p>
+          <h3>
+            <a href={`/projects/${entry.id}/`}>{entry.data.name}</a>
+          </h3>
+          <p class="p-u coord">
+            X {p.x.toFixed(2)} / Y {p.y.toFixed(2)}
+          </p>
+          <p class="cap">{entry.data.tagline}</p>
+        </article>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .work {
+    margin-bottom: var(--loose);
+  }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .sec-head .p-scale {
+    flex: 1 1 60px;
+    min-width: 40px;
+    align-self: center;
+    position: relative;
+    top: -2px;
+  }
+
+  .work-note {
+    max-width: 54ch;
+  }
+
+  /* --- the field map ------------------------------------------------------ */
+
+  .field-map {
+    position: relative;
+    margin-top: 34px;
+  }
+
+  .plot {
+    width: 100%;
+    height: auto;
+  }
+
+  .plot text {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    fill: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .plot .axis {
+    stroke: var(--muted);
+    fill: none;
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .plot .atk line {
+    stroke: var(--hair);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .plot .pdots circle {
+    fill: var(--hair);
+    opacity: 0.55;
+  }
+
+  .plot .texture line,
+  .plot .texture path {
+    stroke: var(--hair);
+    fill: none;
+    stroke-width: 1;
+    opacity: 0.38;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .plot .guide path {
+    stroke: var(--hair);
+    stroke-dasharray: 1 5;
+    fill: none;
+    stroke-width: 1;
+    opacity: 0.75;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .plot .leaders path {
+    stroke: var(--hair);
+    fill: none;
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    transition: stroke 0.2s ease;
+  }
+
+  .plot .halo {
+    fill: none;
+    stroke: var(--hair);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .plot .core {
+    fill: var(--ink);
+  }
+
+  .plot .ring2 {
+    opacity: 0;
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    transition: opacity 0.2s ease;
+  }
+
+  .plot .pt text {
+    font-size: 11px;
+    fill: var(--ink);
+    letter-spacing: 0.12em;
+  }
+
+  /* Lit state, driven from either end. */
+  .plot .pt.on .halo {
+    stroke: var(--ink);
+  }
+
+  .plot .pt.on .ring2 {
+    opacity: 1;
+  }
+
+  .plot .leaders path.on {
+    stroke: var(--ink);
+  }
+
+  /* --- the callouts ------------------------------------------------------- */
+
+  .co {
+    position: absolute;
+    display: grid;
+    gap: 5px;
+  }
+
+  .co-n {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    padding-bottom: 5px;
+    border-bottom: var(--rule) solid var(--hair);
+  }
+
+  .co-n b {
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: 0.14em;
+  }
+
+  .co-n > span {
+    margin-left: auto;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+  }
+
+  /* Right-aligned callouts read outward from the plot, so their row reverses. */
+  .co[style*="right:"] .co-n {
+    flex-direction: row-reverse;
+  }
+
+  .co[style*="right:"] .co-n > span {
+    margin-left: 0;
+    margin-right: auto;
+  }
+
+  .co-name {
+    font-size: 17px;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    font-weight: 500;
+    color: var(--muted);
+    transition: color 0.2s ease;
+  }
+
+  .co.on .co-name {
+    color: var(--ink);
+  }
+
+  @media (min-width: 68rem) {
+    .field-map {
+      aspect-ratio: 1000 / 640;
+      max-width: 1160px;
+    }
+    .plot {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  /* Below the callouts' room, the plot becomes a bare index map: the points
+     keep their numbers and the specimens below carry the same coordinates, so
+     nothing is lost and nothing is duplicated. */
+  @media (max-width: 68rem) {
+    .field-map {
+      display: grid;
+      justify-items: center;
+    }
+    .plot {
+      max-width: 460px;
+      width: 100%;
+    }
+    .plot .leaders {
+      display: none;
+    }
+    .co {
+      display: none;
+    }
+  }
+
+  /* --- the specimen field ------------------------------------------------- */
+
+  .field {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--gut);
+    row-gap: 0;
+    margin-top: var(--loose);
+  }
+
+  .field > * {
+    min-width: 0;
+  }
+
+  .spec {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .spec figure {
+    margin: 0 0 6px;
+  }
+
+  .spec .idx {
+    font-weight: 500;
+    line-height: 0.8;
+    letter-spacing: -0.05em;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--hair);
+    transition:
+      color 0.25s ease,
+      -webkit-text-stroke-color 0.25s ease;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .spec h3 {
+    font-weight: 500;
+    letter-spacing: -0.028em;
+    line-height: 1.02;
+    margin-top: 8px;
+  }
+
+  .spec h3 a {
+    text-decoration: none;
+    background-image: linear-gradient(var(--ink), var(--ink));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 1px;
+    transition: background-size 0.34s cubic-bezier(0.2, 0.7, 0.2, 1);
+    padding-bottom: 2px;
+  }
+
+  .spec:hover h3 a,
+  .spec:focus-within h3 a {
+    background-size: 100% 1px;
+  }
+
+  .spec:hover .idx,
+  .spec:focus-within .idx {
+    color: var(--ink);
+    -webkit-text-stroke-color: var(--ink);
+  }
+
+  .spec:hover :global(.ins .node),
+  .spec:focus-within :global(.ins .node) {
+    fill: var(--ink);
+  }
+
+  .spec .coord {
+    margin-top: 6px;
+  }
+
+  .spec .cap {
+    color: var(--muted);
+    margin-top: 9px;
+    max-width: 38ch;
+    font-size: 14.5px;
+    line-height: 1.42;
+  }
+
+  .spec--xl .idx {
+    font-size: clamp(56px, 7vw, 102px);
+  }
+  .spec--xl h3 {
+    font-size: clamp(26px, 3.1vw, 40px);
+  }
+  .spec--xl .cap {
+    font-size: 16px;
+    max-width: 40ch;
+  }
+  .spec--lg .idx {
+    font-size: clamp(44px, 5vw, 74px);
+  }
+  .spec--lg h3 {
+    font-size: clamp(22px, 2.5vw, 32px);
+  }
+  .spec--lg .cap {
+    font-size: 15.5px;
+  }
+  .spec--md .idx {
+    font-size: clamp(34px, 3.6vw, 52px);
+  }
+  .spec--md h3 {
+    font-size: clamp(18px, 1.9vw, 24px);
+  }
+  .spec--sm .idx {
+    font-size: clamp(28px, 3vw, 40px);
+  }
+  .spec--sm h3 {
+    font-size: clamp(16px, 1.7vw, 20px);
+  }
+  .spec--sm .cap {
+    font-size: 13.5px;
+    max-width: 32ch;
+  }
+
+  @media (max-width: 67rem) {
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--loose);
+    }
+    .spec {
+      margin-top: 0 !important;
+    }
+    .spec figure {
+      max-width: min(420px, 88vw);
+    }
+  }
+</style>
+
+<script>
+  /* Bind each specimen to its point, its leader and its callout, so the three
+     light together from either end. */
+  const specs = document.querySelectorAll<HTMLElement>("[data-spec]");
+
+  for (const spec of specs) {
+    const id = spec.dataset.spec!;
+    const parts = [
+      document.querySelector(`[data-point="${id}"]`),
+      document.querySelector(`[data-leader="${id}"]`),
+      document.querySelector(`[data-callout="${id}"]`),
+    ].filter(Boolean) as Element[];
+
+    const on = () => parts.forEach((p) => p.classList.add("on"));
+    const off = () => parts.forEach((p) => p.classList.remove("on"));
+
+    spec.addEventListener("mouseenter", on);
+    spec.addEventListener("mouseleave", off);
+    spec.addEventListener("focusin", on);
+    spec.addEventListener("focusout", off);
+  }
+</script>

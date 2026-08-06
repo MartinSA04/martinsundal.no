@@ -1,0 +1,364 @@
+---
+/**
+ * One drawing per project, describing the thing rather than decorating it.
+ *
+ * These are bespoke, not parametric: a converging bundle only means something
+ * for the API, a stipple terminator only for the renderer. Each is authored
+ * once and read at build time, so nothing is generated in the browser.
+ */
+interface Props {
+  slug: string;
+}
+
+const { slug } = Astro.props;
+---
+
+{
+  slug === "study-companion" && (
+    <svg
+      class="ins"
+      viewBox="0 0 300 260"
+      style="width:100%;max-width:300px;height:auto"
+      aria-hidden="true"
+    >
+      {/* The course, authored as data rows */}
+      <g class="h">
+        <path d="M14 40h96M14 58h74M14 76h96M14 94h58M14 112h88M14 130h70M14 148h96M14 166h50" />
+      </g>
+      <path class="d" d="M8 30h112v148H8z" />
+      <text x="8" y="22">
+        Authored as data
+      </text>
+      {/* One source, compiled */}
+      <path class="h" d="M126 104h26" />
+      <circle class="f" cx="156" cy="104" r="3" />
+      <path class="h" d="M160 104h14" />
+      {/* Out to a stack of registered plates */}
+      <g class="h">
+        <path d="M186 58l72-18 34 18-72 18z" />
+        <path d="M186 96l72-18 34 18-72 18z" />
+        <path d="M186 134l72-18 34 18-72 18z" />
+        <path d="M186 172l72-18 34 18-72 18z" />
+      </g>
+      <g class="d">
+        <path d="M186 58v114M292 76v114M258 40v114" />
+      </g>
+      <circle class="node" cx="222" cy="49" r="4" />
+      <circle class="node" cx="222" cy="87" r="4" />
+      <circle class="node" cx="222" cy="125" r="4" />
+      <circle class="node" cx="222" cy="163" r="4" />
+      <text x="186" y="212">
+        04 plates
+      </text>
+      <text x="0" y="252">
+        Astro
+      </text>
+      <text x="300" y="252" text-anchor="end">
+        Content model
+      </text>
+    </svg>
+  )
+}
+
+{
+  slug === "ntnu-api" && (
+    <div style="overflow-x:auto">
+      <svg
+        class="ins"
+        viewBox="0 0 470 310"
+        style="width:100%;min-width:300px;height:auto"
+        aria-hidden="true"
+      >
+        <path class="d" d="M28 18v274M300 18v274M442 18v274" />
+        <g class="h">
+          <path d="M28 34C160 34 210 155 300 155" />
+          <path d="M28 71C160 71 212 155 300 155" />
+          <path d="M28 108C160 108 214 155 300 155" />
+          <path d="M28 145C160 145 216 155 300 155" />
+          <path d="M28 182C160 182 216 155 300 155" />
+          <path d="M28 219C160 219 214 155 300 155" />
+          <path d="M28 256C160 256 212 155 300 155" />
+          <path d="M28 293C160 293 210 155 300 155" />
+          <path d="M300 155C356 155 380 96 442 96" />
+          <path d="M300 155h142" />
+          <path d="M300 155C356 155 380 214 442 214" />
+        </g>
+        <g>
+          <circle class="node" cx="28" cy="34" r="3.4" />
+          <circle class="node" cx="28" cy="71" r="3.4" />
+          <circle class="node" cx="28" cy="108" r="3.4" />
+          <circle class="node" cx="28" cy="145" r="3.4" />
+          <circle class="node" cx="28" cy="182" r="3.4" />
+          <circle class="node" cx="28" cy="219" r="3.4" />
+          <circle class="node" cx="28" cy="256" r="3.4" />
+          <circle class="node" cx="28" cy="293" r="3.4" />
+        </g>
+        <circle class="h" cx="300" cy="155" r="15" />
+        <circle class="h" cx="300" cy="155" r="8" />
+        <circle class="f" cx="300" cy="155" r="2.6" />
+        <circle class="f" cx="442" cy="96" r="3" />
+        <circle class="f" cx="442" cy="155" r="3" />
+        <circle class="f" cx="442" cy="214" r="3" />
+        <text x="0" y="12">
+          Scattered public sources
+        </text>
+        <text x="272" y="12">
+          One typed interface
+        </text>
+        <text x="452" y="99">
+          API
+        </text>
+        <text x="452" y="158" class="t-ink">
+          MCP
+        </text>
+        <text x="452" y="217">
+          LLM
+        </text>
+      </svg>
+    </div>
+  )
+}
+
+{
+  slug === "cipherbound" && (
+    <svg
+      class="ins"
+      viewBox="0 0 300 230"
+      style="width:100%;max-width:300px;height:auto"
+      aria-hidden="true"
+    >
+      <g class="tiles h" />
+      <g class="blocked f" />
+      {/* The walk the collision map allows */}
+      <path class="i" d="M26 194 H74 V146 H122 V98 H170 V50 H242" />
+      <circle class="f" cx="26" cy="194" r="4.5" />
+      <g class="h">
+        <circle cx="242" cy="50" r="7" />
+        <path d="M242 41v18M233 50h18" />
+      </g>
+      <text x="0" y="222">
+        Tile map · walkability is data
+      </text>
+      <text x="300" y="222" text-anchor="end">
+        C++
+      </text>
+    </svg>
+  )
+}
+
+{
+  slug === "black-hole" && (
+    <svg
+      class="ins"
+      viewBox="0 0 460 400"
+      style="width:100%;height:auto"
+      aria-hidden="true"
+    >
+      <defs>
+        <pattern id="stipA" width="5" height="5" patternUnits="userSpaceOnUse">
+          <circle cx="2.5" cy="2.5" r=".85" fill="currentColor" />
+        </pattern>
+        <pattern id="stipB" width="9" height="9" patternUnits="userSpaceOnUse">
+          <circle cx="4.5" cy="4.5" r=".75" fill="currentColor" />
+        </pattern>
+        <pattern
+          id="stipC"
+          width="15"
+          height="15"
+          patternUnits="userSpaceOnUse"
+        >
+          <circle cx="7.5" cy="7.5" r=".7" fill="currentColor" />
+        </pattern>
+        <mask id="bandA">
+          <circle cx="230" cy="200" r="132" fill="#fff" />
+          <circle cx="230" cy="200" r="106" fill="#000" />
+        </mask>
+        <mask id="bandB">
+          <circle cx="230" cy="200" r="158" fill="#fff" />
+          <circle cx="230" cy="200" r="132" fill="#000" />
+        </mask>
+        <mask id="bandC">
+          <circle cx="230" cy="200" r="188" fill="#fff" />
+          <circle cx="230" cy="200" r="158" fill="#000" />
+        </mask>
+        <clipPath id="term">
+          <rect x="196" y="0" width="264" height="400" />
+        </clipPath>
+      </defs>
+
+      <g clip-path="url(#term)" opacity=".92">
+        <rect
+          x="40"
+          y="10"
+          width="380"
+          height="380"
+          fill="url(#stipA)"
+          mask="url(#bandA)"
+        />
+        <rect
+          x="40"
+          y="10"
+          width="380"
+          height="380"
+          fill="url(#stipB)"
+          mask="url(#bandB)"
+        />
+        <rect
+          x="40"
+          y="10"
+          width="380"
+          height="380"
+          fill="url(#stipC)"
+          mask="url(#bandC)"
+        />
+      </g>
+
+      <path class="h" d="M196 42v316" />
+      <text x="182" y="374" text-anchor="end">
+        Terminator
+      </text>
+
+      <circle class="h" cx="230" cy="200" r="188" />
+      <circle class="h" cx="230" cy="200" r="96" />
+      {/* ACCENT 2 of 2 — the photon ring. */}
+      <circle class="acc-ring" cx="230" cy="200" r="105" />
+
+      <g class="d">
+        <path d="M0 46h460" />
+        <path d="M0 92h460" />
+        <path d="M0 308h460" />
+        <path d="M0 354h460" />
+      </g>
+      <g class="h">
+        <path d="M0 46C150 46 300 78 460 132" />
+        <path d="M0 92C160 92 300 152 460 246" />
+        <path d="M0 354C150 354 300 322 460 268" />
+        <path d="M0 308C160 308 300 248 460 154" />
+      </g>
+      <path class="d" d="M230 0v400M42 200h376" />
+      <circle class="f" cx="230" cy="200" r="2.4" />
+      <text x="0" y="38">
+        Undeflected
+      </text>
+      <text x="0" y="200" dy="-6">
+        Deflected
+      </text>
+      <text x="248" y="196">
+        Event horizon
+      </text>
+      <text x="248" y="184">
+        Photon ring
+      </text>
+      <text x="460" y="392" text-anchor="end">
+        Schwarzschild · Ø 376
+      </text>
+    </svg>
+  )
+}
+
+{
+  slug === "game-of-life" && (
+    <div class="matwrap">
+      <div class="dotmat" role="presentation" />
+      <svg
+        class="ins"
+        viewBox="0 0 220 118"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <g class="f">
+          <rect x="16" y="5" width="7" height="7" />
+          <rect x="27" y="16" width="7" height="7" />
+          <rect x="5" y="27" width="7" height="7" />
+          <rect x="16" y="27" width="7" height="7" />
+          <rect x="27" y="27" width="7" height="7" />
+          <rect x="82" y="49" width="7" height="7" />
+          <rect x="93" y="60" width="7" height="7" />
+          <rect x="71" y="71" width="7" height="7" />
+          <rect x="82" y="71" width="7" height="7" />
+          <rect x="93" y="71" width="7" height="7" />
+          <rect x="159" y="27" width="7" height="7" />
+          <rect x="170" y="27" width="7" height="7" />
+          <rect x="159" y="38" width="7" height="7" />
+          <rect x="170" y="38" width="7" height="7" />
+          <rect x="192" y="82" width="7" height="7" />
+          <rect x="203" y="82" width="7" height="7" />
+          <rect x="192" y="93" width="7" height="7" />
+          <rect x="203" y="93" width="7" height="7" />
+        </g>
+        <g class="d">
+          <path d="M38 8L66 46M105 74L150 40" />
+        </g>
+      </svg>
+    </div>
+  )
+}
+
+<style>
+  .matwrap {
+    position: relative;
+  }
+
+  .matwrap svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .dotmat {
+    height: 118px;
+    width: 100%;
+    background-image: radial-gradient(
+      circle at center,
+      var(--hair) 0 1px,
+      transparent 1.2px
+    );
+    background-size: 11px 11px;
+  }
+</style>
+
+<script>
+  /* Cipherbound's tile field: 12×8 cells, a scatter of blocked ones, drawn
+     once on load. Generated rather than authored so the grid stays regular. */
+  const NS = "http://www.w3.org/2000/svg";
+  const tiles = document.querySelector(".tiles");
+  const blocked = document.querySelector(".blocked");
+
+  if (tiles && blocked) {
+    const S = 24;
+    const OX = 14;
+    const OY = 26;
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 12; x++) {
+        const r = document.createElementNS(NS, "rect");
+        r.setAttribute("x", String(OX + x * S));
+        r.setAttribute("y", String(OY + y * S));
+        r.setAttribute("width", String(S));
+        r.setAttribute("height", String(S));
+        tiles.appendChild(r);
+      }
+    }
+    const walls: [number, number][] = [
+      [1, 1],
+      [2, 1],
+      [5, 0],
+      [8, 2],
+      [9, 2],
+      [3, 3],
+      [6, 4],
+      [10, 5],
+      [2, 6],
+      [7, 6],
+      [11, 3],
+    ];
+    for (const [x, y] of walls) {
+      const r = document.createElementNS(NS, "rect");
+      r.setAttribute("x", String(OX + x * S + 5));
+      r.setAttribute("y", String(OY + y * S + 5));
+      r.setAttribute("width", String(S - 10));
+      r.setAttribute("height", String(S - 10));
+      blocked.appendChild(r);
+    }
+  }
+</script>

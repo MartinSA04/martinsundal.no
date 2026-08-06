@@ -110,7 +110,7 @@ test("the hero plan first becomes a still life at generation 276", () => {
   assert.equal(first, 276);
 });
 
-test("the settled word is 206 cells wide, which sets the hero overscale", () => {
+test("the settled word is 206 cells wide", () => {
   const plan = parsePlan(readFileSync("public/martin_plan.txt", "utf8"));
   let cells = plan.cells;
   for (let i = 0; i < 276; i++) cells = step(cells, plan.width, plan.height);
@@ -124,7 +124,9 @@ test("the settled word is 206 cells wide, which sets the hero overscale", () => 
       if (x > maxX) maxX = x;
     }
   }
-  // Hero.astro scales the canvas to 166% so the word lands at 96% of the
-  // measure: 1.66 * 206/356 = 0.96. If this width changes, that changes.
+  // The settled word spans 206 of the board's 356 columns. Board.astro now
+  // shows the whole board rather than an overscaled crop, so this no longer
+  // drives a scale factor — but it is still the invariant that says the plan
+  // produces the word it is supposed to, at the size it is supposed to.
   assert.equal(maxX - minX + 1, 206);
 });

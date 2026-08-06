@@ -1,9 +1,10 @@
 ---
+import "../styles/plate.css";
 import Base from "../layouts/Base.astro";
-import Hero from "../components/home/Hero.astro";
-import WorkBand from "../components/home/WorkBand.astro";
-import ProjectIndex from "../components/home/ProjectIndex.astro";
-import Notes from "../components/home/Notes.astro";
+import Masthead from "../components/home/Masthead.astro";
+import Board from "../components/home/Board.astro";
+import WorkField from "../components/home/WorkField.astro";
+import About from "../components/home/About.astro";
 import Contact from "../components/home/Contact.astro";
 import { orderedProjects } from "../lib/content.ts";
 import { homeGraph, SITE } from "../lib/jsonld.ts";
@@ -23,10 +24,14 @@ const description =
   ogImage={`${SITE}/og/home.png`}
   ogType="profile"
   graph={graph}
+  bodyClass="plate-page"
 >
-  <Hero />
-  <WorkBand />
-  <ProjectIndex projects={projects} />
-  <Notes />
-  <Contact />
+  <div class="plate">
+    <div class="plate-spine" aria-hidden="true"></div>
+    <Masthead />
+    <Board />
+    <WorkField projects={projects} />
+    <About />
+    <Contact />
+  </div>
 </Base>

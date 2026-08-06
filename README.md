@@ -78,14 +78,16 @@ the visible text because both come from the same record.
 
 ## Things that look incidental but are not
 
-- **The hero Game of Life converges to "MARTIN"** and becomes a still life at
-  generation 276, which is when the readout under the band switches to
-  `STILL LIFE` and the scene stops stepping. `test/life.test.ts` asserts all of
-  that, and asserts the settled word is 206 cells wide — the number
-  `Hero.astro`'s `166%` overscale is derived from, since `1.66 × 206/356 = 0.96`
-  puts the word at 96% of the measure. At the 173% it used to use, the word
-  landed at 100.1% and the outer column of the M and the N was cut off. Change
-  the plan file and that overscale changes with it.
+- **The home page Game of Life converges to "MARTIN"** and becomes a still life
+  at generation 276, which is when the readout beside the board switches to
+  `Still life · stable` and the scene stops stepping. `src/components/home/Board.astro`
+  steps the same plan at build time so the generation and population readouts
+  are correct with no script at all, then hands the live run to
+  `createLifeScene`. It is the real B3/S23 rule over `public/martin_plan.txt`,
+  not an animation of a finished picture, and `e2e/home.spec.ts` asserts that by
+  watching the population pass through values the settled board never has.
+  `test/life.test.ts` asserts the settle generation, the population, and that
+  the settled word is 206 of the board's 356 columns.
 - **`--life-cell`** is read by `src/lib/life.ts` to colour live cells.
 - **`public/sprites/girl_sheet.png` has no references and is kept on purpose.**
   It is a Cipherbound character sheet, held for a future use on that page.
@@ -115,3 +117,12 @@ needs — resvg has no browser font stack and does not read woff2.
 
 - `docs/superpowers/specs/2026-08-05-site-rewrite-design.md` — the design
 - `docs/superpowers/plans/2026-08-05-site-rewrite.md` — the implementation plan
+- `docs/superpowers/specs/2026-08-05-home-plates-design.md` — the home page as
+  one technical plate
+- `docs/superpowers/specs/2026-08-06-masthead-orbital.md` — the masthead figure,
+  and the SVG and Playwright traps found building it. Read before touching
+  `Masthead.astro`.
+
+`docs/inspo/` holds the reference sheets the specs are argued against. It is
+gitignored — the images are not ours to redistribute — so a fresh clone will not
+have them. Ask for them rather than guessing at what the specs are describing.

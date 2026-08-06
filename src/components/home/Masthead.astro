@@ -1,0 +1,467 @@
+---
+/**
+ * FIG. 00 — Identification.
+ *
+ * A node map: six paths around one body, in three planes, each path drawn as
+ * the arc its traveller has just swept rather than a closed ring.
+ *
+ * Geometry, all in the 430x244 viewBox, body at (176,118):
+ *
+ *   path  plane   rx   ry   flat    k   side  tilt  near  node  tail  period
+ *   N-01    A    112   77   1.45   46    L    -10°  63.5   6.0  bare    52s
+ *   N-02    B    100   34   2.94   40    R    +26°  30.8   5.4   44%    44s
+ *   N-03    A     78   54   1.44   30    L    -10°  45.7   4.6   68%    30s
+ *   N-04    B     66   28   2.36   24    R    +26°  25.6   4.0  bare    24s
+ *   N-05    C     58   50   1.16   12    R    -40°  45.6   3.4   62%    19s
+ *   N-06    A     50   34   1.47   16    L    -10°  30.6   3.0  full    16s
+ *
+ * The plane column is the organising idea. Every path used to share one
+ * flattening and one tilt, so the figure read as a single ring system seen from
+ * directly above. Here the three planes are held apart by how foreshortened
+ * they are — A is open at 1.45:1, B is nearly edge-on at 2.94:1, C is almost
+ * face-on at 1.16:1 — and by tilts 36° and 66° apart. Within a plane the paths
+ * share a tilt and a side and nest strictly by both semi-axes, so they never
+ * cross each other; all the crossings in the figure are between planes, which
+ * is what makes them legible as crossings rather than as clutter.
+ *
+ * `k` is how far the body sits off a path's centre, `near` the closest the path
+ * gets to it, solved numerically over the tilted curve. Placing the body on each
+ * ellipse's true focus instead ties the offset to the flattening — 1.45:1 would
+ * force e = 0.73 — and at that eccentricity every path is an egg and all six
+ * dive to within 24 units of the body at once. Setting `k` independently costs
+ * the focus and buys both back: the nearest path clears the body's r = 12 by 14
+ * units, so it sits in a clearing. The gap shows in the axis ticks too, which
+ * are the true crossings: none falls between 141 and 210.
+ *
+ * Periods follow Kepler's third law against rx — T proportional to rx^1.5,
+ * normalised so the outermost runs 52s — so the index is a real table.
+ *
+ * The tail column is a composition decision, not a technical one. Six trailing
+ * arcs read as busy no matter how they are placed, and the reference sheet does
+ * not draw one per node either: its called-out node is a lone dot with only its
+ * leader attached. N-01 is that dot here, and N-04 is the second bare one, so
+ * four arcs carry the structure and two travellers move unaccompanied.
+ *
+ * Each path's tilt is baked into the arc command's x-axis-rotation rather than
+ * a wrapping <g transform>, so every element shares one coordinate frame. That
+ * is what lets the N-01 callout ride the same path as its traveller and still
+ * hold its label upright.
+ */
+---
+
+<header class="zone head">
+  <div class="head-id">
+    <p class="p-u p-tag zh">Identification · Fig. 00</p>
+    <h1><span>Martin Sundal</span><span class="sur">Aspås</span></h1>
+    <p class="role">
+      <b>Software engineer.</b> Robotics and simulation, working from Trondheim, Norway.
+    </p>
+
+    <div class="meta">
+      <div class="p-stack">
+        <p class="p-u p-u--hair">Field</p>
+        <p class="p-u p-u--ink">Robotics</p>
+        <p class="p-u p-u--ink">Simulation</p>
+      </div>
+      <div class="p-stack">
+        <p class="p-u p-u--hair">Location</p>
+        <p class="p-u p-u--ink">Trondheim</p>
+        <p class="p-u p-u--ink">Norway · 63.4°N</p>
+      </div>
+      <div class="p-stack">
+        <p class="p-u p-u--hair">Specimens</p>
+        <p class="p-u p-u--ink">05 projects</p>
+        <p class="p-u p-u--ink">01 board</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="orb-wrap" aria-hidden="true">
+    <div class="orb ins">
+      <svg viewBox="0 0 430 244">
+        <!-- Reference axes. They overrun the field on every side; the heavy cap
+             at the top of the vertical is the only weighted line out here. -->
+        <path class="h ax" d="M2 118h326M176 6v232"></path>
+        <path class="i cap" d="M176 6v19"></path>
+
+        <!-- Field boundary, clear of every path. Sized nearer the outer two it
+             ran alongside them and read as a seventh path in the wrong pen. -->
+        <ellipse class="dotted" cx="161" cy="126" rx="152" ry="88"></ellipse>
+
+        <!-- Four of the six paths are stroked, as a trailing arc that ends
+             exactly on its traveller: pathLength="100" puts the dash pattern in
+             percent of the path, and both the dash offset and the traveller are
+             driven off the same --sweep, so they cannot drift apart. N-01 and
+             N-04 have no arc at all — their travellers ride --path unaccompanied
+             — which is why they are absent here rather than hidden. -->
+        <path
+          class="trail o2"
+          pathLength="100"
+          d="M301.8 179.4A100 34 26 1 1 122.1 91.7A100 34 26 1 1 301.8 179.4"
+        ></path>
+        <path
+          class="trail o3"
+          pathLength="100"
+          d="M223.3 109.7A78 54 -10 1 1 69.6 136.8A78 54 -10 1 1 223.3 109.7"
+        ></path>
+        <path
+          class="trail o5"
+          pathLength="100"
+          d="M229.6 73A58 50 -40 1 1 140.8 147.6A58 50 -40 1 1 229.6 73"></path>
+        <path
+          class="trail solid o6"
+          pathLength="100"
+          d="M209.5 112.1A50 34 -10 1 1 111 129.5A50 34 -10 1 1 209.5 112.1"
+        ></path>
+
+        <!-- Where the paths actually cross the horizontal. -->
+        <g class="f">
+          <circle cx="22.6" cy="118" r="0.9"></circle>
+          <circle cx="71" cy="118" r="0.9"></circle>
+          <circle cx="111.8" cy="118" r="0.9"></circle>
+          <circle cx="130.5" cy="118" r="0.9"></circle>
+          <circle cx="141.2" cy="118" r="0.9"></circle>
+          <circle cx="209.8" cy="118" r="0.9"></circle>
+          <circle cx="223.8" cy="118" r="0.9"></circle>
+          <circle cx="233.8" cy="118" r="0.9"></circle>
+          <circle cx="237.7" cy="118" r="0.9"></circle>
+          <circle cx="241.8" cy="118" r="0.9"></circle>
+          <circle cx="250.7" cy="118" r="0.9"></circle>
+        </g>
+
+        <!-- The body the whole field is arranged around. -->
+        <circle class="f" cx="176" cy="118" r="12"></circle>
+
+        <circle class="rides trav o1" r="6"></circle>
+        <circle class="rides trav o2" r="5.4"></circle>
+        <circle class="rides trav o3" r="4.6"></circle>
+        <circle class="rides trav o4" r="4"></circle>
+        <circle class="rides trav o5" r="3.4"></circle>
+        <circle class="rides trav o6" r="3"></circle>
+
+        <!-- The callout rides N-01 too, so it stays hitched to the traveller it
+             names instead of pointing at empty space. -->
+        <g class="rides callout o1">
+          <path class="h" d="M0 0l26-30h30"></path>
+          <text class="t-ink" x="62" y="-27">N-01</text>
+        </g>
+
+        <!-- Registration. -->
+        <path class="h reg" d="M49 40h10M54 35v10M301 222h10M306 217v10"></path>
+
+        <!-- Index of paths: identifier, plane, and the period its traveller
+             actually runs at. -->
+        <g class="idx">
+          <path class="h" d="M340 34v14M340 208v14"></path>
+          <circle class="h" cx="356" cy="50" r="6"></circle>
+          <circle class="f" cx="356" cy="50" r="3.4"></circle>
+          <g data-orbit="o1">
+            <text x="368" y="53">N-01</text>
+            <text class="t-ink" x="398" y="53">A</text>
+            <text x="410" y="53">52s</text>
+          </g>
+          <circle class="f" cx="356" cy="82" r="3.0"></circle>
+          <g data-orbit="o2">
+            <text x="368" y="85">N-02</text>
+            <text class="t-ink" x="398" y="85">B</text>
+            <text x="410" y="85">44s</text>
+          </g>
+          <circle class="f" cx="356" cy="114" r="2.6"></circle>
+          <g data-orbit="o3">
+            <text x="368" y="117">N-03</text>
+            <text class="t-ink" x="398" y="117">A</text>
+            <text x="410" y="117">30s</text>
+          </g>
+          <circle class="f" cx="356" cy="146" r="2.3"></circle>
+          <g data-orbit="o4">
+            <text x="368" y="149">N-04</text>
+            <text class="t-ink" x="398" y="149">B</text>
+            <text x="410" y="149">24s</text>
+          </g>
+          <circle class="f" cx="356" cy="178" r="2.0"></circle>
+          <g data-orbit="o5">
+            <text x="368" y="181">N-05</text>
+            <text class="t-ink" x="398" y="181">C</text>
+            <text x="410" y="181">19s</text>
+          </g>
+          <circle class="f" cx="356" cy="210" r="1.8"></circle>
+          <g data-orbit="o6">
+            <text x="368" y="213">N-06</text>
+            <text class="t-ink" x="398" y="213">A</text>
+            <text x="410" y="213">16s</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+    <p class="p-u">
+      Fig. 00 · Orbital synthesis · Node map · 06 paths · 03 planes
+    </p>
+  </div>
+</header>
+
+<style>
+  .head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+    gap: clamp(28px, 4vw, 72px);
+    align-items: center;
+    margin-bottom: var(--loose);
+  }
+
+  .head-id {
+    min-width: 0;
+  }
+
+  h1 {
+    font-weight: 500;
+    font-size: clamp(2.6rem, 8.2vw, 6.4rem);
+    line-height: 0.88;
+    letter-spacing: -0.04em;
+    margin-top: 16px;
+    text-wrap: balance;
+  }
+
+  h1 span {
+    display: block;
+  }
+
+  h1 .sur {
+    color: var(--muted);
+  }
+
+  .role {
+    margin-top: 22px;
+    font-size: clamp(15px, 1.5vw, 19px);
+    line-height: 1.35;
+    max-width: 30ch;
+    letter-spacing: -0.005em;
+  }
+
+  .role b {
+    font-weight: 500;
+  }
+
+  .meta {
+    display: flex;
+    gap: clamp(18px, 3.4vw, 46px);
+    flex-wrap: wrap;
+    margin-top: 30px;
+    padding-top: 9px;
+    border-top: var(--rule) solid var(--hair);
+  }
+
+  .orb-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 9px;
+    justify-self: end;
+  }
+
+  .orb {
+    width: clamp(268px, 38vw, 520px);
+    aspect-ratio: 430 / 244;
+  }
+
+  .orb svg {
+    width: 100%;
+    height: auto;
+  }
+
+  /* The axes are the faintest thing in the figure — they locate it, they are
+     not part of it. */
+  .orb .ax {
+    opacity: 0.55;
+  }
+
+  .orb .cap {
+    stroke-width: 2.2;
+  }
+
+  /* Registration marks are the quietest thing on the plate — they hold the
+     corners without asking to be read. */
+  .orb .reg {
+    opacity: 0.6;
+  }
+
+  .orb .idx text {
+    font-size: 7.5px;
+  }
+
+  .orb .dotted {
+    fill: none;
+    stroke: var(--hair);
+    stroke-width: 1.6;
+    stroke-dasharray: 0.1 6.5;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  /* --sweep is the single clock for a path. Registering it is what makes it
+     interpolate smoothly rather than jump at each keyframe, and it drives both
+     the traveller's position along the path and the dash offset of the arc
+     behind it — so the arc always ends exactly on its traveller, with nothing
+     to keep in sync by hand. */
+  @property --sweep {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 0;
+  }
+
+  /* Every path is drawn as a trailing arc rather than a closed ring: with
+     pathLength="100" the dash pattern is in percent of the path, so a --tail of
+     42 shows 42% of it, ending at --sweep. Six closed rings is most of what made
+     the field look like a tangle; six arcs put roughly half as much ink on it. */
+  .orb .trail {
+    fill: none;
+    stroke: var(--hair);
+    /* No vector-effect here, deliberately, and it is the one rule in this file
+       that cannot be made consistent with the rest of the plate. non-scaling-
+       stroke makes the browser stroke in device space while pathLength
+       normalises in user space, so the dash pattern and the path disagree by
+       the render scale — at 520px wide that is 1.21x, which walked every arc
+       about a fifth of an orbit clear of the traveller it is supposed to end
+       on. Without it the stroke scales with the figure instead: 0.85 lands near
+       a 1px hairline at the desktop size and thins gracefully below that. */
+    stroke-width: 0.85;
+    stroke-dasharray: var(--tail) calc(100 - var(--tail));
+    stroke-dashoffset: calc(var(--tail) - var(--sweep));
+    animation: orb-sweep linear infinite;
+  }
+
+  .orb .solid {
+    stroke-dasharray: none;
+  }
+
+  /* Anything that rides a path is drawn at the origin and carried there by
+     offset-path — the offset translate composes with the element's own geometry
+     rather than replacing it, so a traveller must have no cx/cy of its own.
+
+     offset-anchor defaults to the element's transform-origin, and for a <g> that
+     resolves against its own bounding box — so the callout, whose box sits up
+     and to the right of its leader's start, landed a leader's length off its
+     traveller. Pinning both to the view-box origin makes the offset a plain
+     translate to the path point for every rider, whatever its shape.
+     offset-rotate is pinned too, so the callout's label stays upright instead of
+     tumbling round its orbit. */
+  .orb .rides {
+    transform-box: view-box;
+    transform-origin: 0 0;
+    offset-path: var(--path);
+    offset-distance: calc(var(--sweep) * 1%);
+    offset-anchor: 0 0;
+    offset-rotate: 0deg;
+    animation: orb-sweep linear infinite;
+  }
+
+  .orb .trav {
+    fill: var(--ink);
+  }
+
+  /* Three planes. A is open, B nearly edge-on, C almost face-on; paths sharing a
+     plane share a tilt and never cross one another.
+
+     --sweep here is where the path sits at load, and each delay is that value
+     run back through the inverse of the orb-sweep easing — so the figure opens
+     in exactly the arrangement it falls back to when kernel.css collapses every
+     animation under reduced motion. The values are spread as widely as the paths
+     allow, except N-01's: it is parked where its callout has clear air above the
+     field, since that is the frame everyone sees first. */
+  .orb .o1 {
+    --path: path(
+      "M241 106.5A112 77 -10 1 1 20.4 145.4A112 77 -10 1 1 241 106.5"
+    );
+    --sweep: 64;
+    animation-duration: 52s;
+    animation-delay: -38.05s;
+  }
+
+  .orb .o2 {
+    --path: path(
+      "M301.8 179.4A100 34 26 1 1 122.1 91.7A100 34 26 1 1 301.8 179.4"
+    );
+    --tail: 44;
+    --sweep: 2;
+    animation-duration: 44s;
+    animation-delay: -0.41s;
+  }
+
+  .orb .o3 {
+    --path: path(
+      "M223.3 109.7A78 54 -10 1 1 69.6 136.8A78 54 -10 1 1 223.3 109.7"
+    );
+    --tail: 68;
+    --sweep: 42;
+    animation-duration: 30s;
+    animation-delay: -10.53s;
+  }
+
+  .orb .o4 {
+    --path: path(
+      "M256.9 157.5A66 28 26 1 1 138.3 99.6A66 28 26 1 1 256.9 157.5"
+    );
+    --sweep: 88;
+    animation-duration: 24s;
+    animation-delay: -22.49s;
+  }
+
+  .orb .o5 {
+    --path: path("M229.6 73A58 50 -40 1 1 140.8 147.6A58 50 -40 1 1 229.6 73");
+    --tail: 62;
+    --sweep: 74;
+    animation-duration: 19s;
+    animation-delay: -15.87s;
+  }
+
+  .orb .o6 {
+    --path: path(
+      "M209.5 112.1A50 34 -10 1 1 111 129.5A50 34 -10 1 1 209.5 112.1"
+    );
+    --tail: 100;
+    --sweep: 24;
+    animation-duration: 16s;
+    animation-delay: -2.36s;
+  }
+
+  /* Kepler's second law, near enough to read as one: the path starts at
+     perihelion, so the first half decelerates out to aphelion at 50% and the
+     second accelerates back. The two curves are mirrors, which is what keeps the
+     speed continuous across the loop instead of jerking at 0%. Peak is about 5x
+     the crawl. */
+  @keyframes orb-sweep {
+    0% {
+      --sweep: 0;
+      animation-timing-function: cubic-bezier(0.25, 0.55, 0.6, 0.82);
+    }
+    50% {
+      --sweep: 50;
+      animation-timing-function: cubic-bezier(0.4, 0.18, 0.75, 0.45);
+    }
+    100% {
+      --sweep: 100;
+    }
+  }
+
+  /* The offset-distance and animation-delay on each path are one decision, not
+     two. The distances were picked to spread the travellers as widely as their
+     paths allow, and each delay is that distance run back through the inverse of
+     the orb-travel easing — so the figure loads in exactly the arrangement it
+     falls back to when kernel.css collapses every animation under reduced
+     motion. Either way it opens as a system, never as a conjunction. N-01's is
+     the one not chosen purely for spread: it is parked where its callout has
+     clear air above the field, since that is the frame everyone sees first. */
+
+  @media (max-width: 67rem) {
+    .head {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 38px;
+    }
+    .orb-wrap {
+      align-items: flex-start;
+      justify-self: start;
+    }
+    .orb {
+      width: min(520px, 90vw);
+    }
+  }
+</style>

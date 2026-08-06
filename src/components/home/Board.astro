@@ -1,0 +1,274 @@
+---
+/**
+ * FIG. 01 — The board.
+ *
+ * The real thing: `createLifeScene` runs the actual B3/S23 rule over
+ * `public/martin_plan.txt`, the same 356×192 board and the same pure functions
+ * the build uses. It is not an animation of a precomputed picture — the word
+ * is what the rule produces, and the readouts report the run.
+ *
+ * The settled figures are computed here at build time from that same plan, so
+ * a visitor with no script gets the correct numbers rather than zeroes.
+ * Stepping all 276 generations costs ~110ms.
+ */
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { parsePlan, step, countLive } from "../../lib/life.ts";
+
+const planPath = fileURLToPath(
+  new URL("../../../public/martin_plan.txt", import.meta.url),
+);
+const plan = parsePlan(readFileSync(planPath, "utf8"));
+
+let cells = plan.cells;
+let settledGen = 0;
+
+for (let g = 1; g <= 1000; g++) {
+  const next = step(cells, plan.width, plan.height);
+  let same = true;
+  for (let i = 0; i < next.length; i++) {
+    if (next[i] !== cells[i]) {
+      same = false;
+      break;
+    }
+  }
+  if (same) {
+    settledGen = g - 1;
+    break;
+  }
+  cells = next;
+}
+
+const settledPop = countLive(cells);
+
+/* The dial reads 0–300, so the settle sits at 331.2° rather than exactly at
+   the top — a full ring would read as "complete scale", not "settled here". */
+const DIAL_MAX = 300;
+const settleDeg = (settledGen / DIAL_MAX) * 360;
+---
+
+<section class="zone board" aria-labelledby="board-h">
+  <div class="sec-head">
+    <h2 id="board-h" class="p-u p-u--lg p-u--ink zh">Fig. 01 — The board</h2>
+    <span class="p-u p-tag">Conway B3/S23</span>
+    <span class="p-scale" aria-hidden="true"></span>
+    <span class="p-u p-u--hair">{plan.width} × {plan.height} cells</span>
+  </div>
+
+  <div class="board-grid">
+    <figure class="board-fig">
+      <div class="p-brk">
+        <span class="p-brk-i" aria-hidden="true"></span>
+        <canvas
+          id="life-canvas"
+          width={plan.width}
+          height={plan.height}
+          role="img"
+          aria-label={`A Conway's Game of Life board, ${plan.width} by ${plan.height} cells, that settles at generation ${settledGen} into the word MARTIN and stays a still life.`}
+        ></canvas>
+      </div>
+      <figcaption class="board-foot">
+        <span class="p-u"
+          >Seeded from martin_plan.txt · untouched thereafter</span
+        >
+        <span class="p-u p-u--ink" data-state data-settled
+          >Still life · stable</span
+        >
+      </figcaption>
+    </figure>
+
+    <div class="board-read">
+      <div class="gauge ins">
+        <svg viewBox="0 0 200 200" aria-hidden="true">
+          <circle class="h" cx="100" cy="100" r="92"></circle>
+          <circle class="h" cx="100" cy="100" r="80"></circle>
+          <circle class="h" cx="100" cy="100" r="58"></circle>
+          <g class="gticks h"></g>
+          <circle
+            cx="100"
+            cy="100"
+            r="80"
+            fill="none"
+            stroke="var(--hair)"
+            stroke-width="4"
+            transform="rotate(-90 100 100)"
+            opacity=".55"
+            data-arc
+            stroke-dasharray="0 502.7"></circle>
+          {/* ACCENT 1 of 2 — the generation the board settles at. */}
+          <path
+            class="acc-tick"
+            d="M100 6v20"
+            transform={`rotate(${settleDeg} 100 100)`}></path>
+          <circle class="f" cx="100" cy="100" r="2"></circle>
+          <text x="100" y="118" text-anchor="middle">Settle {settledGen}</text>
+          <text x="100" y="132" text-anchor="middle" class="t-ink"
+            >Still life</text
+          >
+        </svg>
+      </div>
+
+      <div class="readout">
+        <p class="big" data-gen>{settledGen}</p>
+        <div class="p-stack">
+          <span class="p-u p-u--hair">Gen</span>
+          <span class="p-u">of {settledGen}</span>
+        </div>
+      </div>
+      <div class="readout">
+        <p class="big big--out" data-pop>{settledPop}</p>
+        <div class="p-stack">
+          <span class="p-u p-u--hair">Pop</span>
+          <span class="p-u">live cells</span>
+        </div>
+      </div>
+
+      <p class="board-cap">
+        It runs the real rule from a seeded start, settles into the word at
+        generation {settledGen}, and holds there — nothing moves again.
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .board {
+    margin-bottom: var(--loose);
+  }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .sec-head .p-scale {
+    flex: 1 1 60px;
+    min-width: 40px;
+    align-self: center;
+    position: relative;
+    top: -2px;
+  }
+
+  .board-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 250px;
+    gap: clamp(28px, 4vw, 56px);
+    align-items: start;
+    margin-top: 22px;
+  }
+
+  .board-fig {
+    position: relative;
+  }
+
+  .board-fig .p-brk {
+    padding: 13px 14px;
+  }
+
+  #life-canvas {
+    width: 100%;
+    aspect-ratio: 356 / 192;
+    height: auto;
+    /* The board is 356 cells wide and drawn at 1px per cell, so the browser is
+       scaling it up ~3×. Smoothing turns a still life into a smudge. */
+    image-rendering: pixelated;
+  }
+
+  .board-foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .gauge {
+    width: 100%;
+    max-width: 212px;
+  }
+
+  .readout {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    margin-top: 16px;
+  }
+
+  .big {
+    font-weight: 500;
+    font-size: clamp(38px, 4.4vw, 60px);
+    line-height: 0.82;
+    letter-spacing: -0.045em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .big--out {
+    color: transparent;
+    -webkit-text-stroke: 1px var(--hair);
+  }
+
+  .board-cap {
+    max-width: 48ch;
+    margin-top: 20px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  @media (max-width: 67rem) {
+    .board-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 32px;
+    }
+  }
+</style>
+
+<script>
+  import { createLifeScene } from "../../lib/life.ts";
+
+  const canvas = document.getElementById("life-canvas");
+  const genEl = document.querySelector<HTMLElement>("[data-gen]");
+  const popEl = document.querySelector<HTMLElement>("[data-pop]");
+  const stateEl = document.querySelector<HTMLElement>("[data-state]");
+  const arc = document.querySelector<SVGCircleElement>("[data-arc]");
+
+  const DIAL_MAX = 300;
+  const CIRC = 502.7;
+
+  /* Ships settled and accented, which is the truth with no script: the board
+     on screen is the final still life. Script demotes it before restarting. */
+  function report(generation: number, settled: boolean, pop: number) {
+    if (genEl) genEl.textContent = String(generation);
+    if (popEl) popEl.textContent = String(pop);
+    if (stateEl) {
+      stateEl.textContent = settled ? "Still life · stable" : "Resolving";
+      if (settled) stateEl.setAttribute("data-settled", "");
+      else stateEl.removeAttribute("data-settled");
+    }
+    if (arc) {
+      const on = Math.min(1, generation / DIAL_MAX) * CIRC;
+      arc.setAttribute("stroke-dasharray", `${on.toFixed(1)} ${CIRC}`);
+    }
+  }
+
+  if (canvas instanceof HTMLCanvasElement) {
+    if (stateEl) {
+      stateEl.textContent = "Resolving";
+      stateEl.removeAttribute("data-settled");
+    }
+
+    const scene = createLifeScene({
+      canvas,
+      planSrc: "/martin_plan.txt",
+      // 276 generations at 24/s lands in about eleven seconds, and the board
+      // is a still life from there on.
+      speed: 24,
+      pauseWhenOffscreen: true,
+      onGeneration: report,
+    });
+    scene?.start();
+  }
+</script>
