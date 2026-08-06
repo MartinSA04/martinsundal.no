@@ -20,21 +20,22 @@ import {
   BLOCH_PANEL,
   BLOCH_PERIOD,
   PANEL,
-  PERIOD,
+  TURN,
   blochFrame,
   meshPoints,
 } from "../../lib/quantum.ts";
 
 const mesh = meshPoints(0);
 const bloch = blochFrame(0);
-const { cx, cy, r, axes, poleTop, poleBottom, axisBottom } = BLOCH_GEOMETRY;
+const { cx, cy, r, axes, poleTop, poleBottom, axisBottom, ket0, ket1 } =
+  BLOCH_GEOMETRY;
 ---
 
 <section
   class="zone studies"
   aria-labelledby="stu-h"
   data-surface
-  data-period={PERIOD}
+  data-turn={TURN}
   data-bloch-period={BLOCH_PERIOD}
 >
   <div class="sec-head">
@@ -82,7 +83,7 @@ const { cx, cy, r, axes, poleTop, poleBottom, axisBottom } = BLOCH_GEOMETRY;
       <figcaption class="p-u cap">
         Fig. 05a · Quantum corral<br />
         <span class="sym">
-          Re ψ = J₂(j₂₁·r)·cos(2θ − ωt) · m = 2 · T {PERIOD}s
+          Re ψ = Σ cₘ·J_m(j_m₁·r)·cos(mθ ± ω_m t) · m = 0, 2, 3 · turn {TURN}s
         </span>
       </figcaption>
     </figure>
@@ -197,46 +198,40 @@ const { cx, cy, r, axes, poleTop, poleBottom, axisBottom } = BLOCH_GEOMETRY;
           <line
             class="i vec"
             data-vec
-            data-behind={bloch.behind ? "" : undefined}
             x1={cx}
             y1={cy}
             x2={bloch.tip[0]}
             y2={bloch.tip[1]}></line>
-          <polyline
-            class="f tip"
-            data-head
-            data-behind={bloch.behind ? "" : undefined}
-            points={bloch.head}></polyline>
+          <polyline class="f tip" data-head points={bloch.head}></polyline>
           <circle class="f" cx={cx} cy={cy} r="1.8"></circle>
           <circle
             class="f tip"
             data-tip
-            data-behind={bloch.behind ? "" : undefined}
             cx={bloch.tip[0]}
             cy={bloch.tip[1]}
             r="2.6"></circle>
           <text
             class="t-ink sym"
             data-state-label
+            text-anchor={bloch.stateAnchor}
             x={bloch.stateLabel[0]}
             y={bloch.stateLabel[1]}>|ψ&#x27E9;</text
           >
 
-          <!-- The poles. -->
+          <!-- The poles, dotted on the sphere; their kets hang off the ends of
+               the z axis, out where the state can never reach them. -->
           <circle class="f" cx={poleTop[0]} cy={poleTop[1]} r="2.2"></circle>
           <circle class="f" cx={poleBottom[0]} cy={poleBottom[1]} r="2.2"
           ></circle>
-          <text class="t-ink sym" x={poleTop[0] + 6} y={poleTop[1] - 4}
-            >|0&#x27E9;</text
-          >
-          <text class="t-ink sym" x={poleBottom[0] + 6} y={poleBottom[1] + 13}
-            >|1&#x27E9;</text
-          >
+          <text class="t-ink sym" x={ket0[0]} y={ket0[1]}>|0&#x27E9;</text>
+          <text class="t-ink sym" x={ket1[0]} y={ket1[1]}>|1&#x27E9;</text>
         </svg>
       </div>
       <figcaption class="p-u cap">
         Fig. 05b · Bloch sphere<br />
-        <span class="sym">θ = 52° · precession · T {BLOCH_PERIOD}s</span>
+        <span class="sym">
+          Driven qubit · tilted precession · T {BLOCH_PERIOD}s
+        </span>
       </figcaption>
     </figure>
   </div>
@@ -305,14 +300,14 @@ const { cx, cy, r, axes, poleTop, poleBottom, axisBottom } = BLOCH_GEOMETRY;
   /* Larger than the first pass: it now carries three axis labels, two angle
      labels and three kets, and none of them survive being shrunk. */
   .bloch {
-    width: clamp(168px, 17vw, 232px);
+    width: clamp(200px, 21vw, 292px);
     aspect-ratio: 1;
   }
 
   /* The caption is wider than the sphere, so without this the column sizes to
      the text and pushes the figure into the plate's right margin. */
   .bloch-fig {
-    max-width: clamp(168px, 17vw, 232px);
+    max-width: clamp(200px, 21vw, 292px);
   }
 
   .surf svg,
@@ -347,19 +342,12 @@ const { cx, cy, r, axes, poleTop, poleBottom, axisBottom } = BLOCH_GEOMETRY;
     opacity: 0.85;
   }
 
-  /* Behind the sphere, the vector and its tip drop to the hairline — the one
-     depth cue in a figure with no shading. */
+  /* The vector holds one weight all the way round. It used to drop to the
+     hairline behind the sphere as a depth cue, which read as the state fading
+     rather than as it passing behind — and the equator already carries the
+     depth, solid in front and dashed behind. */
   .vec {
     stroke-width: 1.4;
-  }
-
-  .vec[data-behind] {
-    stroke: var(--hair);
-    stroke-width: 1;
-  }
-
-  .tip[data-behind] {
-    fill: var(--hair);
   }
 
   .bloch text {
@@ -424,7 +412,7 @@ const { cx, cy, r, axes, poleTop, poleBottom, axisBottom } = BLOCH_GEOMETRY;
       width: min(320px, 78vw);
     }
     .bloch {
-      width: min(148px, 34vw);
+      width: min(292px, 72vw);
     }
   }
 </style>

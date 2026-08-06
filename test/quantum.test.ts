@@ -5,21 +5,25 @@ import {
   BLOCH_GEOMETRY,
   BLOCH_PANEL,
   BLOCH_PERIOD,
-  J21,
-  M,
-  PHI_ARC_R,
   MESH_LINES,
+  MODES,
+  NUTATIONS,
   PANEL,
   PEAK,
-  PERIOD,
+  PHI_ARC_R,
   PLAN_EXTENT,
+  PRECESSIONS,
   RMAX,
+  START,
+  TILT,
+  TURN,
   besselJ,
   blochDepth,
   blochFrame,
   blochProject,
+  blochState,
   meshPoints,
-  phaseAt,
+  omega,
   project,
   psiReal,
 } from "../src/lib/quantum.ts";
@@ -38,7 +42,8 @@ test("besselJ matches known values", () => {
     [1, 3.831706, 0],
     [2, 1, 0.114903],
     [2, 3, 0.486091],
-    [2, 5, 0.046565],
+    [3, 2, 0.128943],
+    [3, 6.380162, 0],
   ];
   for (const [m, x, want] of cases) {
     assert.ok(
@@ -48,11 +53,19 @@ test("besselJ matches known values", () => {
   }
 });
 
-test("J21 is a zero of J_2, and the first one", () => {
-  assert.ok(Math.abs(besselJ(2, J21)) < 1e-12, `J_2(J21) = ${besselJ(2, J21)}`);
-  for (let i = 1; i < 400; i++) {
-    const x = (i / 400) * J21;
-    assert.ok(besselJ(2, x) > 1e-9, `J_2 crossed zero early, at ${x}`);
+test("each mode's zero is the first zero of its own J_m", () => {
+  for (const mode of MODES) {
+    assert.ok(
+      Math.abs(besselJ(mode.m, mode.zero)) < 1e-9,
+      `J_${mode.m}(${mode.zero}) is not zero`,
+    );
+    for (let i = 1; i < 400; i++) {
+      const x = (i / 400) * mode.zero;
+      assert.ok(
+        Math.abs(besselJ(mode.m, x)) > 1e-9,
+        `J_${mode.m} crossed zero early, at ${x}`,
+      );
+    }
   }
 });
 
@@ -60,80 +73,91 @@ test("J21 is a zero of J_2, and the first one", () => {
 
 test("psi vanishes on the wall of the well, at every time", () => {
   for (let k = 0; k < 32; k++) {
-    const phase = (k / 32) * TWO_PI;
+    const t = (k / 32) * TURN;
     for (let i = 0; i < 24; i++) {
-      const theta = (i / 24) * TWO_PI;
       assert.ok(
-        Math.abs(psiReal(1, theta, phase)) < 1e-12,
-        `psi(1, ${theta}, ${phase}) is not zero on the wall`,
+        Math.abs(psiReal(1, (i / 24) * TWO_PI, t)) < 1e-9,
+        "psi is not zero on the wall",
       );
     }
   }
 });
 
-test("psi vanishes on the axis, as an m=2 state must", () => {
-  for (let k = 0; k < 16; k++) {
-    assert.ok(Math.abs(psiReal(0, 0, (k / 16) * TWO_PI)) < 1e-12);
+test("the frequencies are the real energies, j^2 on one shared clock", () => {
+  for (let i = 0; i < MODES.length; i++) {
+    const ratio = omega(i) / omega(0);
+    const want = MODES[i]!.zero ** 2 / MODES[0]!.zero ** 2;
+    assert.ok(
+      Math.abs(ratio - want) < 1e-12,
+      `mode ${i} runs at ${ratio} of the base, but its energy ratio is ${want}`,
+    );
   }
+  /* And the base clock is what TURN says it is: the m=2 pattern turns once. */
+  const turnRate = omega(0) / MODES[0]!.m;
+  assert.ok(Math.abs(TWO_PI / turnRate - TURN) < 1e-9);
 });
 
-test("psi is exactly periodic in phase", () => {
-  for (const [r, th] of [
-    [0.3, 0.4],
-    [0.59, 2.1],
-    [0.85, 5.0],
-  ]) {
-    for (let k = 0; k < 8; k++) {
-      const p = (k / 8) * TWO_PI;
-      assert.ok(
-        Math.abs(psiReal(r!, th!, p) - psiReal(r!, th!, p + TWO_PI)) < 1e-12,
+test("the state is not a rigid rotation", () => {
+  /* The whole reason for three modes. A rigidly rotating pattern reproduces
+     itself exactly under a matching turn of theta; this one must not, or it is
+     the single-mode figure again with extra arithmetic. */
+  let worst = 0;
+  for (let k = 1; k < 40; k++) {
+    const t = (k / 40) * TURN;
+    const turned = (omega(0) * t) / MODES[0]!.m;
+    for (const r of [0.3, 0.55, 0.8]) {
+      worst = Math.max(
+        worst,
+        Math.abs(psiReal(r, 0.6 - turned, t) - psiReal(r, 0.6, 0)),
       );
     }
   }
+  assert.ok(worst > 0.15, `the surface only deforms by ${worst} — still rigid`);
 });
 
-test("the pattern is a rigid rotation, and repeats after half a turn", () => {
-  /* Rotating by the phase over m reproduces the field exactly: that is what
-     makes it rigid rather than rippling, and it is the property that lets the
-     loop close at all for a circular well. */
-  for (const r of [0.25, 0.6, 0.9]) {
-    for (let k = 0; k < 12; k++) {
-      const phase = (k / 12) * TWO_PI;
-      assert.ok(
-        Math.abs(psiReal(r, 0.7 + phase / M, phase) - psiReal(r, 0.7, 0)) <
-          1e-12,
-        "the pattern is not rotating rigidly",
-      );
-      /* Half a turn of phase is a whole period of the drawn shape. */
-      assert.ok(
-        Math.abs(
-          psiReal(r, 0.7, phase) - psiReal(r, 0.7, phase + Math.PI * 2),
-        ) < 1e-12,
-      );
-    }
+test("the state never exactly repeats, and that is by construction", () => {
+  /* Irrational energy ratios mean no common period. Checked as the absence of a
+     repeat over a long window rather than asserted about the reals. */
+  const sample = (t: number) =>
+    [0.3, 0.5, 0.7].map((r) => psiReal(r, 0.4, t)).join(",");
+  const first = sample(0);
+  for (let k = 1; k <= 400; k++) {
+    assert.notEqual(sample((k * TURN) / 8), first);
   }
 });
 
-test("the state has four lobes, alternating in sign", () => {
-  const signs = [0, 1, 2, 3].map((q) =>
-    Math.sign(psiReal(0.594, (q * Math.PI) / 2, 0)),
-  );
-  assert.deepEqual(signs, [1, -1, 1, -1]);
-});
-
-test("the drawn height is normalised to exactly +-1", () => {
-  let peak = 0;
-  for (let i = 0; i <= 400; i++) {
-    for (let k = 0; k < 40; k++) {
+test("every mode contributes — none is drowned out", () => {
+  for (const mode of MODES) {
+    let peak = 0;
+    for (let i = 1; i < 60; i++) {
       peak = Math.max(
         peak,
-        Math.abs(psiReal(i / 400, (k / 40) * TWO_PI, (k / 40) * TWO_PI)),
+        (mode.amplitude * Math.abs(besselJ(mode.m, mode.zero * (i / 60)))) /
+          PEAK,
       );
     }
+    assert.ok(
+      peak > 0.08,
+      `mode m=${mode.m} peaks at only ${peak} of the total`,
+    );
   }
-  assert.ok(peak <= 1 + 1e-9, `height reached ${peak}`);
-  assert.ok(peak > 0.999, `height only reached ${peak}`);
-  assert.ok(PEAK > 0.48 && PEAK < 0.49, `PEAK ${PEAK} is not J_2's maximum`);
+});
+
+test("PEAK is the exact supremum, so the height is bounded and well used", () => {
+  let worst = 0;
+  for (let k = 0; k < 900; k++) {
+    const t = (k / 900) * TURN * 7;
+    for (let i = 0; i <= 40; i++) {
+      for (let j = 0; j < 24; j++) {
+        worst = Math.max(
+          worst,
+          Math.abs(psiReal((i / 40) * RMAX, (j / 24) * TWO_PI, t)),
+        );
+      }
+    }
+  }
+  assert.ok(worst <= 1 + 1e-12, `the state reached ${worst} of PEAK`);
+  assert.ok(worst > 0.7, `the state only ever reaches ${worst} of its budget`);
 });
 
 /* --- the mesh ------------------------------------------------------------- */
@@ -142,9 +166,9 @@ test("the mesh has every spoke and every ring", () => {
   assert.equal(meshPoints(0).length, MESH_LINES);
 });
 
-test("no projected point leaves the panel, at any phase", () => {
-  for (let k = 0; k < 96; k++) {
-    for (const line of meshPoints((k / 96) * TWO_PI)) {
+test("no projected point leaves the panel, at any time", () => {
+  for (let k = 0; k < 300; k++) {
+    for (const line of meshPoints((k / 300) * TURN * 5)) {
       for (const pair of line.split(" ")) {
         const [x, y] = pair.split(",").map(Number);
         assert.ok(
@@ -156,17 +180,12 @@ test("no projected point leaves the panel, at any phase", () => {
   }
 });
 
-test("the mesh returns to its opening frame after one period", () => {
-  assert.deepEqual(meshPoints(phaseAt(0)), meshPoints(phaseAt(PERIOD)));
-});
-
 test("every drawn line moves — nothing in the figure is a node", () => {
   /* psi vanishes on the wall, so a ring drawn there would be dead flat forever
      while the rest of the surface turned. The mesh therefore stops just inside
-     it. This is the guard on that: sample each polyline at two phases and
-     require it to have changed. */
+     it. This is the guard on that. */
   const a = meshPoints(0);
-  const b = meshPoints(Math.PI / 3);
+  const b = meshPoints(TURN / 6);
   for (let i = 0; i < a.length; i++) {
     assert.notEqual(
       a[i],
@@ -174,25 +193,6 @@ test("every drawn line moves — nothing in the figure is a node", () => {
       `polyline ${i} is static — it is sitting on a node`,
     );
   }
-});
-
-test("the mesh stops short of the wall", () => {
-  assert.ok(RMAX < 1, "the mesh reaches the wall, where psi is pinned to zero");
-  assert.ok(RMAX > 0.85, `RMAX ${RMAX} crops the figure well inside the well`);
-  /* Still far enough out to be past the crest of J_2, so the lobes are whole. */
-  const crest = 0.594;
-  assert.ok(RMAX > crest, "the mesh is cropped inside the lobe crest");
-});
-
-test("the figure is drawn low enough that the lobes stand up", () => {
-  /* The whole look rests on this: the height of a lobe must beat the depth of
-     the plan, or the disc reads as seen from above and the lobes flatten into
-     shading. */
-  const crest = PLAN_EXTENT.cy - project(0.594, Math.PI / 2, Math.PI)[1];
-  assert.ok(
-    crest > PLAN_EXTENT.ry,
-    `a lobe rises ${crest.toFixed(1)} against a plan depth of ${PLAN_EXTENT.ry} — too flat`,
-  );
 });
 
 test("the axis markers sit on the axes", () => {
@@ -206,6 +206,31 @@ test("the axis markers sit on the axes", () => {
   assert.equal(AXES.marks.filter((m) => m.filled).length, 1);
 });
 
+test("the mesh stops short of the wall", () => {
+  assert.ok(RMAX < 1, "the mesh reaches the wall, where psi is pinned to zero");
+  assert.ok(RMAX > 0.85, `RMAX ${RMAX} crops the figure well inside the well`);
+});
+
+test("the figure is drawn low enough that the lobes stand up", () => {
+  /* The whole look rests on this: a lobe must rise further than the plan is
+     deep, or the disc reads as seen from above and the lobes flatten into
+     shading. Taken as the best the surface manages over a long window. */
+  let crest = 0;
+  for (let k = 0; k < 400; k++) {
+    const t = (k / 400) * TURN * 5;
+    for (let j = 0; j < 24; j++) {
+      crest = Math.max(
+        crest,
+        PLAN_EXTENT.cy - project(0.6, (j / 24) * TWO_PI, t)[1],
+      );
+    }
+  }
+  assert.ok(
+    crest > PLAN_EXTENT.ry,
+    `a lobe rises ${crest.toFixed(1)} against a plan depth of ${PLAN_EXTENT.ry} — too flat`,
+  );
+});
+
 /* --- the sphere ----------------------------------------------------------- */
 
 test("the projection puts x lower-left, y right, and z straight up", () => {
@@ -214,40 +239,106 @@ test("the projection puts x lower-left, y right, and z straight up", () => {
   const [zx, zy] = blochProject(0, 0, 1);
   assert.ok(
     xx < BLOCH_GEOMETRY.cx && xy > BLOCH_GEOMETRY.cy,
-    "x is not lower-left",
+    "x not lower-left",
   );
   assert.ok(
     yx > BLOCH_GEOMETRY.cx && yy > BLOCH_GEOMETRY.cy,
-    "y is not lower-right",
+    "y not lower-right",
   );
   assert.ok(Math.abs(zx - BLOCH_GEOMETRY.cx) < 1e-9, "z is not vertical");
   assert.ok(zy < BLOCH_GEOMETRY.cy, "z does not point up");
 });
 
 test("the front half of the equator is the half drawn lower", () => {
-  const front = BLOCH_GEOMETRY.equatorFront
-    .split(" ")
-    .map((p) => Number(p.split(",")[1]));
-  const back = BLOCH_GEOMETRY.equatorBack
-    .split(" ")
-    .map((p) => Number(p.split(",")[1]));
-  assert.ok(Math.max(...front) > Math.max(...back));
-  assert.ok(Math.min(...front) >= Math.min(...back) - 1e-9);
+  const ys = (s: string) => s.split(" ").map((p) => Number(p.split(",")[1]));
+  assert.ok(
+    Math.max(...ys(BLOCH_GEOMETRY.equatorFront)) >
+      Math.max(...ys(BLOCH_GEOMETRY.equatorBack)),
+  );
 });
 
-test("the state stays on the sphere and inside the panel", () => {
-  for (let k = 0; k < 64; k++) {
-    const b = blochFrame((k / 64) * BLOCH_PERIOD);
+test("the state stays on the unit sphere", () => {
+  for (let k = 0; k < 400; k++) {
+    const [X, Y, Z] = blochState((k / 400) * BLOCH_PERIOD);
+    assert.ok(
+      Math.abs(Math.hypot(X, Y, Z) - 1) < 1e-9,
+      "the state left the sphere",
+    );
+  }
+});
+
+test("the state sweeps a band, not a single circle", () => {
+  /* Free precession about z holds theta fixed; that was the old figure and it
+     read as one circle. Precession about a tilted axis has to move theta as
+     well, over the full band the tilt allows. */
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (let k = 0; k < 600; k++) {
+    const { theta } = blochFrame((k / 600) * BLOCH_PERIOD);
+    lo = Math.min(lo, theta);
+    hi = Math.max(hi, theta);
+  }
+  const span = hi - lo;
+  assert.ok(span > 0.5, `theta only spans ${span} radians — still one circle`);
+  /* And it spans exactly what the geometry says. The path is a cone about the
+     effective field of half-angle TILT - START, and that axis is itself TILT
+     off z — so theta runs from START out to 2*TILT - START, not TILT +- START. */
+  assert.ok(Math.abs(lo - START) < 0.02, `low edge ${lo}, want ${START}`);
+  assert.ok(
+    Math.abs(hi - (2 * TILT - START)) < 0.02,
+    `high edge ${hi}, want ${2 * TILT - START}`,
+  );
+  /* Clear of both poles, so the angle arcs never degenerate. */
+  assert.ok(lo > 0.2 && hi < Math.PI - 0.2);
+});
+
+test("the azimuth winds right round", () => {
+  const seen = new Set<number>();
+  for (let k = 0; k < 600; k++) {
+    const { phi } = blochFrame((k / 600) * BLOCH_PERIOD);
+    /* Clamped: atan2 returns pi inclusive, which would land in a ninth bucket. */
+    seen.add(Math.min(7, Math.floor(((phi + Math.PI) / TWO_PI) * 8)));
+  }
+  assert.equal(seen.size, 8, "the state does not reach every azimuth");
+});
+
+test("the trajectory closes, because both turn counts are whole", () => {
+  assert.ok(Number.isInteger(NUTATIONS) && Number.isInteger(PRECESSIONS));
+  const a = blochState(0);
+  const b = blochState(BLOCH_PERIOD);
+  for (let i = 0; i < 3; i++) assert.ok(Math.abs(a[i]! - b[i]!) < 1e-9);
+  /* Coprime, so it does not close early and retrace itself. */
+  const gcd = (x: number, y: number): number => (y ? gcd(y, x % y) : x);
+  assert.equal(gcd(NUTATIONS, PRECESSIONS), 1);
+});
+
+test("the state passes both behind and in front", () => {
+  const depths = Array.from({ length: 400 }, (_, k) => {
+    const [X, Y, Z] = blochState((k / 400) * BLOCH_PERIOD);
+    return blochDepth(X, Y, Z);
+  });
+  assert.ok(Math.max(...depths) > 0 && Math.min(...depths) < 0);
+});
+
+test("the state and its furniture stay inside the panel", () => {
+  for (let k = 0; k < 400; k++) {
+    const b = blochFrame((k / 400) * BLOCH_PERIOD);
     const d = Math.hypot(
       b.tip[0] - BLOCH_GEOMETRY.cx,
       b.tip[1] - BLOCH_GEOMETRY.cy,
     );
-    assert.ok(
-      d <= BLOCH_GEOMETRY.r + 1e-9,
-      `tip escaped by ${d - BLOCH_GEOMETRY.r}`,
-    );
-    for (const [x, y] of [b.tip, b.foot, b.thetaLabel, b.phiLabel]) {
-      assert.ok(x >= 0 && x <= BLOCH_PANEL && y >= 0 && y <= BLOCH_PANEL);
+    assert.ok(d <= BLOCH_GEOMETRY.r + 1e-9, "tip escaped the sphere");
+    for (const [x, y] of [
+      b.tip,
+      b.foot,
+      b.thetaLabel,
+      b.phiLabel,
+      b.stateLabel,
+    ]) {
+      assert.ok(
+        x >= 0 && x <= BLOCH_PANEL && y >= 0 && y <= BLOCH_PANEL,
+        `a label left the ${BLOCH_PANEL} panel at ${x},${y}`,
+      );
     }
   }
 });
@@ -255,55 +346,19 @@ test("the state stays on the sphere and inside the panel", () => {
 test("the arcs start on the axes they are measured from", () => {
   const b = blochFrame(BLOCH_PERIOD * 0.3);
   const first = (s: string) => s.split(" ")[0]!.split(",").map(Number);
-  /* Points are serialised to 2dp, so compare at that resolution rather than
-     against an unrounded projection. */
-  const near = (a: number, b: number) => Math.abs(a - b) < 0.01;
-  /* The polar arc starts on the z axis. */
+  /* Points are serialised to 2dp, so compare at that resolution. */
+  const near = (x: number, y: number) => Math.abs(x - y) < 0.01;
   const [tx] = first(b.thetaArc);
   assert.ok(near(tx!, BLOCH_GEOMETRY.cx), "theta arc misses z");
-  /* The azimuth arc starts on the x axis. */
   const [px, py] = first(b.phiArc);
   const onX = blochProject(PHI_ARC_R, 0, 0);
-  assert.ok(
-    near(px!, onX[0]) && near(py!, onX[1]),
-    "phi arc does not start on x",
-  );
+  assert.ok(near(px!, onX[0]) && near(py!, onX[1]), "phi arc misses x");
 });
 
-test("the tip passes behind and in front exactly once each", () => {
-  const flags = Array.from(
-    { length: 240 },
-    (_, k) => blochFrame((k / 240) * BLOCH_PERIOD).behind,
-  );
-  let crossings = 0;
-  for (let i = 0; i < flags.length; i++) {
-    if (flags[i] !== flags[(i + 1) % flags.length]) crossings++;
-  }
-  assert.equal(crossings, 2);
-  assert.ok(flags.includes(true) && flags.includes(false));
-});
-
-test("depth agrees with the drawn near half of the equator", () => {
-  for (let k = 0; k < 48; k++) {
-    const t = (k / 48) * TWO_PI;
-    const near = blochDepth(Math.cos(t), Math.sin(t), 0) > 0;
-    const [, y] = blochProject(Math.cos(t), Math.sin(t), 0);
-    assert.equal(
-      near,
-      y > BLOCH_GEOMETRY.cy,
-      "a near point of the equator was drawn above the centre line",
-    );
-  }
-});
-
-test("both figures loop, and slowly", () => {
-  assert.ok(PERIOD >= 60, `the surface turns in ${PERIOD}s — too fast`);
+test("both figures move slowly", () => {
+  assert.ok(TURN >= 60, `the surface turns in ${TURN}s — too fast`);
   assert.ok(
     BLOCH_PERIOD >= 40,
-    `the sphere precesses in ${BLOCH_PERIOD}s — too fast`,
+    `the sphere closes in ${BLOCH_PERIOD}s — too fast`,
   );
-  const a = blochFrame(0);
-  const b = blochFrame(BLOCH_PERIOD);
-  assert.ok(Math.abs(a.tip[0] - b.tip[0]) < 1e-9);
-  assert.ok(Math.abs(a.tip[1] - b.tip[1]) < 1e-9);
 });

@@ -53,88 +53,100 @@ Numbering: this is Fig. 05. `Contact` renumbers from Fig. 05 to Fig. 06.
 
 ## The surface — a quantum corral
 
-A particle in a **circular** infinite well: the thing an STM builds out of a
-ring of adatoms. Separating in polar coordinates,
+A particle in a circular infinite well: the thing an STM builds out of a ring of
+adatoms. Separating in polar coordinates gives modes J_m(j_m1 r) e^(i m th) with
+energies proportional to j_m1^2, where j_m1 is J_m's first zero — which is what
+pins psi to zero on the wall at r = 1. The drawn height is the real part of a
+three-mode superposition in that one well:
 
 ```text
-psi(r, th, t) = J_m(j_mn * r) * e^(i*m*th) * e^(-i*E*t)
+Re psi = A * J_2(j_21 r) * cos(2th - w_A t)      four lobes, turning
+       + B * J_0(j_01 r) * cos(w_B t)            a central swell, breathing
+       + C * J_3(j_31 r) * cos(3th + w_C t)      six lobes, turning back
 
-Re psi = J_2(j_21 * r) * cos(2*th - w*t)        j_21 = 5.13562 (first zero of J_2)
+A = 1.00   B = 0.28   C = 0.34        w proportional to j_m1^2, one shared clock
 ```
 
-Two up-lobes and two down-lobes on a disc, turning about the axis. J_m is the
-Bessel function of the first kind; pinning j_21 to the wall is what forces psi
-to vanish at r = 1, so the rim is flat and the lobes rise inside it.
+Every frequency is the mode's real energy. The amplitudes are the only free
+numbers in the figure.
 
 **Why the well is round.** The first pass used a square box, and its silhouette
 was a diamond. The reference sheet's figure is unmistakably round, with lobes
-that cross in front of each other. The corral is the same physics on the domain
-the drawing actually has.
+that cross in front of each other.
 
-**Why one mode and not four.** A single mode carries a single energy, so its
-time dependence is a rigid rotation of the pattern and Re psi is exactly
-periodic — full stop. Mixing modes would ripple the surface, but a circular
-well's energies go as j_mn^2 and those ratios are irrational (5.783 against
-26.37 for the first two), so no combination of them ever closes a loop. Rigid
-rotation is not a compromise here; it is what a circular well permits, and the
-square box's four-mode ripple was only available because its energies happened
-to be integers.
+**Why three modes and not one.** The second pass drew the m = 2 mode alone,
+because a single mode carries a single energy and therefore closes an exact
+loop. But a single mode's time dependence is a rigid rotation: the shape never
+changes, it only turns, and that is exactly what it looked like. Three modes at
+their true energies genuinely deform — one pattern turns each way and the
+central swell breathes through both.
 
-The projection does the rest. Seen nearly edge-on, the lobes sweep past one
-another and the silhouette changes continuously even though the surface is
-rigid.
+**On giving up the exact loop.** j_m1^2 ratios are irrational, so the state is
+quasi-periodic and never exactly repeats. That was the reason for the single
+mode, and it was the wrong call. A seam could only appear at a restart, and
+there is no restart: the figure runs from a continuous clock and evolves
+smoothly forever. The loop bought nothing and cost the motion.
 
-Constants: SPAN 120, SQUASH 0.42, RISE 86, in a 300 panel. SQUASH is the whole
+**Normalisation is exact rather than sampled.** At a fixed point each mode is a
+cosine of fixed amplitude whose phase sweeps the whole circle, and the three
+frequencies are mutually irrational — so over time the phases become
+independent and the supremum is just the sum of the three amplitudes. No
+sampling in time, no safety margin. It is rarely reached, which is deliberate:
+the surface sits around two thirds of its height budget and swells towards the
+top of it when the modes come into phase.
+
+Constants: SPAN 120, SQUASH 0.42, RISE 98, in a 300 panel. SQUASH is the whole
 look — at 1.0 the disc is seen from directly above and the lobes flatten into
 shading; near 0.4 the view is low enough that they stand up. A test asserts a
-lobe rises further than the plan is deep, so the figure cannot silently go flat
-again.
+lobe rises further than the plan is deep.
 
 **Drawing.** 40 spokes of 24 samples and 12 rings of 81, hairline, no
 hidden-line removal.
 
 **The wall is not drawn.** psi is pinned to zero at r = 1, so anything drawn
 there is a node: dead flat, and flat forever while the rest of the surface
-turns. Drawing it put a static ellipse around a moving figure, which read as a
-frame rather than as part of the state. The mesh therefore stops at r = 0.94 and
-the wall has nothing to show — it still sets the state, through j_21, it just
-does not appear. A test samples every polyline at two phases and requires all of
-them to have moved.
+moves. The mesh stops at r = 0.94 and the wall has nothing to show — it still
+sets the state, through the three zeros, it just does not appear. A test samples
+every polyline at two times and requires all of them to have moved.
 
 **Markers on the axes.** Open squares at each axis end and one filled square out
-along the horizontal, which is where the reference sheet puts them. Not panel
-corners — that was the first pass, and it read as a crop mark rather than a
-plot.
+along the horizontal, which is where the reference sheet puts them.
 
 ## The Bloch sphere
 
 Drawn the canonical way, after `docs/inspo/Bloch_Sphere_representation.svg.webp`:
+three axes arrowed on the positive directions and labelled x, y, z in italic;
+the equator solid where it passes in front and dashed where it runs behind; both
+angles marked with their arcs; the state's drop onto the equatorial plane and
+the radius out to where it lands. No fill on the disc — everything on this plate
+is drawn, nothing is shaded.
 
-```text
-|psi> = cos(th/2)|0> + e^(i*ph)*sin(th/2)|1>     th = 52 deg fixed, ph advancing
-```
+**The motion is a tilted precession, not a circle.** Free precession about z
+holds the polar angle fixed, so the tip traces one circle and reads as a loop
+with nothing to watch. Here the state precesses about an effective field lying
+55 degrees off z — what a detuned drive produces — so its polar angle rises and
+falls. That path is then carried round again by the lab frame's own rotation.
+Two rotations composed, 2 nutations against 3 precessions per cycle: coprime, so
+it does not close early, and both whole, so it does close exactly at 60s.
 
-- Three axes with arrowheads on the positive directions, labelled x, y, z in
-  italic; z carries on below the origin, unarrowed, to |1>.
-- The equator split at the silhouette: solid where it passes in front of the
-  sphere, dashed where it runs behind.
-- Both angles marked with their arcs — th from the z axis to the state, ph in
-  the equatorial plane from the x axis — and both arcs swing with the state
-  rather than sitting in a fixed plane.
-- The state's drop onto the equatorial plane, and the radius out to where it
-  lands: the pair that fixes ph.
-- Dots at both poles and at the tip. No fill on the disc: everything on this
-  plate is drawn, nothing is shaded.
+The state sweeps a band from 26 to 84 degrees, clear of both poles, so the angle
+arcs never degenerate. Tests hold the band edges, the winding, and the closure.
 
-th is fixed and ph advances, which is free precession.
+**The vector holds one weight all the way round.** It used to drop to the
+hairline behind the sphere as a depth cue, which read as the state fading rather
+than as it passing behind. The equator already carries the depth.
+
+**The kets hang off the ends of the z axis**, out where the state cannot reach
+them. Beside the poles, |0> and |psi> landed on each other every time the state
+swung high.
 
 ## Timing
 
-The surface turns once in 72s and the sphere precesses in 54s. Both are much
-slower than the first pass at 24s and 12s, which read as animations rather than
-as states being integrated. An m = 2 pattern looks the same after half a turn,
-so the surface repeats every 36s, against the sphere's 54 — a 2:3 ratio, so the
-band never settles into one beat. A test holds both floors.
+The surface's m = 2 component turns once in 72s, which sets the shared clock;
+the other two modes follow from their own energies. The sphere's trajectory
+closes in 60s. Both are far slower than the first pass at 24s and 12s, which
+read as animations rather than as states being integrated, and a test holds both
+floors.
 
 ## Copy
 
@@ -162,8 +174,9 @@ specialization `MTFYMAKVANTE24`.
 > rest of this page is simulators. This is where the physics they simulate gets
 > read.
 
-Captions: `Fig. 05a · Quantum corral · Re ψ = J₂(j₂₁·r)·cos(2θ − ωt) · m = 2 ·
-T 72s` and `Fig. 05b · Bloch sphere · θ = 52° · precession · T 54s`.
+Captions: `Fig. 05a · Quantum corral · Re ψ = Σ cₘ·J_m(j_m₁·r)·cos(mθ ± ω_m t) ·
+m = 0, 2, 3 · turn 72s` and `Fig. 05b · Bloch sphere · Driven qubit · tilted
+precession · T 60s`.
 
 ## Code
 
@@ -217,9 +230,6 @@ collapses its animations.
   transparency is what makes it read as an instrument plot.
 - No interactivity — no drag-to-rotate, no scrubbing. Every other figure on the
   plate runs on its own clock and this one does too.
-- No multi-mode ripple on the surface. A circular well cannot close a loop with
-  more than one mode, and a seamless loop is worth more here than a busier
-  figure.
 - No third figure. Two computed objects in one band is already the densest
   thing on the page.
 - No course list. It was in the first draft as an index in the manner of the

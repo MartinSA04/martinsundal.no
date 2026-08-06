@@ -7,13 +7,13 @@
  * frame, and every early return below leaves a figure that is still true, just
  * still.
  *
- * Two things keep it cheap. Screen x never moves for a mesh point — the pattern
- * rotates, the geometry does not — so quantum.ts caches it along with the mode
- * amplitude, and a frame is a couple of multiplications per point. And an
+ * Two things keep it cheap. Screen x never moves for a mesh point — the
+ * patterns rotate, the geometry does not — so quantum.ts caches it along with
+ * each mode's amplitude, and a frame is five multiplications per point. And an
  * IntersectionObserver stops the loop whenever the band is off screen, which
  * for a figure this far down the page is most of the time.
  */
-import { blochFrame, meshPoints, phaseAt } from "../lib/quantum.ts";
+import { blochFrame, meshPoints } from "../lib/quantum.ts";
 
 const band = document.querySelector<HTMLElement>("[data-surface]");
 if (band) {
@@ -43,7 +43,7 @@ if (band) {
     el?.setAttribute(name, value.toFixed(2));
 
   const draw = (seconds: number) => {
-    const points = meshPoints(phaseAt(seconds));
+    const points = meshPoints(seconds);
     for (let i = 0; i < lines.length && i < points.length; i++) {
       lines[i]!.setAttribute("points", points[i]!);
     }
@@ -68,12 +68,7 @@ if (band) {
     at(phiLabel, "y", b.phiLabel[1]);
     at(stateLabel, "x", b.stateLabel[0]);
     at(stateLabel, "y", b.stateLabel[1]);
-
-    for (const el of [vec, tip, arrow]) {
-      if (!el) continue;
-      if (b.behind) el.setAttribute("data-behind", "");
-      else el.removeAttribute("data-behind");
-    }
+    stateLabel?.setAttribute("text-anchor", b.stateAnchor);
   };
 
   const tick = (now: number) => {
@@ -94,9 +89,9 @@ if (band) {
     if (!frame) return;
     cancelAnimationFrame(frame);
     frame = 0;
-    /* Drop the clock rather than banking it. The state is periodic and nobody
-       is timing it, so resuming from the opening frame costs nothing and buys
-       the same first impression every time the band is scrolled back to. */
+    /* Drop the clock rather than banking it. The surface is quasi-periodic, so
+       there is no phase worth preserving; resuming from t = 0 costs nothing and
+       buys the same opening frame every time the band is scrolled back to. */
     origin = 0;
   };
 
