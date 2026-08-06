@@ -21,7 +21,6 @@ import Trace from "../micro/Trace.astro";
 import Readout from "../micro/Readout.astro";
 import Ruler from "../micro/Ruler.astro";
 import Racetrack from "../micro/Racetrack.astro";
-import Aperture from "../micro/Aperture.astro";
 
 const planPath = fileURLToPath(
   new URL("../../../public/martin_plan.txt", import.meta.url),
@@ -138,12 +137,22 @@ const BOARD = `${plan.width}×${plan.height}`;
   </div>
 
   {
-    /* The lead has no rectangle. Its measure is whatever the aperture allows
-      at that line, so the first and last lines stop on the chamfer and the
-      paragraph is the shape rather than sitting inside one. */
+    /* No aperture here. One shape-bounded block on a page reads as a
+      deliberate accent; two read as a tic, and this copy is supporting
+      material rather than the statement. It is coupled the way the rest of
+      the plate is instead: a rule broken by its own label, and a measure that
+      stops where the readout beside it begins. */
   }
-  <div class="wrap lead-band">
-    <Aperture variant="arc" aspect={0.235} bite={0.32} minHalf={0.55}>
+  <div class="wrap summary">
+    <div class="summary-axis" aria-hidden="true">
+      <span class="summary-cap"></span>
+      <span class="summary-rule"></span>
+      <span class="micro-label">Summary</span>
+      <span class="summary-rule"></span>
+      <span class="summary-cap" data-at="end"></span>
+    </div>
+
+    <div class="summary-cols">
       <p class="lead">
         At Aker Solutions I work on the software behind a robotised production
         line: robot control, scanning, and the plumbing that moves data between
@@ -156,7 +165,7 @@ const BOARD = `${plan.width}×${plan.height}`;
         more about architecture than reading about it, and a renderer that bends
         light forces you to get the geometry right.
       </p>
-    </Aperture>
+    </div>
   </div>
 </section>
 
@@ -289,21 +298,49 @@ const BOARD = `${plan.width}×${plan.height}`;
     margin-inline-start: auto;
   }
 
-  /* --- lead ---------------------------------------------------------------- */
-  .lead-band {
+  /* --- summary ------------------------------------------------------------- */
+  .summary {
     margin-top: var(--space-5);
   }
 
-  .lead + .lead {
-    margin-top: 0.9rem;
+  /* The rule is broken by its label rather than the label sitting on top of
+     an unbroken one, and it closes on caps at both ends. */
+  .summary-axis {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+
+  .summary-rule {
+    flex: 1;
+    block-size: var(--rule);
+    background: var(--hair);
+  }
+
+  .summary-cap {
+    inline-size: 5px;
+    block-size: 5px;
+    border-radius: 50%;
+    border: var(--rule) solid var(--hair);
+    flex: none;
+  }
+
+  .summary-cap[data-at="end"] {
+    background: var(--hair);
+  }
+
+  .summary-cols {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-5);
   }
 
   .lead {
     margin: 0;
-    font-size: var(--step-1);
-    line-height: 1.5;
-    text-align: center;
-    text-wrap: pretty;
+    font-size: var(--step-0);
+    line-height: 1.6;
+    max-width: 52ch;
   }
 
   @media (max-width: 60rem) {
@@ -330,9 +367,9 @@ const BOARD = `${plan.width}×${plan.height}`;
     .life-frame {
       aspect-ratio: 3;
     }
-    .lead {
-      text-align: left;
-      font-size: var(--step-0);
+    .summary-cols {
+      grid-template-columns: 1fr;
+      gap: var(--space-3);
     }
   }
 </style>
