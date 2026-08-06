@@ -3,363 +3,450 @@
  *
  * --- the surface -----------------------------------------------------------
  *
- * A particle in a two-dimensional infinite square well, ħ = m = L = 1. The
- * eigenstates are φₙₘ = sin(nπx)·sin(mπy) with Eₙₘ ∝ n² + m², and the drawn
- * height is the real part of a four-mode superposition:
+ * A particle in a circular infinite well — a quantum corral, the thing an STM
+ * builds out of a ring of adatoms. Separating the Schrodinger equation in polar
+ * coordinates gives
  *
- *     ψ = a·φ₁₁·e^(-2iτ) + b·(φ₂₁ + i·φ₁₂)·e^(-5iτ) + c·φ₁₃·e^(-10iτ)
+ *     psi(r, th, t) = J_m(j_mn * r) * e^(i*m*th) * e^(-i*E*t)
  *
- *     Re ψ = a·φ₁₁·cos2τ + b·(φ₂₁·cos5τ + φ₁₂·sin5τ) + c·φ₁₃·cos10τ
+ * where J_m is the Bessel function of the first kind and j_mn is its n-th zero,
+ * which is what forces psi to vanish on the wall at r = 1. The drawn height is
+ * the real part of the (m = 2, n = 1) state:
  *
- * Three things about that state are load-bearing, and all three are physics
- * rather than art direction:
+ *     Re psi = J_2(j_21 * r) * cos(2*th - w*t)
  *
- *   The saddle turns. φ₂₁ and φ₁₂ are degenerate at E = 5. Added in phase they
- *   give a four-lobe saddle that only breathes in place; added in quadrature —
- *   the `+ i·φ₁₂`, which is what puts cos and sin on the same energy below —
- *   the saddle rotates. That rotation is the figure.
+ * Two up-lobes and two down-lobes on a disc, turning about the axis. That is
+ * the figure on the reference sheet, and it is a real eigenstate rather than a
+ * shape chosen to resemble one.
  *
- *   It ripples rather than merely spinning. φ₁₁ and φ₁₃ sit 3 below and 5 above
- *   the degenerate pair, so they beat against it at two rates that never
- *   coincide. The obvious fourth mode is φ₂₂ at E = 8, and it is the wrong one:
- *   its detuning of 3 matches φ₁₁'s exactly, so the two swells lock together
- *   and the surface has one beat instead of two. φ₁₃ is also the only term
- *   without a mirror line, which is what keeps the figure from settling into
- *   something symmetric.
+ * Why this and not the square box it replaced: the box gave a square mesh whose
+ * silhouette was a diamond, and the reference is unmistakably round. The corral
+ * is the same physics on the domain the drawing actually has.
  *
- *   The loop has no seam. Every energy is an integer multiple of one unit, so
- *   ψ(τ + 2π) = ψ(τ) exactly. Nothing is crossfaded and nothing drifts.
+ * The loop is exact for a reason worth stating, because it is the one thing a
+ * multi-mode state cannot give here. A single mode carries a single energy, so
+ * the time dependence is a rigid rotation of the pattern and Re psi is periodic
+ * in w*t with period 2*pi, full stop. Mixing in a second mode would ripple the
+ * surface, but the energies of a circular well go as j_mn^2 and those ratios are
+ * irrational — 5.783 against 26.37 for the first two — so no combination of them
+ * ever closes. Rigid rotation is not a compromise here, it is what a circular
+ * well permits.
  *
- * ψ vanishes on all four walls, so the mesh meets its frame flat on every edge.
+ * The projection does the rest of the work: seen nearly edge-on, the lobes sweep
+ * past each other and the silhouette changes continuously even though the
+ * surface itself is rigid.
  *
  * --- the sphere ------------------------------------------------------------
  *
- * |ψ⟩ = cos(θ/2)|0⟩ + e^(iφ)·sin(θ/2)|1⟩ with θ fixed and φ advancing: free
- * precession about z, the simplest true motion a qubit has. Its period is half
- * the surface's, so the band returns to its opening state as one system.
+ * |psi> = cos(th/2)|0> + e^(i*ph)*sin(th/2)|1>, drawn the canonical way: three
+ * labelled axes, the equator solid in front and dashed behind, the polar angle
+ * th and the azimuth ph both marked with their arcs, and the state's drop onto
+ * the equatorial plane. th is fixed and ph advances, which is free precession.
  *
- * No DOM in here. The component renders τ = 0 from these functions on the
+ * No DOM in here. The component renders t = 0 from these functions on the
  * server and src/scripts/surface.ts drives the rest from the same source.
  */
 
-/* --- the state ------------------------------------------------------------ */
-
-/** Amplitudes. b is the subject; a and c are the two beats against it. */
-const A11 = 0.4;
-const A_PAIR = 1.0;
-const A13 = 0.3;
-
-/** One full τ ∈ [0, 2π), in seconds. */
-export const PERIOD = 24;
-
-/** The sphere's precession, in seconds. Exactly half the surface's. */
-export const BLOCH_PERIOD = 12;
+/* --- Bessel --------------------------------------------------------------- */
 
 /**
- * The four modes, as (n, m, E, amplitude). Exported because the tests assert
- * on the energies — that the pair is degenerate and the detunings differ — and
- * those are the properties the whole figure rests on.
+ * J_m(x) by its power series, which is all this needs: x never exceeds the
+ * first zero of J_2 at 5.14, where the series converges in a dozen terms.
+ *
+ * Stepped by the ratio between successive terms rather than by evaluating
+ * factorials, so nothing ever overflows and there is no cancellation to worry
+ * about at these magnitudes.
  */
-export const MODES = [
-  { n: 1, m: 1, energy: 2, amplitude: A11 },
-  { n: 2, m: 1, energy: 5, amplitude: A_PAIR },
-  { n: 1, m: 2, energy: 5, amplitude: A_PAIR },
-  { n: 1, m: 3, energy: 10, amplitude: A13 },
-] as const;
-
-/** φₙₘ(x, y) = sin(nπx)·sin(mπy). */
-export function eigenstate(n: number, m: number, x: number, y: number): number {
-  return Math.sin(n * Math.PI * x) * Math.sin(m * Math.PI * y);
+export function besselJ(m: number, x: number): number {
+  const half = x / 2;
+  let term = half ** m;
+  for (let k = 2; k <= m; k++) term /= k;
+  let sum = term;
+  for (let k = 0; k < 40; k++) {
+    term *= -(half * half) / ((k + 1) * (k + 1 + m));
+    sum += term;
+    if (Math.abs(term) < 1e-17) break;
+  }
+  return sum;
 }
 
-/** Re ψ(x, y, τ), unnormalised. */
-export function psiReal(x: number, y: number, tau: number): number {
-  const sx = Math.sin(Math.PI * x);
-  const s2x = Math.sin(2 * Math.PI * x);
-  const sy = Math.sin(Math.PI * y);
-  const s2y = Math.sin(2 * Math.PI * y);
-  const s3y = Math.sin(3 * Math.PI * y);
+/** First zero of J_2: where the wall of the corral sits. */
+export const J21 = 5.135622301840683;
 
-  return (
-    A11 * (sx * sy) * Math.cos(2 * tau) +
-    A_PAIR * (s2x * sy * Math.cos(5 * tau) + sx * s2y * Math.sin(5 * tau)) +
-    A13 * (sx * s3y) * Math.cos(10 * tau)
-  );
+/** Angular index of the drawn state. Two up-lobes and two down-lobes. */
+export const M = 2;
+
+/** Peak of J_2 over the well, sampled — the normaliser for the drawn height. */
+export const PEAK = (() => {
+  let peak = 0;
+  for (let i = 0; i <= 2000; i++) {
+    const v = Math.abs(besselJ(M, (i / 2000) * J21));
+    if (v > peak) peak = v;
+  }
+  return peak;
+})();
+
+/** Re psi(r, th, t), normalised to +-1. */
+export function psiReal(r: number, theta: number, phase: number): number {
+  return (besselJ(M, J21 * r) / PEAK) * Math.cos(M * theta - phase);
 }
+
+/* --- time ----------------------------------------------------------------- */
 
 /**
- * A rigorous ceiling on |Re ψ| anywhere, any time. The degenerate pair is
- * A·cos5τ + B·sin5τ, whose amplitude is √(A² + B²); the other two terms can at
- * worst add their own amplitudes on top. Nothing can exceed this, so the tests
- * use it to check that the sampled PEAK below is both safe and not wasteful.
+ * Seconds for the pattern to turn once. An m = 2 state looks the same after
+ * half a turn, so the figure repeats every PERIOD / 2 — deliberately slow: the
+ * first pass ran this at 24s and read as an animation rather than a state.
  */
-export function amplitudeBound(x: number, y: number): number {
-  const p21 = A_PAIR * eigenstate(2, 1, x, y);
-  const p12 = A_PAIR * eigenstate(1, 2, x, y);
-  return (
-    Math.abs(A11 * eigenstate(1, 1, x, y)) +
-    Math.hypot(p21, p12) +
-    Math.abs(A13 * eigenstate(1, 3, x, y))
-  );
+export const PERIOD = 72;
+
+/** The sphere's precession, in seconds. Slower still, and 2:3 against the
+ * surface's visual repeat, so the band never settles into a single beat. */
+export const BLOCH_PERIOD = 54;
+
+/** Seconds to the rotation phase w*t. */
+export function phaseAt(seconds: number): number {
+  return ((seconds % PERIOD) / PERIOD) * 2 * Math.PI;
 }
 
 /* --- the mesh ------------------------------------------------------------- */
 
-/** Lines per family, and samples along each line. */
-export const LINES = 21;
-export const SAMPLES = 41;
+/** Spokes, samples along each; rings, samples around each. */
+export const SPOKES = 40;
+export const SPOKE_SAMPLES = 24;
+export const RINGS = 12;
+export const RING_SAMPLES = 81;
+
+/** Total polylines the component renders and the script drives. */
+export const MESH_LINES = SPOKES + RINGS;
 
 /** viewBox of the surface panel. */
 export const PANEL = 300;
 
 /**
- * Plan scale and height scale of the axonometric projection.
+ * Plan scale, foreshortening, and height.
  *
- * Sized so the figure fills its square: the plan diamond is 2·cos30·PLAN wide
- * and 2·sin30·PLAN deep, and the surface adds RISE above and below that, so the
- * drawn extent is 256 x 268 in a 300 panel — enough margin that the mesh never
- * crowds the corner handles. The first pass had these at 138 and 46, which left
- * a third of the panel's height empty and flattened the saddle into a mound;
- * the height budget is what makes it read as a surface at all.
+ * SQUASH is the whole look. At 1.0 the disc is a circle seen from directly
+ * above and the lobes read as shading; near 0.4 the view is low enough that the
+ * lobes stand up and cross in front of each other, which is what the reference
+ * draws. RISE is then large enough that the figure is taller than it is deep.
  */
-const PLAN = 148;
-const RISE = 60;
-const COS30 = Math.cos(Math.PI / 6);
-const SIN30 = 0.5;
+const SPAN = 120;
+const SQUASH = 0.42;
+const RISE = 86;
 
-const coarse = Array.from({ length: LINES }, (_, i) => i / (LINES - 1));
-const fine = Array.from({ length: SAMPLES }, (_, i) => i / (SAMPLES - 1));
+const C = PANEL / 2;
 
 /**
- * Both families of grid points, with their four φ values precomputed.
+ * Every mesh point, with everything that does not depend on time already
+ * folded in.
  *
- * The mesh is redrawn every frame and the modes are fixed, so the only thing
- * that changes between frames is the four time factors. Caching φ turns each
- * frame from ~14k calls to sin into ~7k multiplications, which is the
- * difference between this figure costing something and costing nothing.
- *
- * Family A holds y and runs along x; family B holds x and runs along y.
+ * Screen x never moves — the pattern rotates, the geometry does not — so only
+ * the height has to be recomputed, and even that is two multiplications from
+ * the cached amplitude and the cached cos/sin of m*theta. A frame is therefore
+ * a few thousand multiplications and one string build, which is why this can
+ * run at 60fps without the page noticing.
  */
-function buildFamily(hold: number[], run: number[], holdIsY: boolean) {
-  const count = hold.length * run.length;
-  const px = new Float64Array(count);
-  const py = new Float64Array(count);
-  const phi = new Float64Array(count * 4);
+function buildLine(points: readonly (readonly [number, number])[]) {
+  const n = points.length;
+  const sx = new Float64Array(n);
+  const syBase = new Float64Array(n);
+  const ac = new Float64Array(n);
+  const as = new Float64Array(n);
 
-  let k = 0;
-  for (const h of hold) {
-    for (const r of run) {
-      const x = holdIsY ? r : h;
-      const y = holdIsY ? h : r;
-      px[k] = x;
-      py[k] = y;
-      phi[k * 4] = eigenstate(1, 1, x, y);
-      phi[k * 4 + 1] = eigenstate(2, 1, x, y);
-      phi[k * 4 + 2] = eigenstate(1, 2, x, y);
-      phi[k * 4 + 3] = eigenstate(1, 3, x, y);
-      k++;
-    }
+  for (let i = 0; i < n; i++) {
+    const [r, th] = points[i]!;
+    const amp = besselJ(M, J21 * r) / PEAK;
+    sx[i] = C + r * Math.cos(th) * SPAN;
+    syBase[i] = C + r * Math.sin(th) * SPAN * SQUASH;
+    ac[i] = amp * Math.cos(M * th);
+    as[i] = amp * Math.sin(M * th);
   }
-  return { px, py, phi, lines: hold.length, samples: run.length };
+  return { sx, syBase, ac, as, n };
 }
 
-const families = [
-  buildFamily(coarse, fine, true),
-  buildFamily(coarse, fine, false),
-];
+const lines = (() => {
+  const out: ReturnType<typeof buildLine>[] = [];
 
-/**
- * The normalising maximum: the largest |Re ψ| any drawn point reaches over a
- * full period, so the surface fills its height budget exactly and never
- * overruns it.
- *
- * Measured rather than taken from amplitudeBound(), because that bound assumes
- * all four terms peak at once and they never do — normalising by it would
- * leave the figure visibly flat. Measured in two passes rather than one,
- * because a single coarse τ scan under-reads the true maximum by roughly a
- * percent and padding that back with a blanket margin overshoots the rigorous
- * ceiling, which is the same as not knowing the answer:
- *
- *   pass 1  every grid point on a coarse τ grid, to find which points are
- *           anywhere near holding the maximum.
- *   pass 2  a dense τ scan on only those points — a handful survive the 0.97
- *           cut, so this costs almost nothing.
- *
- * The remaining margin is 0.05%, which covers the gap between the dense τ
- * samples with room to spare and still sits well under amplitudeBound(). The
- * tests hold it between the two.
- */
-function samplePeak(): number {
-  const evaluate = (
-    c11: number,
-    c21: number,
-    c12: number,
-    c13: number,
-    steps: number,
-  ) => {
-    let best = 0;
-    for (let s = 0; s < steps; s++) {
-      const tau = (s / steps) * 2 * Math.PI;
-      const v =
-        c11 * Math.cos(2 * tau) +
-        c21 * Math.cos(5 * tau) +
-        c12 * Math.sin(5 * tau) +
-        c13 * Math.cos(10 * tau);
-      const a = v < 0 ? -v : v;
-      if (a > best) best = a;
-    }
-    return best;
-  };
-
-  const coarse: number[] = [];
-  let ceiling = 0;
-  for (const f of families) {
-    for (let k = 0; k < f.px.length; k++) {
-      const v = evaluate(
-        A11 * f.phi[k * 4],
-        A_PAIR * f.phi[k * 4 + 1],
-        A_PAIR * f.phi[k * 4 + 2],
-        A13 * f.phi[k * 4 + 3],
-        180,
-      );
-      coarse.push(v);
-      if (v > ceiling) ceiling = v;
-    }
+  for (let s = 0; s < SPOKES; s++) {
+    const th = (s / SPOKES) * 2 * Math.PI;
+    out.push(
+      buildLine(
+        Array.from(
+          { length: SPOKE_SAMPLES },
+          (_, i) => [i / (SPOKE_SAMPLES - 1), th] as const,
+        ),
+      ),
+    );
   }
 
-  let peak = ceiling;
-  let i = 0;
-  for (const f of families) {
-    for (let k = 0; k < f.px.length; k++, i++) {
-      if (coarse[i] < ceiling * 0.97) continue;
-      const v = evaluate(
-        A11 * f.phi[k * 4],
-        A_PAIR * f.phi[k * 4 + 1],
-        A_PAIR * f.phi[k * 4 + 2],
-        A13 * f.phi[k * 4 + 3],
-        6000,
-      );
-      if (v > peak) peak = v;
-    }
+  for (let ring = 1; ring <= RINGS; ring++) {
+    const r = ring / RINGS;
+    out.push(
+      buildLine(
+        Array.from(
+          { length: RING_SAMPLES },
+          (_, i) => [r, (i / (RING_SAMPLES - 1)) * 2 * Math.PI] as const,
+        ),
+      ),
+    );
   }
 
-  return peak * 1.0005;
-}
+  return out;
+})();
 
-export const PEAK = samplePeak();
-
-/**
- * Axonometric projection. The plan is a diamond — x and y run out to the left
- * and right — and z lifts straight up the screen, which is the projection every
- * surface plot on the reference sheet uses.
- */
+/** Where the projection puts a point of the disc at a given phase. */
 export function project(
-  x: number,
-  y: number,
-  z: number,
+  r: number,
+  theta: number,
+  phase: number,
 ): readonly [number, number] {
-  const u = x - 0.5;
-  const v = y - 0.5;
-  const c = PANEL / 2;
-  return [c + (u - v) * COS30 * PLAN, c + (u + v) * SIN30 * PLAN - z * RISE];
+  return [
+    C + r * Math.cos(theta) * SPAN,
+    C + r * Math.sin(theta) * SPAN * SQUASH - psiReal(r, theta, phase) * RISE,
+  ];
 }
 
 /**
- * Every polyline of the mesh at time τ, as `points` attribute strings. Family A
- * first, then family B, so the order is stable between the server's frame and
- * the browser's.
+ * Every polyline of the mesh at a phase, as `points` attribute strings. Spokes
+ * first, then rings, so the order is stable between the server's frame and the
+ * browser's.
  */
-export function meshPoints(tau: number): string[] {
-  const t11 = Math.cos(2 * tau);
-  const t21 = Math.cos(5 * tau);
-  const t12 = Math.sin(5 * tau);
-  const t13 = Math.cos(10 * tau);
+export function meshPoints(phase: number): string[] {
+  const cp = Math.cos(phase);
+  const sp = Math.sin(phase);
   const out: string[] = [];
 
-  for (const f of families) {
-    for (let line = 0; line < f.lines; line++) {
-      const parts: string[] = [];
-      for (let s = 0; s < f.samples; s++) {
-        const k = line * f.samples + s;
-        const z =
-          (A11 * f.phi[k * 4] * t11 +
-            A_PAIR * f.phi[k * 4 + 1] * t21 +
-            A_PAIR * f.phi[k * 4 + 2] * t12 +
-            A13 * f.phi[k * 4 + 3] * t13) /
-          PEAK;
-        const [sx, sy] = project(f.px[k], f.py[k], z);
-        parts.push(`${sx.toFixed(2)},${sy.toFixed(2)}`);
-      }
-      out.push(parts.join(" "));
+  for (const line of lines) {
+    const parts: string[] = [];
+    for (let i = 0; i < line.n; i++) {
+      /* cos(m*th - phase) expanded onto the cached cos and sin of m*th. */
+      const z = line.ac[i]! * cp + line.as[i]! * sp;
+      parts.push(
+        `${line.sx[i]!.toFixed(2)},${(line.syBase[i]! - z * RISE).toFixed(2)}`,
+      );
     }
+    out.push(parts.join(" "));
   }
   return out;
 }
 
-/** Seconds → τ. */
-export function tauAt(seconds: number): number {
-  return ((seconds % PERIOD) / PERIOD) * 2 * Math.PI;
-}
+/**
+ * The rim of the well, where psi is pinned to zero. Flat by definition, so it
+ * is drawn once and never moves — the one line in the figure that states the
+ * boundary condition rather than obeying it silently.
+ */
+export const RIM = { cx: C, cy: C, rx: SPAN, ry: SPAN * SQUASH };
+
+/**
+ * Reference axes and the markers that sit on them. The reference sheet puts an
+ * open square at each axis end and one filled square out along the horizontal,
+ * which is where these come from — they are not panel corners.
+ */
+export const AXES = {
+  h: { x1: 14, x2: PANEL - 14, y: C },
+  v: { x: C, y1: 14, y2: PANEL - 14 },
+  marks: [
+    { x: 14, y: C, filled: false },
+    { x: PANEL - 14, y: C, filled: false },
+    { x: C, y: 14, filled: false },
+    { x: 222, y: C, filled: true },
+  ],
+};
 
 /* --- the sphere ----------------------------------------------------------- */
 
-/** viewBox of the Bloch panel, and the sphere inside it. */
-export const BLOCH_PANEL = 140;
-const BR = 52;
-const BC = BLOCH_PANEL / 2;
+export const BLOCH_PANEL = 210;
+const BR = 62;
+const BCX = 100;
+const BCY = 100;
 
-/** Polar angle of the state. Fixed — only the phase advances. */
-export const THETA = (55 * Math.PI) / 180;
+/** Polar angle of the state. Fixed — only the azimuth advances. */
+export const THETA = (52 * Math.PI) / 180;
 
-/** Camera elevation above the equatorial plane. Sets how open the equator is. */
-const ELEV = (22 * Math.PI) / 180;
+/** Camera azimuth and elevation. Chosen so x falls to the lower left and y to
+ * the right, which is how the canonical figure is always drawn. */
+const AZ = (35 * Math.PI) / 180;
+const EL = (20 * Math.PI) / 180;
 
-/** Semi-minor axis of any circle of latitude, as drawn. */
-export const BLOCH_SQUASH = Math.sin(ELEV);
+/** Radii of the two angle arcs, in sphere radii. Exported so the tests can
+ * check that each arc starts on the axis it is measured from without keeping a
+ * second copy of the number. */
+export const THETA_ARC_R = 0.38;
+export const PHI_ARC_R = 0.54;
 
-/** Where the equator and the precession circle sit, for the static markup. */
+/** Orthographic projection of a unit-sphere point onto the panel. */
+export function blochProject(
+  X: number,
+  Y: number,
+  Z: number,
+): readonly [number, number] {
+  const right = -Math.sin(AZ) * X + Math.cos(AZ) * Y;
+  const up =
+    -Math.cos(AZ) * Math.sin(EL) * X -
+    Math.sin(AZ) * Math.sin(EL) * Y +
+    Math.cos(EL) * Z;
+  return [BCX + BR * right, BCY - BR * up];
+}
+
+/** Positive towards the viewer: what decides solid from dashed. */
+export function blochDepth(X: number, Y: number, Z: number): number {
+  return (
+    Math.cos(EL) * Math.cos(AZ) * X +
+    Math.cos(EL) * Math.sin(AZ) * Y +
+    Math.sin(EL) * Z
+  );
+}
+
+const polyline = (pts: readonly (readonly [number, number])[]) =>
+  pts.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
+
+/** A short arrowhead at `tip`, pointing away from `from`. */
+function head(
+  from: readonly [number, number],
+  tip: readonly [number, number],
+  size = 6,
+): string {
+  const dx = tip[0] - from[0];
+  const dy = tip[1] - from[1];
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  const w = size * 0.42;
+  return polyline([
+    [tip[0], tip[1]],
+    [tip[0] - ux * size - uy * w, tip[1] - uy * size + ux * w],
+    [tip[0] - ux * size + uy * w, tip[1] - uy * size - ux * w],
+  ]);
+}
+
+const axis = (
+  X: number,
+  Y: number,
+  Z: number,
+  label: readonly [number, number],
+) => {
+  const tip = blochProject(X, Y, Z);
+  return {
+    x2: tip[0],
+    y2: tip[1],
+    head: head([BCX, BCY], tip),
+    lx: tip[0] + label[0],
+    ly: tip[1] + label[1],
+  };
+};
+
+/**
+ * Everything about the sphere that never moves: the silhouette, the two halves
+ * of the equator, the three axes with their arrowheads and labels, and the
+ * poles.
+ */
 export const BLOCH_GEOMETRY = {
-  cx: BC,
-  cy: BC,
+  cx: BCX,
+  cy: BCY,
   r: BR,
-  /** The precession circle at z = cos θ. */
-  orbit: {
-    rx: BR * Math.sin(THETA),
-    ry: BR * Math.sin(THETA) * BLOCH_SQUASH,
-    cy: BC - BR * Math.cos(THETA) * Math.cos(ELEV),
+  /* The equator splits at the silhouette. Front is the lower half and is drawn
+     solid; back is the upper half and is dashed. */
+  equatorFront: polyline(
+    Array.from({ length: 41 }, (_, i) => {
+      const t = -Math.PI / 2 + (i / 40) * Math.PI;
+      return blochProject(Math.cos(t + AZ), Math.sin(t + AZ), 0);
+    }),
+  ),
+  equatorBack: polyline(
+    Array.from({ length: 41 }, (_, i) => {
+      const t = Math.PI / 2 + (i / 40) * Math.PI;
+      return blochProject(Math.cos(t + AZ), Math.sin(t + AZ), 0);
+    }),
+  ),
+  axes: {
+    x: axis(1.34, 0, 0, [-11, 12]),
+    y: axis(0, 1.34, 0, [7, 6]),
+    z: axis(0, 0, 1.3, [-13, -3]),
   },
-  equator: { rx: BR, ry: BR * BLOCH_SQUASH },
-  pole: BR * Math.cos(ELEV),
+  poleTop: blochProject(0, 0, 1),
+  poleBottom: blochProject(0, 0, -1),
+  /* The negative z axis is drawn plain, without a head — the reference only
+     arrows the positive directions. */
+  axisBottom: blochProject(0, 0, -1.24),
 };
 
 export interface BlochFrame {
-  /** Tip of the state vector, in panel coordinates. */
   tip: readonly [number, number];
-  /** Its drop onto the equatorial plane. */
   foot: readonly [number, number];
-  /** True when the tip is on the far side of the sphere. */
+  /** Arrowhead on the state vector. */
+  head: string;
+  /** The polar-angle arc, from the z axis round to the state. */
+  thetaArc: string;
+  /** The azimuth arc, in the equatorial plane, from the x axis round to phi. */
+  phiArc: string;
+  /** Where to hang the two angle labels. */
+  thetaLabel: readonly [number, number];
+  phiLabel: readonly [number, number];
+  /** Where to hang the state label, pushed clear of the vector. */
+  stateLabel: readonly [number, number];
   behind: boolean;
 }
 
-/** The state vector at time t, orthographically projected. */
+/** The state vector and its furniture at time t. */
 export function blochFrame(seconds: number): BlochFrame {
-  const phase = ((seconds % BLOCH_PERIOD) / BLOCH_PERIOD) * 2 * Math.PI;
+  const phi = ((seconds % BLOCH_PERIOD) / BLOCH_PERIOD) * 2 * Math.PI;
   const sinT = Math.sin(THETA);
-  const X = sinT * Math.cos(phase);
-  const Y = sinT * Math.sin(phase);
+  const X = sinT * Math.cos(phi);
+  const Y = sinT * Math.sin(phi);
   const Z = Math.cos(THETA);
 
-  /* Depth is the axis the projection throws away — the y of the scene after
-     the camera's elevation is rolled in. The viewer sits on its positive side,
-     so the near half of the equator is the half drawn lower on the panel. */
-  const depth = Y * Math.cos(ELEV) + Z * Math.sin(ELEV);
+  const tip = blochProject(X, Y, Z);
+  const foot = blochProject(X, Y, 0);
+
+  /* The polar arc lives in the plane through z and the state, so it swings with
+     the state rather than sitting in a fixed plane. */
+  const AR = THETA_ARC_R;
+  const thetaArc = polyline(
+    Array.from({ length: 21 }, (_, i) => {
+      const t = (i / 20) * THETA;
+      return blochProject(
+        AR * Math.sin(t) * Math.cos(phi),
+        AR * Math.sin(t) * Math.sin(phi),
+        AR * Math.cos(t),
+      );
+    }),
+  );
+
+  const PR = PHI_ARC_R;
+  const phiArc = polyline(
+    Array.from({ length: 25 }, (_, i) => {
+      const t = (i / 24) * phi;
+      return blochProject(PR * Math.cos(t), PR * Math.sin(t), 0);
+    }),
+  );
+
+  const thetaMid = blochProject(
+    AR * 1.28 * Math.sin(THETA / 2) * Math.cos(phi),
+    AR * 1.28 * Math.sin(THETA / 2) * Math.sin(phi),
+    AR * 1.28 * Math.cos(THETA / 2),
+  );
+  const phiMid = blochProject(
+    PR * 1.24 * Math.cos(phi / 2),
+    PR * 1.24 * Math.sin(phi / 2),
+    0,
+  );
 
   return {
-    tip: [
-      BC + BR * X,
-      BC - BR * (Z * Math.cos(ELEV) - Y * Math.sin(ELEV)),
+    tip,
+    foot,
+    head: head([BCX, BCY], tip),
+    thetaArc,
+    phiArc,
+    thetaLabel: [thetaMid[0] - 3, thetaMid[1] + 3] as const,
+    phiLabel: [phiMid[0] - 3, phiMid[1] + 9] as const,
+    /* Pushed well clear along the vector's own direction, so it never lands on
+       the vector, the tip, or the polar arc — all three of which crowd the same
+       corner when the state points up and to the left. */
+    stateLabel: [
+      tip[0] + (tip[0] - BCX) * 0.3 + 6,
+      tip[1] + (tip[1] - BCY) * 0.3 - 6,
     ] as const,
-    foot: [BC + BR * X, BC + BR * Y * Math.sin(ELEV)] as const,
-    behind: depth < 0,
+    behind: blochDepth(X, Y, Z) < 0,
   };
 }

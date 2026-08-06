@@ -4,8 +4,8 @@ A new band on the home plate, carrying the studies and the quantum technology
 specialization, built around an animated wavefunction surface and a Bloch
 sphere.
 
-Reference: the surface graph in the middle of `docs/inspo/macro.webp`, and the
-wireframe sphere on the same sheet.
+References: the surface graph in the middle of `docs/inspo/macro.webp`, and
+`docs/inspo/Bloch_Sphere_representation.svg.webp` for the sphere.
 
 ## Why
 
@@ -52,100 +52,82 @@ order the band reads.
 
 Numbering: this is Fig. 05. `Contact` renumbers from Fig. 05 to Fig. 06.
 
-## The surface — Re ψ(x, y, t)
+## The surface — a quantum corral
 
-A particle in a two-dimensional infinite square well, ħ = m = L = 1, in a
-four-mode superposition. The drawn height is the real part.
-
-```text
-ψ(x, y, τ) = a·φ₁₁·e^(-2iτ)  +  b·(φ₂₁ + i·φ₁₂)·e^(-5iτ)  +  c·φ₁₃·e^(-10iτ)
-
-φₙₘ(x, y) = sin(nπx)·sin(mπy)          Eₙₘ ∝ n² + m²  →  2, 5, 5, 10
-
-Re ψ = a·φ₁₁·cos 2τ
-     + b·(φ₂₁·cos 5τ + φ₁₂·sin 5τ)
-     + c·φ₁₃·cos 10τ
-```
-
-Three properties do the work:
-
-**The saddle rotates.** φ₂₁ and φ₁₂ are degenerate at E = 5. Adding them in
-phase gives a four-lobe saddle that only breathes; adding them in quadrature —
-the `+ i·φ₁₂` — gives one that turns. That turning saddle is the shape on the
-reference sheet, reached from the physics rather than drawn to match it.
-
-**It ripples rather than merely spins.** φ₁₁ and φ₁₃ sit 3 below and 5 above
-the pair, so they beat against it at two different rates instead of riding
-along. The detunings have to differ: φ₂₂ at E = 8 is the obvious fourth mode
-and it is the wrong one, because its beat of 3 matches φ₁₁'s exactly and the
-two swells then move as one. At 3 and 5 the mesh is never twice in the same
-state within a period. Without either mode the figure is a rotating rigid shape
-and reads as a rendered object rather than a state being integrated.
-
-φ₁₃ is also the only asymmetric term, which keeps the figure from resolving
-into something with a mirror line — the reference sheet's surface has none
-either.
-
-**The loop has no seam.** Every energy is an integer multiple of the same unit,
-so ψ(τ + 2π) = ψ(τ) exactly. The animation is a closed cycle, not a long
-sequence crossfaded back to its start. Nothing to keep in sync by hand.
-
-ψ vanishes on all four walls, so the mesh meets its frame flat on every edge,
-the way the reference does.
-
-Constants:
-
-| symbol | value | note                                              |
-| ------ | ----- | ------------------------------------------------- |
-| a      | 0.40  | φ₁₁, the slow swell under everything              |
-| b      | 1.00  | the degenerate pair, the figure's subject         |
-| c      | 0.30  | φ₁₃, the fast asymmetric ripple                   |
-| T      | 24 s  | one full τ ∈ [0, 2π)                              |
-
-Panel: `clamp(230px, 25vw, 336px)` square, viewBox 300 × 300. The Bloch sphere
-is `clamp(128px, 13vw, 178px)`, viewBox 140 × 140.
-
-Projection scales are PLAN 148 and RISE 60, giving a drawn extent of 256 × 268
-inside the 300 panel. Both were raised from a first pass at 138 and 46, which
-left a third of the panel's height unused and flattened the saddle into a
-mound — on a surface plot the height budget is most of the reading.
-
-Heights are normalised by the maximum \|Re ψ\| over a full period, computed once
-numerically in `quantum.ts` rather than guessed, so the surface fills its panel
-and never overruns it.
-
-**Drawing.** Two families of polylines, 21 lines each, 41 samples per line,
-projected axonometrically:
+A particle in a **circular** infinite well: the thing an STM builds out of a
+ring of adatoms. Separating in polar coordinates,
 
 ```text
-u = x − 0.5,  v = y − 0.5
-sx = (u − v)·cos30°·S
-sy = (u + v)·sin30°·S − z·H
+psi(r, th, t) = J_m(j_mn * r) * e^(i*m*th) * e^(-i*E*t)
+
+Re psi = J_2(j_21 * r) * cos(2*th - w*t)        j_21 = 5.13562 (first zero of J_2)
 ```
 
-No hidden-line removal: the reference mesh is transparent too, which is both
-the correct look and much cheaper. Hairline stroke in `--hair`, matching the
-node map's `.trail`.
+Two up-lobes and two down-lobes on a disc, turning about the axis. J_m is the
+Bessel function of the first kind; pinning j_21 to the wall is what forces psi
+to vanish at r = 1, so the rim is flat and the lobes rise inside it.
 
-Around it, per the sheet: crosshair axes that overrun the field on all four
-sides, and square corner handles at the panel bounds with one filled.
+**Why the well is round.** The first pass used a square box, and its silhouette
+was a diamond. The reference sheet's figure is unmistakably round, with lobes
+that cross in front of each other. The corral is the same physics on the domain
+the drawing actually has.
+
+**Why one mode and not four.** A single mode carries a single energy, so its
+time dependence is a rigid rotation of the pattern and Re psi is exactly
+periodic — full stop. Mixing modes would ripple the surface, but a circular
+well's energies go as j_mn^2 and those ratios are irrational (5.783 against
+26.37 for the first two), so no combination of them ever closes a loop. Rigid
+rotation is not a compromise here; it is what a circular well permits, and the
+square box's four-mode ripple was only available because its energies happened
+to be integers.
+
+The projection does the rest. Seen nearly edge-on, the lobes sweep past one
+another and the silhouette changes continuously even though the surface is
+rigid.
+
+Constants: SPAN 120, SQUASH 0.42, RISE 86, in a 300 panel. SQUASH is the whole
+look — at 1.0 the disc is seen from directly above and the lobes flatten into
+shading; near 0.4 the view is low enough that they stand up. A test asserts a
+lobe rises further than the plan is deep, so the figure cannot silently go flat
+again.
+
+**Drawing.** 40 spokes of 24 samples and 12 rings of 81, hairline, no
+hidden-line removal. The rim is drawn once in a heavier weight — it is the wall,
+and the one line that states the boundary condition rather than obeying it.
+
+**Markers on the axes.** Open squares at each axis end and one filled square out
+along the horizontal, which is where the reference sheet puts them. Not panel
+corners — that was the first pass, and it read as a crop mark rather than a
+plot.
 
 ## The Bloch sphere
 
+Drawn the canonical way, after `docs/inspo/Bloch_Sphere_representation.svg.webp`:
+
 ```text
-|ψ⟩ = cos(θ/2)|0⟩ + e^(iφ(t))·sin(θ/2)|1⟩       θ = 55°,  φ(t) = 2πt / 12 s
+|psi> = cos(th/2)|0> + e^(i*ph)*sin(th/2)|1>     th = 52 deg fixed, ph advancing
 ```
 
-θ is fixed and φ precesses about z, so the tip traces a circle of constant
-latitude — free precession, the simplest true motion a qubit has.
+- Three axes with arrowheads on the positive directions, labelled x, y, z in
+  italic; z carries on below the origin, unarrowed, to |1>.
+- The equator split at the silhouette: solid where it passes in front of the
+  sphere, dashed where it runs behind.
+- Both angles marked with their arcs — th from the z axis to the state, ph in
+  the equatorial plane from the x axis — and both arcs swing with the state
+  rather than sitting in a fixed plane.
+- The state's drop onto the equatorial plane, and the radius out to where it
+  lands: the pair that fixes ph.
+- Dots at both poles and at the tip, and a faint fill on the disc.
 
-Drawn: silhouette circle, equator ellipse, the dotted precession circle at
-z = cos θ, the vector from origin to tip with a dot at the tip, a dashed drop
-line to the equatorial plane, and |0⟩ / |1⟩ caps on the z axis.
+th is fixed and ph advances, which is free precession.
 
-Its 12 s period is exactly half the surface's 24 s, so the band returns to its
-opening state as one system rather than two animations that happen to share a
-frame. Same discipline as the node map's Kepler periods.
+## Timing
+
+The surface turns once in 72s and the sphere precesses in 54s. Both are much
+slower than the first pass at 24s and 12s, which read as animations rather than
+as states being integrated. An m = 2 pattern looks the same after half a turn,
+so the surface repeats every 36s, against the sphere's 54 — a 2:3 ratio, so the
+band never settles into one beat. A test holds both floors.
 
 ## Copy
 
@@ -185,18 +167,24 @@ in:
 | TFE4169 | Nanoelektronikk                  | V    |
 | TFE4181 | Videregående optikk og fotonikk  | V    |
 
-Caption: `Fig. 05a · Re ψ(x,y,t) · 2D box · 04 modes · T 24s` and
-`Fig. 05b · Bloch · θ 55° · T 12s`.
+Captions: `Fig. 05a · Quantum corral · Re ψ = J₂(j₂₁·r)·cos(2θ − ωt) · m = 2 ·
+T 72s` and `Fig. 05b · Bloch sphere · θ = 52° · precession · T 54s`.
 
 ## Code
 
 **`src/lib/quantum.ts`** — pure, no DOM, mirroring `lensing.ts`:
 
-- `psiReal(x, y, tau)` — the scalar field above.
-- `surfaceMesh(tau)` — both polyline families as flat coordinate arrays,
-  already projected, ready to serialise.
-- `blochVector(t)` — tip position and its equatorial projection.
-- `PEAK` — the normalising maximum, computed at module load by sampling.
+- `besselJ(m, x)` — by its power series, stepped term-to-term so nothing
+  overflows. x never exceeds 5.14 here, where it converges in a dozen terms.
+- `psiReal(r, th, phase)` — the scalar field above, normalised to ±1.
+- `meshPoints(phase)` — every spoke and ring as a `points` string, already
+  projected. Screen x never moves — the pattern rotates, the geometry does not
+  — so it is cached with the mode amplitude and a frame is two multiplications
+  per point.
+- `blochFrame(t)` — the state vector and all its furniture: tip, foot,
+  arrowhead, both angle arcs, and where each label hangs.
+- `AXES`, `RIM`, `BLOCH_GEOMETRY` — everything static, so the component and the
+  tests read the same numbers instead of keeping copies.
 
 **`test/quantum.test.ts`** — periodicity (`psiReal(x, y, τ) === psiReal(x, y,
 τ + 2π)`), boundary conditions (ψ = 0 on all four walls for every τ), mode
@@ -207,7 +195,8 @@ full period.
 server-side, so the figure is correct and still with JavaScript off.
 
 **`src/scripts/surface.ts`** — a `requestAnimationFrame` loop rewriting the
-`points` attribute on the existing polylines and the Bloch transforms. An
+`points` attribute on the existing polylines and every moving part of the
+sphere. An
 `IntersectionObserver` pauses it when the band is off-screen, and
 `prefers-reduced-motion` means it never starts at all, leaving the server-
 rendered frame — the same contract the masthead keeps when `kernel.css`
@@ -233,5 +222,8 @@ collapses its animations.
   transparency is what makes it read as an instrument plot.
 - No interactivity — no drag-to-rotate, no scrubbing. Every other figure on the
   plate runs on its own clock and this one does too.
+- No multi-mode ripple on the surface. A circular well cannot close a loop with
+  more than one mode, and a seamless loop is worth more here than a busier
+  figure.
 - No third figure. Two computed objects in one band is already the densest
   thing on the page.

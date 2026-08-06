@@ -16,18 +16,20 @@
  * specialization's third year, which is the year this cohort is entering.
  */
 import {
+  AXES,
   BLOCH_GEOMETRY,
   BLOCH_PANEL,
   BLOCH_PERIOD,
   PANEL,
   PERIOD,
+  RIM,
   blochFrame,
   meshPoints,
 } from "../../lib/quantum.ts";
 
 const mesh = meshPoints(0);
 const bloch = blochFrame(0);
-const { cx, cy, r, orbit, equator, pole } = BLOCH_GEOMETRY;
+const { cx, cy, r, axes, poleTop, poleBottom, axisBottom } = BLOCH_GEOMETRY;
 
 /* The third year of the quantum technology track. H is autumn, V is spring —
    the catalogue's own terms, kept rather than translated. */
@@ -75,28 +77,41 @@ const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
           <!-- Reference axes, overrunning the field on all four sides. -->
           <path
             class="h ax"
-            d={`M6 ${PANEL / 2}h${PANEL - 12}M${PANEL / 2} 6v${PANEL - 12}`}
+            d={`M${AXES.h.x1} ${AXES.h.y}H${AXES.h.x2}M${AXES.v.x} ${AXES.v.y1}V${AXES.v.y2}`}
           ></path>
 
-          <!-- The mesh: two families of polylines, family A then family B, in
-               the order src/lib/quantum.ts emits them. -->
+          <!-- The wall of the well: psi is pinned to zero here, so the rim is
+               flat and the lobes rise inside it. -->
+          <ellipse class="h rim" cx={RIM.cx} cy={RIM.cy} rx={RIM.rx} ry={RIM.ry}
+          ></ellipse>
+
+          <!-- Spokes then rings, in the order src/lib/quantum.ts emits them. -->
           <g class="mesh">
             {mesh.map((points) => <polyline points={points} />)}
           </g>
 
-          <!-- Corner handles, one filled, per the reference sheet. -->
+          <!-- Markers sit on the axes, not at the panel corners — the way the
+               reference sheet ends each of its axes. -->
           <g class="handles">
-            <rect class="i" x="8" y="8" width="7" height="7"></rect>
-            <rect class="i" x={PANEL - 15} y="8" width="7" height="7"></rect>
-            <rect class="i" x="8" y={PANEL - 15} width="7" height="7"></rect>
-            <rect class="f" x={PANEL - 15} y={PANEL - 15} width="7" height="7"
-            ></rect>
+            {
+              AXES.marks.map((m) => (
+                <rect
+                  class={m.filled ? "f" : "i"}
+                  x={m.x - 3.5}
+                  y={m.y - 3.5}
+                  width="7"
+                  height="7"
+                />
+              ))
+            }
           </g>
         </svg>
       </div>
       <figcaption class="p-u cap">
-        Fig. 05a · Wavefunction<br />
-        <span class="sym">Re ψ(x,y,t) · 2D box · 04 modes · T {PERIOD}s</span>
+        Fig. 05a · Quantum corral<br />
+        <span class="sym">
+          Re ψ = J₂(j₂₁·r)·cos(2θ − ωt) · m = 2 · T {PERIOD}s
+        </span>
       </figcaption>
     </figure>
 
@@ -140,22 +155,56 @@ const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
     <figure class="fig bloch-fig">
       <div class="bloch ins" aria-hidden="true">
         <svg viewBox={`0 0 ${BLOCH_PANEL} ${BLOCH_PANEL}`}>
-          <!-- Silhouette, equator, and the z axis through the poles. -->
-          <circle class="h" cx={cx} cy={cy} r={r}></circle>
-          <ellipse class="d" cx={cx} cy={cy} rx={equator.rx} ry={equator.ry}
-          ></ellipse>
-          <path class="h" d={`M${cx} ${cy - pole - 9}v${2 * pole + 18}`}></path>
+          <!-- Silhouette. -->
+          <circle class="h ball" cx={cx} cy={cy} r={r}></circle>
 
-          <!-- The circle of latitude the tip is confined to. -->
-          <ellipse
-            class="d orbit"
-            cx={cx}
-            cy={orbit.cy}
-            rx={orbit.rx}
-            ry={orbit.ry}></ellipse>
+          <!-- The equator, split at the silhouette: solid where it passes in
+               front of the sphere, dashed where it runs behind. -->
+          <polyline class="d" points={BLOCH_GEOMETRY.equatorBack}></polyline>
+          <polyline class="h" points={BLOCH_GEOMETRY.equatorFront}></polyline>
 
-          <!-- The state vector, its drop to the equatorial plane, and its tip.
-               These four are what surface.ts rewrites each frame. -->
+          <!-- Three axes, arrowed on the positive directions only. The z axis
+               carries on below the origin unarrowed, to the |1> pole. -->
+          <line class="h" x1={cx} y1={cy} x2={axisBottom[0]} y2={axisBottom[1]}
+          ></line>
+          {
+            (["x", "y", "z"] as const).map((k) => (
+              <>
+                <line
+                  class="h"
+                  x1={cx}
+                  y1={cy}
+                  x2={axes[k].x2}
+                  y2={axes[k].y2}
+                />
+                <polyline class="f" points={axes[k].head} />
+                <text class="t-ink sym ax-l" x={axes[k].lx} y={axes[k].ly}>
+                  {k}
+                </text>
+              </>
+            ))
+          }
+
+          <!-- The two angles. Both arcs swing with the state, so they are
+               rewritten each frame along with the vector. -->
+          <polyline class="h arc" data-theta-arc points={bloch.thetaArc}
+          ></polyline>
+          <polyline class="h arc" data-phi-arc points={bloch.phiArc}></polyline>
+          <text
+            class="t-ink sym"
+            data-theta-label
+            x={bloch.thetaLabel[0]}
+            y={bloch.thetaLabel[1]}>θ</text
+          >
+          <text
+            class="t-ink sym"
+            data-phi-label
+            x={bloch.phiLabel[0]}
+            y={bloch.phiLabel[1]}>φ</text
+          >
+
+          <!-- The state's drop onto the equatorial plane, and the radius out
+               to where it lands — the pair that fixes phi. -->
           <line
             class="d"
             data-drop
@@ -164,6 +213,15 @@ const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
             x2={bloch.foot[0]}
             y2={bloch.foot[1]}></line>
           <line
+            class="d"
+            data-radius
+            x1={cx}
+            y1={cy}
+            x2={bloch.foot[0]}
+            y2={bloch.foot[1]}></line>
+
+          <!-- The state vector itself. -->
+          <line
             class="i vec"
             data-vec
             data-behind={bloch.behind ? "" : undefined}
@@ -171,6 +229,11 @@ const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
             y1={cy}
             x2={bloch.tip[0]}
             y2={bloch.tip[1]}></line>
+          <polyline
+            class="f tip"
+            data-head
+            data-behind={bloch.behind ? "" : undefined}
+            points={bloch.head}></polyline>
           <circle class="f" cx={cx} cy={cy} r="1.8"></circle>
           <circle
             class="f tip"
@@ -178,15 +241,29 @@ const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
             data-behind={bloch.behind ? "" : undefined}
             cx={bloch.tip[0]}
             cy={bloch.tip[1]}
-            r="3.2"></circle>
+            r="2.6"></circle>
+          <text
+            class="t-ink sym"
+            data-state-label
+            x={bloch.stateLabel[0]}
+            y={bloch.stateLabel[1]}>|ψ&#x27E9;</text
+          >
 
-          <text class="t-ink" x={cx + 6} y={cy - pole - 3}>|0&#x27E9;</text>
-          <text class="t-ink" x={cx + 6} y={cy + pole + 11}>|1&#x27E9;</text>
+          <!-- The poles. -->
+          <circle class="f" cx={poleTop[0]} cy={poleTop[1]} r="2.2"></circle>
+          <circle class="f" cx={poleBottom[0]} cy={poleBottom[1]} r="2.2"
+          ></circle>
+          <text class="t-ink sym" x={poleTop[0] + 6} y={poleTop[1] - 4}
+            >|0&#x27E9;</text
+          >
+          <text class="t-ink sym" x={poleBottom[0] + 6} y={poleBottom[1] + 13}
+            >|1&#x27E9;</text
+          >
         </svg>
       </div>
       <figcaption class="p-u cap">
-        Fig. 05b · Bloch<br />
-        <span class="sym">θ = 55° · T {BLOCH_PERIOD}s</span>
+        Fig. 05b · Bloch sphere<br />
+        <span class="sym">θ = 52° · precession · T {BLOCH_PERIOD}s</span>
       </figcaption>
     </figure>
   </div>
@@ -276,15 +353,17 @@ const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
     aspect-ratio: 1;
   }
 
+  /* Larger than the first pass: it now carries three axis labels, two angle
+     labels and three kets, and none of them survive being shrunk. */
   .bloch {
-    width: clamp(128px, 13vw, 178px);
+    width: clamp(168px, 17vw, 232px);
     aspect-ratio: 1;
   }
 
   /* The caption is wider than the sphere, so without this the column sizes to
      the text and pushes the figure into the plate's right margin. */
   .bloch-fig {
-    max-width: clamp(128px, 13vw, 178px);
+    max-width: clamp(168px, 17vw, 232px);
   }
 
   .surf svg,
@@ -314,6 +393,23 @@ const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
     stroke-width: 1;
   }
 
+  /* The rim is the wall of the well, so it carries more weight than the mesh
+     inside it. */
+  .rim {
+    stroke: var(--muted);
+  }
+
+  /* A faint disc behind the wireframe, as the canonical figure has — enough to
+     read as a solid body without competing with anything drawn on it. */
+  .ball {
+    fill: color-mix(in oklab, var(--ink) 4%, transparent);
+  }
+
+  .arc {
+    fill: none;
+    opacity: 0.85;
+  }
+
   /* Behind the sphere, the vector and its tip drop to the hairline — the one
      depth cue in a figure with no shading. */
   .vec {
@@ -329,8 +425,19 @@ const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
     fill: var(--hair);
   }
 
-  .orbit {
-    opacity: 0.7;
+  .bloch text {
+    font-size: 10px;
+  }
+
+  .bloch .sym {
+    text-transform: none;
+  }
+
+  /* Axis names are set the way a maths figure sets them, not the way the plate
+     sets a label. */
+  .bloch .ax-l {
+    font-style: italic;
+    font-size: 11px;
   }
 
   /* --- the readout -------------------------------------------------------- */

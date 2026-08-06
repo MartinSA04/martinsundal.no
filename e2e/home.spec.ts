@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { MESH_LINES } from "../src/lib/quantum.ts";
 
 test("hero keeps the life canvas and states the name in real text", async ({
   page,
@@ -404,44 +405,47 @@ test("the studies band states the specialization", async ({ page }) => {
   ).toHaveCount(1);
 });
 
-test("the wavefunction surface is served whole and then advances", async ({
+test("the corral surface is served whole and then advances", async ({
   page,
 }) => {
   await page.goto("/");
   const lines = page.locator(".mesh polyline");
 
-  // Both families, every line, present before any script runs on them.
-  await expect(lines).toHaveCount(42);
+  // Every spoke and every ring, present before any script runs on them.
+  await expect(lines).toHaveCount(MESH_LINES);
 
   await page.locator("[data-surface]").scrollIntoViewIfNeeded();
 
-  // psi vanishes on the walls for all time, so the first line of a family sits
-  // flat on the floor of the plot. Flat means collinear, not constant-y: the
-  // projection sends a floor line to a diagonal, so it is the absence of any
-  // bend that carries the boundary condition through to the screen.
-  const pts = (await lines.first().getAttribute("points"))!
+  // The outermost ring is the wall of the well, where psi is pinned to zero, so
+  // it sits flat and its points lie on the drawn rim ellipse. That is the
+  // boundary condition surviving the projection, not just the maths.
+  const rim = (await lines.last().getAttribute("points"))!
     .split(" ")
     .map((p) => p.split(",").map(Number) as [number, number]);
-  const [ax, ay] = pts[0]!;
-  const [bx, by] = pts[pts.length - 1]!;
-  const bend = Math.max(
-    ...pts.map(([x, y]) =>
-      Math.abs((bx - ax) * (y - ay) - (by - ay) * (x - ax)),
+  const box = await page.locator(".surf svg").getAttribute("viewBox");
+  const panel = Number(box!.split(" ")[2]);
+  const worst = Math.max(
+    ...rim.map(([x, y]) =>
+      Math.abs(
+        ((x! - panel / 2) / 120) ** 2 +
+          ((y! - panel / 2) / (120 * 0.42)) ** 2 -
+          1,
+      ),
     ),
   );
   expect(
-    bend,
-    "the wall line bends — psi is not zero on the boundary",
-  ).toBeLessThan(1);
+    worst,
+    "the rim is not flat — psi is not zero on the wall",
+  ).toBeLessThan(0.01);
 
-  // A line through the middle of the mesh is not flat, and does not stay put.
-  const mid = lines.nth(10);
+  // A spoke through the middle of the mesh is not flat, and does not stay put.
+  const mid = lines.nth(5);
   const before = (await mid.getAttribute("points"))!;
   expect(
     new Set(before.split(" ").map((p) => p.split(",")[1])).size,
   ).toBeGreaterThan(3);
   await expect
-    .poll(() => mid.getAttribute("points"), { timeout: 5000 })
+    .poll(() => mid.getAttribute("points"), { timeout: 8000 })
     .not.toBe(before);
 });
 
@@ -465,7 +469,7 @@ test("the studies figures are whole without JavaScript, and still under reduced 
   const ctx = await browser.newContext({ javaScriptEnabled: false });
   const p = await ctx.newPage();
   await p.goto("/");
-  await expect(p.locator(".mesh polyline")).toHaveCount(42);
+  await expect(p.locator(".mesh polyline")).toHaveCount(MESH_LINES);
   await expect(p.locator("[data-tip]")).toHaveCount(1);
   await expect(p.locator("[data-surface]")).toContainText("Quantum Technology");
   await ctx.close();
@@ -474,7 +478,7 @@ test("the studies figures are whole without JavaScript, and still under reduced 
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   await page.locator("[data-surface]").scrollIntoViewIfNeeded();
-  const mid = page.locator(".mesh polyline").nth(10);
+  const mid = page.locator(".mesh polyline").nth(5);
   const before = await mid.getAttribute("points");
   await page.waitForTimeout(1200);
   expect(
