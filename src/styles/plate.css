@@ -315,6 +315,22 @@
   fill: var(--ink);
 }
 
+/* Filled at hairline weight — arrowheads on a lead line are part of the line,
+   not an emphasis, so they must not out-weigh the object they point at. */
+.ins .fh {
+  fill: var(--hair);
+  stroke: none;
+}
+
+/* Patent reference numerals. The one place on a figure where type is inked
+   rather than muted: on a patent sheet the numerals are the only thing drawn
+   heavier than the line work, and they have to read before the drawing does. */
+.ins .num {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  fill: var(--ink);
+}
+
 .ins .node {
   fill: var(--hair);
   transition: fill 0.25s ease;

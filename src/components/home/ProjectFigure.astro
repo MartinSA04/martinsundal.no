@@ -11,6 +11,89 @@ interface Props {
 }
 
 const { slug } = Astro.props;
+
+/* --- Cipherbound: the capture device, drawn as a patent figure ------------
+   A different drafting tradition from the rest of the sheet: one line weight
+   throughout, nothing dimensioned, and form carried by shading rather than by
+   a number. Only the reference numerals are inked.
+
+   The shading is the reason this works. Arc radii crowd toward the shaded rim
+   on a power curve, each arc is centred on the shadow and shortens the deeper
+   it sits, and the outermost stops short of the silhouette so a band of clear
+   paper is left for reflected light. It is masked out of the band and the
+   release, so the tone breaks where a feature interrupts it.
+
+   Computed here rather than in the browser, like every other figure. */
+const cb = { cx: 132, cy: 128, R: 82 };
+const cbB = cb.R * 0.132; // half-height of the equatorial band
+const cbHW = Math.sqrt(cb.R * cb.R - cbB * cbB); // band chord half-width
+const cbRC = cb.R * 0.82; // cavity wall, hidden behind the shell
+const r1 = (v: number) => Math.round(v * 10) / 10;
+const cbPt = (r: number, a: number) =>
+  [r1(cb.cx + r * Math.cos(a)), r1(cb.cy + r * Math.sin(a))] as const;
+
+const cbShade = Array.from({ length: 15 }, (_, i) => {
+  const t = i / 14;
+  const r = cb.R * (0.945 - 0.33 * Math.pow(1 - t, 1.9));
+  const span = 1.375 * (0.38 + 0.62 * Math.pow(t, 0.8));
+  const [x0, y0] = cbPt(r, 0.875 - span);
+  const [x1, y1] = cbPt(r, 0.875 + span);
+  return `M${x0} ${y0}A${r1(r)} ${r1(r)} 0 ${span > Math.PI / 2 ? 1 : 0} 1 ${x1} ${y1}`;
+}).join("");
+
+/* The band, interrupted where the release bezel stands over it. */
+const cbBez = Math.sqrt(Math.pow(cb.R * 0.33, 2) - cbB * cbB);
+const cbBand = [cb.cy - cbB, cb.cy + cbB]
+  .map(
+    (y) =>
+      `M${r1(cb.cx - cbHW)} ${r1(y)}H${r1(cb.cx - cbBez)}` +
+      `M${r1(cb.cx + cbBez)} ${r1(y)}H${r1(cb.cx + cbHW)}`,
+  )
+  .join("");
+
+/* Reference numerals. Lead lines run straight from the numeral to the feature
+   and end in an arrowhead; per the convention, no two of them cross. */
+const cbRefs = [
+  { n: "10", x: 262, y: 56, to: cbPt(cb.R, -0.765) },
+  { n: "12", x: 262, y: 92, to: [153.3, 75.5] as const },
+  { n: "18", x: 262, y: 128, to: [151.7, 108.3] as const },
+  { n: "14", x: 262, y: 196, to: [169.7, 182.1] as const },
+  { n: "16", x: 26, y: 104, to: [58.7, r1(cb.cy - cbB)] as const },
+  {
+    n: "20",
+    x: 26,
+    y: 150,
+    to: [r1(cb.cx - cb.R - cb.R * 0.07), 133.7] as const,
+  },
+  { n: "22", x: 26, y: 200, to: cbPt(cbRC, 2.391) },
+];
+
+const cbLeads = cbRefs
+  .map(({ x, y, to }) => {
+    const dx = to[0] - x;
+    const dy = to[1] - (y + 3);
+    const L = Math.hypot(dx, dy);
+    const ux = dx / L;
+    const uy = dy / L;
+    return `M${r1(x + ux * 9)} ${r1(y + 3 + uy * 9)}L${r1(to[0] - ux * 5)} ${r1(to[1] - uy * 5)}`;
+  })
+  .join("");
+
+const cbHeads = cbRefs
+  .map(({ x, y, to }) => {
+    const dx = to[0] - x;
+    const dy = to[1] - (y + 3);
+    const L = Math.hypot(dx, dy);
+    const ux = dx / L;
+    const uy = dy / L;
+    const w = 1.7;
+    return (
+      `M${r1(to[0])} ${r1(to[1])}` +
+      `L${r1(to[0] - ux * 5.6 - uy * w)} ${r1(to[1] - uy * 5.6 + ux * w)}` +
+      `L${r1(to[0] - ux * 5.6 + uy * w)} ${r1(to[1] - uy * 5.6 - ux * w)}z`
+    );
+  })
+  .join("");
 ---
 
 {
@@ -123,23 +206,61 @@ const { slug } = Astro.props;
   slug === "cipherbound" && (
     <svg
       class="ins"
-      viewBox="0 0 300 230"
+      viewBox="0 0 300 250"
       style="width:100%;max-width:300px;height:auto"
       aria-hidden="true"
     >
-      <g class="tiles h" />
-      <g class="blocked f" />
-      {/* The walk the collision map allows */}
-      <path class="i" d="M26 194 H74 V146 H122 V98 H170 V50 H242" />
-      <circle class="f" cx="26" cy="194" r="4.5" />
-      <g class="h">
-        <circle cx="242" cy="50" r="7" />
-        <path d="M242 41v18M233 50h18" />
+      <defs>
+        {/* The shading breaks where a feature interrupts it. */}
+        <mask id="cb-shade">
+          <rect x="0" y="0" width="300" height="250" fill="#000" />
+          <circle cx={cb.cx} cy={cb.cy} r={cb.R} fill="#fff" />
+          <rect
+            x="0"
+            y={r1(cb.cy - cbB)}
+            width="300"
+            height={r1(cbB * 2)}
+            fill="#000"
+          />
+          <circle cx={cb.cx} cy={cb.cy} r={r1(cb.R * 0.36)} fill="#000" />
+        </mask>
+      </defs>
+
+      <g mask="url(#cb-shade)">
+        <path class="h" d={cbShade} />
       </g>
-      <text x="0" y="222">
-        Tile map · walkability is data
+
+      {/* Object lines carry the drawing; shading and annotation stay under it,
+        which is the same hierarchy a real sheet uses. */}
+      <circle class="i" cx={cb.cx} cy={cb.cy} r={cb.R} />
+      {/* The release stands proud of the band, so the band breaks at it. */}
+      <path class="i" d={cbBand} />
+      <circle class="i" cx={cb.cx} cy={cb.cy} r={r1(cb.R * 0.33)} />
+      <circle class="i" cx={cb.cx} cy={cb.cy} r={r1(cb.R * 0.17)} />
+      <circle
+        class="i"
+        cx={r1(cb.cx - cb.R - cb.R * 0.07)}
+        cy={cb.cy}
+        r={r1(cb.R * 0.07)}
+      />
+      {/* The cavity is hidden behind the shell, so it goes in broken line. */}
+      <path
+        class="d"
+        d={`M${cb.cx} ${r1(cb.cy - cbRC)}A${r1(cbRC)} ${r1(cbRC)} 0 0 0 ${cb.cx} ${r1(cb.cy + cbRC)}`}
+      />
+
+      <path class="h" d={cbLeads} />
+      <path class="fh" d={cbHeads} />
+      {cbRefs.map((r) => (
+        <text class="num" x={r.x} y={r.y} text-anchor="middle">
+          {r.n}
+        </text>
+      ))}
+
+      <text x="0" y="242">
+        Fig. 1 · capture device
       </text>
-      <text x="300" y="222" text-anchor="end">
+      <text x="300" y="242" text-anchor="end">
         C++
       </text>
     </svg>
@@ -317,48 +438,3 @@ const { slug } = Astro.props;
     background-size: 11px 11px;
   }
 </style>
-
-<script>
-  /* Cipherbound's tile field: 12×8 cells, a scatter of blocked ones, drawn
-     once on load. Generated rather than authored so the grid stays regular. */
-  const NS = "http://www.w3.org/2000/svg";
-  const tiles = document.querySelector(".tiles");
-  const blocked = document.querySelector(".blocked");
-
-  if (tiles && blocked) {
-    const S = 24;
-    const OX = 14;
-    const OY = 26;
-    for (let y = 0; y < 8; y++) {
-      for (let x = 0; x < 12; x++) {
-        const r = document.createElementNS(NS, "rect");
-        r.setAttribute("x", String(OX + x * S));
-        r.setAttribute("y", String(OY + y * S));
-        r.setAttribute("width", String(S));
-        r.setAttribute("height", String(S));
-        tiles.appendChild(r);
-      }
-    }
-    const walls: [number, number][] = [
-      [1, 1],
-      [2, 1],
-      [5, 0],
-      [8, 2],
-      [9, 2],
-      [3, 3],
-      [6, 4],
-      [10, 5],
-      [2, 6],
-      [7, 6],
-      [11, 3],
-    ];
-    for (const [x, y] of walls) {
-      const r = document.createElementNS(NS, "rect");
-      r.setAttribute("x", String(OX + x * S + 5));
-      r.setAttribute("y", String(OY + y * S + 5));
-      r.setAttribute("width", String(S - 10));
-      r.setAttribute("height", String(S - 10));
-      blocked.appendChild(r);
-    }
-  }
-</script>
