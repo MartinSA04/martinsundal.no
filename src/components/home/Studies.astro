@@ -12,8 +12,7 @@
  * which is the contract the masthead's node map keeps too.
  *
  * Every fact in the readout is from the NTNU catalogue: programme MTFYMA,
- * cohort 2024, specialization MTFYMAKVANTE24. The course index is that
- * specialization's third year, which is the year this cohort is entering.
+ * cohort 2024, specialization MTFYMAKVANTE24.
  */
 import {
   AXES,
@@ -22,7 +21,6 @@ import {
   BLOCH_PERIOD,
   PANEL,
   PERIOD,
-  RIM,
   blochFrame,
   meshPoints,
 } from "../../lib/quantum.ts";
@@ -30,30 +28,6 @@ import {
 const mesh = meshPoints(0);
 const bloch = blochFrame(0);
 const { cx, cy, r, axes, poleTop, poleBottom, axisBottom } = BLOCH_GEOMETRY;
-
-/* The third year of the quantum technology track. H is autumn, V is spring —
-   the catalogue's own terms, kept rather than translated. */
-const terms = [
-  {
-    label: "Autumn · H",
-    courses: [
-      { code: "FY2045", title: "Kvantemekanikk I" },
-      { code: "TFY4220", title: "Faste stoffers fysikk" },
-      { code: "TFE4146", title: "Halvlederkomponenter" },
-      { code: "TFY4345", title: "Klassisk mekanikk" },
-    ],
-  },
-  {
-    label: "Spring · V",
-    courses: [
-      { code: "TFY4355", title: "Kvanteinformasjon og -beregninger" },
-      { code: "TFE4169", title: "Nanoelektronikk" },
-      { code: "TFE4181", title: "Videregående optikk og fotonikk" },
-    ],
-  },
-];
-
-const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
 ---
 
 <section
@@ -80,12 +54,10 @@ const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
             d={`M${AXES.h.x1} ${AXES.h.y}H${AXES.h.x2}M${AXES.v.x} ${AXES.v.y1}V${AXES.v.y2}`}
           ></path>
 
-          <!-- The wall of the well: psi is pinned to zero here, so the rim is
-               flat and the lobes rise inside it. -->
-          <ellipse class="h rim" cx={RIM.cx} cy={RIM.cy} rx={RIM.rx} ry={RIM.ry}
-          ></ellipse>
-
-          <!-- Spokes then rings, in the order src/lib/quantum.ts emits them. -->
+          <!-- Spokes then rings, in the order src/lib/quantum.ts emits them.
+               The wall of the well is not among them: psi is pinned to zero
+               there, so anything drawn on it is a node and would sit still
+               while the rest of the figure moved. -->
           <g class="mesh">
             {mesh.map((points) => <polyline points={points} />)}
           </g>
@@ -122,9 +94,9 @@ const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
         <p class="p-u p-u--ink">NTNU · Trondheim</p>
       </div>
 
-      <p class="prog">Fysikk og matematikk</p>
+      <p class="prog">Applied Physics and Mathematics</p>
       <p class="p-u p-u--n prog-en">
-        Applied Physics and Mathematics · integrated MSc · 5 years
+        Fysikk og matematikk · integrated MSc · 5 years
       </p>
 
       <div class="p-rule" style="margin-top:16px"></div>
@@ -155,8 +127,9 @@ const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
     <figure class="fig bloch-fig">
       <div class="bloch ins" aria-hidden="true">
         <svg viewBox={`0 0 ${BLOCH_PANEL} ${BLOCH_PANEL}`}>
-          <!-- Silhouette. -->
-          <circle class="h ball" cx={cx} cy={cy} r={r}></circle>
+          <!-- Silhouette, unfilled — everything on the plate is drawn, nothing
+               is shaded. -->
+          <circle class="h" cx={cx} cy={cy} r={r}></circle>
 
           <!-- The equator, split at the silhouette: solid where it passes in
                front of the sphere, dashed where it runs behind. -->
@@ -267,30 +240,6 @@ const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
       </figcaption>
     </figure>
   </div>
-
-  <!-- The course index, in the manner of the node map's path index. -->
-  <div class="idx-wrap">
-    <p class="p-u idx-head">
-      Third year · quantum technology · {String(courseCount).padStart(2, "0")} courses
-    </p>
-    <div class="idx-cols">
-      {
-        terms.map((t) => (
-          <div class="term">
-            <p class="p-u p-u--ink term-h">{t.label}</p>
-            <ul class="idx">
-              {t.courses.map((c) => (
-                <li>
-                  <span class="p-u p-u--ink">{c.code}</span>
-                  <span class="p-u p-u--n">{c.title}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))
-      }
-    </div>
-  </div>
 </section>
 
 <script>
@@ -393,18 +342,6 @@ const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
     stroke-width: 1;
   }
 
-  /* The rim is the wall of the well, so it carries more weight than the mesh
-     inside it. */
-  .rim {
-    stroke: var(--muted);
-  }
-
-  /* A faint disc behind the wireframe, as the canonical figure has — enough to
-     read as a solid body without competing with anything drawn on it. */
-  .ball {
-    fill: color-mix(in oklab, var(--ink) 4%, transparent);
-  }
-
   .arc {
     fill: none;
     opacity: 0.85;
@@ -474,48 +411,6 @@ const courseCount = terms.reduce((n, t) => n + t.courses.length, 0);
     max-width: 42em;
     margin-top: 20px;
     letter-spacing: -0.004em;
-    color: var(--muted);
-  }
-
-  /* --- the course index --------------------------------------------------- */
-
-  .idx-wrap {
-    margin-top: clamp(26px, 3vw, 44px);
-    border-top: var(--rule) solid var(--hair);
-    padding-top: 10px;
-  }
-
-  /* Grouped by term rather than flowed, so the index says something the flow
-     order could not: which half of the year each course sits in. */
-  .idx-cols {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(288px, 1fr));
-    gap: 24px clamp(24px, 4vw, 72px);
-    margin-top: 14px;
-  }
-
-  .term-h {
-    padding-bottom: 7px;
-    border-bottom: var(--rule) solid var(--hair);
-  }
-
-  .idx {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .idx li {
-    display: grid;
-    grid-template-columns: 8ch minmax(0, 1fr);
-    gap: 12px;
-    align-items: baseline;
-    border-bottom: var(--rule) solid var(--whisper);
-    padding: 7px 0;
-  }
-
-  .idx li .p-u--n {
-    text-transform: none;
     color: var(--muted);
   }
 

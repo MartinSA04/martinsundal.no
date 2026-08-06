@@ -12,7 +12,8 @@ import {
   PANEL,
   PEAK,
   PERIOD,
-  RIM,
+  PLAN_EXTENT,
+  RMAX,
   besselJ,
   blochDepth,
   blochFrame,
@@ -159,24 +160,38 @@ test("the mesh returns to its opening frame after one period", () => {
   assert.deepEqual(meshPoints(phaseAt(0)), meshPoints(phaseAt(PERIOD)));
 });
 
-test("the rim is flat, and is where the wall is", () => {
-  for (let k = 0; k < 16; k++) {
-    const theta = (k / 16) * TWO_PI;
-    const [x, y] = project(1, theta, (k / 16) * TWO_PI);
-    /* On the drawn rim ellipse. */
-    const e = ((x - RIM.cx) / RIM.rx) ** 2 + ((y - RIM.cy) / RIM.ry) ** 2;
-    assert.ok(Math.abs(e - 1) < 1e-9, `rim point off the ellipse: ${e}`);
+test("every drawn line moves — nothing in the figure is a node", () => {
+  /* psi vanishes on the wall, so a ring drawn there would be dead flat forever
+     while the rest of the surface turned. The mesh therefore stops just inside
+     it. This is the guard on that: sample each polyline at two phases and
+     require it to have changed. */
+  const a = meshPoints(0);
+  const b = meshPoints(Math.PI / 3);
+  for (let i = 0; i < a.length; i++) {
+    assert.notEqual(
+      a[i],
+      b[i],
+      `polyline ${i} is static — it is sitting on a node`,
+    );
   }
+});
+
+test("the mesh stops short of the wall", () => {
+  assert.ok(RMAX < 1, "the mesh reaches the wall, where psi is pinned to zero");
+  assert.ok(RMAX > 0.85, `RMAX ${RMAX} crops the figure well inside the well`);
+  /* Still far enough out to be past the crest of J_2, so the lobes are whole. */
+  const crest = 0.594;
+  assert.ok(RMAX > crest, "the mesh is cropped inside the lobe crest");
 });
 
 test("the figure is drawn low enough that the lobes stand up", () => {
   /* The whole look rests on this: the height of a lobe must beat the depth of
      the plan, or the disc reads as seen from above and the lobes flatten into
      shading. */
-  const crest = RIM.cy - project(0.594, Math.PI / 2, Math.PI)[1];
+  const crest = PLAN_EXTENT.cy - project(0.594, Math.PI / 2, Math.PI)[1];
   assert.ok(
-    crest > RIM.ry,
-    `a lobe rises ${crest.toFixed(1)} against a plan depth of ${RIM.ry} — too flat`,
+    crest > PLAN_EXTENT.ry,
+    `a lobe rises ${crest.toFixed(1)} against a plan depth of ${PLAN_EXTENT.ry} — too flat`,
   );
 });
 

@@ -117,6 +117,20 @@ export const SPOKE_SAMPLES = 24;
 export const RINGS = 12;
 export const RING_SAMPLES = 81;
 
+/**
+ * How far out the mesh is drawn, as a fraction of the well.
+ *
+ * Short of the wall, deliberately. psi is pinned to zero at r = 1, so anything
+ * drawn there is a node: a ring on the wall is dead flat and stays flat forever,
+ * whatever the rest of the surface is doing. Drawing it put a static ellipse
+ * around a moving figure, which read as a frame rather than as part of the
+ * state. Stopping just inside means every line in the plot is live.
+ *
+ * The wall is therefore not drawn at all. It is still what sets the state —
+ * j_21 is the boundary condition — it just has nothing to show.
+ */
+export const RMAX = 0.94;
+
 /** Total polylines the component renders and the script drives. */
 export const MESH_LINES = SPOKES + RINGS;
 
@@ -174,14 +188,14 @@ const lines = (() => {
       buildLine(
         Array.from(
           { length: SPOKE_SAMPLES },
-          (_, i) => [i / (SPOKE_SAMPLES - 1), th] as const,
+          (_, i) => [(i / (SPOKE_SAMPLES - 1)) * RMAX, th] as const,
         ),
       ),
     );
   }
 
   for (let ring = 1; ring <= RINGS; ring++) {
-    const r = ring / RINGS;
+    const r = (ring / RINGS) * RMAX;
     out.push(
       buildLine(
         Array.from(
@@ -231,12 +245,13 @@ export function meshPoints(phase: number): string[] {
   return out;
 }
 
-/**
- * The rim of the well, where psi is pinned to zero. Flat by definition, so it
- * is drawn once and never moves — the one line in the figure that states the
- * boundary condition rather than obeying it silently.
- */
-export const RIM = { cx: C, cy: C, rx: SPAN, ry: SPAN * SQUASH };
+/** Plan extent of the drawn mesh — what the panel has to hold sideways. */
+export const PLAN_EXTENT = {
+  cx: C,
+  cy: C,
+  rx: SPAN * RMAX,
+  ry: SPAN * SQUASH * RMAX,
+};
 
 /**
  * Reference axes and the markers that sit on them. The reference sheet puts an

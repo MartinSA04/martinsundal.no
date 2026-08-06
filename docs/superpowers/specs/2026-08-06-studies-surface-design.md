@@ -34,7 +34,7 @@ A `zone` between `About` and `Contact`, three columns:
 │  │            │    SPEC · KVANTETEKNOLOGI       ◟  |1⟩   ◞         │
 │  ╵            ╵    lead paragraph                  ◟◞               │
 │                                                                     │
-│  Fig. 05a · Re ψ       ── course index ─────────  Fig. 05b · Bloch  │
+│  Fig. 05a · Re ψ                                Fig. 05b · Bloch  │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -44,8 +44,7 @@ panel among panels, and that proportion is the point.
 
 Centre: the readout and the lead.
 
-Right: the Bloch sphere, smaller, with the course index running beneath the
-centre and right columns.
+Right: the Bloch sphere, smaller.
 
 Below `67rem` the three columns collapse to one, surface first, in the same
 order the band reads.
@@ -92,8 +91,15 @@ lobe rises further than the plan is deep, so the figure cannot silently go flat
 again.
 
 **Drawing.** 40 spokes of 24 samples and 12 rings of 81, hairline, no
-hidden-line removal. The rim is drawn once in a heavier weight — it is the wall,
-and the one line that states the boundary condition rather than obeying it.
+hidden-line removal.
+
+**The wall is not drawn.** psi is pinned to zero at r = 1, so anything drawn
+there is a node: dead flat, and flat forever while the rest of the surface
+turns. Drawing it put a static ellipse around a moving figure, which read as a
+frame rather than as part of the state. The mesh therefore stops at r = 0.94 and
+the wall has nothing to show — it still sets the state, through j_21, it just
+does not appear. A test samples every polyline at two phases and requires all of
+them to have moved.
 
 **Markers on the axes.** Open squares at each axis end and one filled square out
 along the horizontal, which is where the reference sheet puts them. Not panel
@@ -117,7 +123,8 @@ Drawn the canonical way, after `docs/inspo/Bloch_Sphere_representation.svg.webp`
   rather than sitting in a fixed plane.
 - The state's drop onto the equatorial plane, and the radius out to where it
   lands: the pair that fixes ph.
-- Dots at both poles and at the tip, and a faint fill on the disc.
+- Dots at both poles and at the tip. No fill on the disc: everything on this
+  plate is drawn, nothing is shaded.
 
 th is fixed and ph advances, which is free precession.
 
@@ -137,10 +144,13 @@ specialization `MTFYMAKVANTE24`.
 **Readout.**
 
 - NTNU · Trondheim
-- Fysikk og matematikk — Applied Physics and Mathematics
+- Applied Physics and Mathematics, with `Fysikk og matematikk` beneath it —
+  English first, the way the specialization block already read. The two were
+  the other way round at first, which left the same page stating a programme
+  Norwegian-first and its specialization English-first.
 - Integrated MSc · 5 years · 2024–2029
 - Year 03 / 05
-- Spec · Kvanteteknologi / Quantum Technology
+- Spec · Quantum Technology / Kvanteteknologi
 
 **Lead** (draft, first person, in the register of Fig. 03):
 
@@ -151,21 +161,6 @@ specialization `MTFYMAKVANTE24`.
 > figures in this band are not pictures of that, they are it, evaluated. The
 > rest of this page is simulators. This is where the physics they simulate gets
 > read.
-
-**Course index**, the track's third year, in the manner of the node map's path
-index. Grouped into two columns by term rather than flowed, so the index says
-something the flow order could not — which half of the year each course sits
-in:
-
-| code    | title                            | term |
-| ------- | -------------------------------- | ---- |
-| FY2045  | Kvantemekanikk I                 | H    |
-| TFY4220 | Faste stoffers fysikk            | H    |
-| TFE4146 | Halvlederkomponenter             | H    |
-| TFY4345 | Klassisk mekanikk                | H    |
-| TFY4355 | Kvanteinformasjon og -beregninger| V    |
-| TFE4169 | Nanoelektronikk                  | V    |
-| TFE4181 | Videregående optikk og fotonikk  | V    |
 
 Captions: `Fig. 05a · Quantum corral · Re ψ = J₂(j₂₁·r)·cos(2θ − ωt) · m = 2 ·
 T 72s` and `Fig. 05b · Bloch sphere · θ = 52° · precession · T 54s`.
@@ -227,3 +222,6 @@ collapses its animations.
   figure.
 - No third figure. Two computed objects in one band is already the densest
   thing on the page.
+- No course list. It was in the first draft as an index in the manner of the
+  node map's, and it earned nothing the specialization line does not already
+  say.
