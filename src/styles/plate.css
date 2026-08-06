@@ -315,6 +315,12 @@
   fill: var(--ink);
 }
 
+/* The Game of Life plate's dot matrix. Deliberately not .node: that one lights
+   up on hover, and a whole board of it would flood the figure. */
+.ins .mat {
+  fill: var(--hair);
+}
+
 /* Filled at hairline weight — arrowheads on a lead line are part of the line,
    not an emphasis, so they must not out-weigh the object they point at. */
 .ins .fh {

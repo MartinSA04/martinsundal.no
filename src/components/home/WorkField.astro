@@ -577,6 +577,21 @@ const fan = Array.from({ length: 15 }, (_, i) => {
     fill: var(--ink);
   }
 
+  /* The capture device opens a little when its specimen is hovered. The pivot
+     is the hinge pin itself, in viewBox units, so the shell swings on the part
+     the drawing says it swings on. Six degrees is enough to break the seam and
+     show the cavity behind it without the figure becoming a cartoon. */
+  .spec :global(.cb-lid) {
+    transform-box: view-box;
+    transform-origin: 44.3px 128px;
+    transition: transform 0.42s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .spec:hover :global(.cb-lid),
+  .spec:focus-within :global(.cb-lid) {
+    transform: rotate(-6deg);
+  }
+
   .spec .coord {
     margin-top: 6px;
   }

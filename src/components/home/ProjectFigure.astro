@@ -5,7 +5,14 @@
  * These are bespoke, not parametric: a converging bundle only means something
  * for the API, a stipple terminator only for the renderer. Each is authored
  * once and read at build time, so nothing is generated in the browser.
+ *
+ * Two of them move when their specimen is hovered. The capture device's shell
+ * lifts off its band, which is a CSS transform and needs no script. The Game
+ * of Life plate plays its synthesis, which needs one — but the generations it
+ * plays are still computed here, at build time, not in the browser.
  */
+import { step } from "../../lib/life.ts";
+
 interface Props {
   slug: string;
 }
@@ -41,15 +48,37 @@ const cbShade = Array.from({ length: 15 }, (_, i) => {
   return `M${x0} ${y0}A${r1(r)} ${r1(r)} 0 ${span > Math.PI / 2 ? 1 : 0} 1 ${x1} ${y1}`;
 }).join("");
 
+/* The silhouette and the cavity, each split at the band: the half above it
+   belongs to the shell that lifts, the half below stays with the body. */
+const cbUpper =
+  `M${r1(cb.cx - cbHW)} ${r1(cb.cy - cbB)}` +
+  `A${cb.R} ${cb.R} 0 0 1 ${r1(cb.cx + cbHW)} ${r1(cb.cy - cbB)}`;
+const cbLower =
+  `M${r1(cb.cx - cbHW)} ${r1(cb.cy + cbB)}` +
+  `A${cb.R} ${cb.R} 0 0 0 ${r1(cb.cx + cbHW)} ${r1(cb.cy + cbB)}`;
+const cbCW = Math.sqrt(cbRC * cbRC - cbB * cbB);
+const cbCavityUpper =
+  `M${cb.cx} ${r1(cb.cy - cbRC)}` +
+  `A${r1(cbRC)} ${r1(cbRC)} 0 0 0 ${r1(cb.cx - cbCW)} ${r1(cb.cy - cbB)}`;
+const cbCavityLower =
+  `M${r1(cb.cx - cbCW)} ${r1(cb.cy - cbB)}` +
+  `A${r1(cbRC)} ${r1(cbRC)} 0 0 0 ${cb.cx} ${r1(cb.cy + cbRC)}`;
+
 /* The band, interrupted where the release bezel stands over it. */
 const cbBez = Math.sqrt(Math.pow(cb.R * 0.33, 2) - cbB * cbB);
-const cbBand = [cb.cy - cbB, cb.cy + cbB]
-  .map(
-    (y) =>
-      `M${r1(cb.cx - cbHW)} ${r1(y)}H${r1(cb.cx - cbBez)}` +
-      `M${r1(cb.cx + cbBez)} ${r1(y)}H${r1(cb.cx + cbHW)}`,
-  )
-  .join("");
+const cbBand =
+  [cb.cy - cbB, cb.cy + cbB]
+    .map(
+      (y) =>
+        `M${r1(cb.cx - cbHW)} ${r1(y)}H${r1(cb.cx - cbBez)}` +
+        `M${r1(cb.cx + cbBez)} ${r1(y)}H${r1(cb.cx + cbHW)}`,
+    )
+    .join("") +
+  /* the ends of the band, which the split silhouette leaves open */
+  `M${r1(cb.cx - cbHW)} ${r1(cb.cy - cbB)}` +
+  `A${cb.R} ${cb.R} 0 0 0 ${r1(cb.cx - cbHW)} ${r1(cb.cy + cbB)}` +
+  `M${r1(cb.cx + cbHW)} ${r1(cb.cy - cbB)}` +
+  `A${cb.R} ${cb.R} 0 0 1 ${r1(cb.cx + cbHW)} ${r1(cb.cy + cbB)}`;
 
 /* Reference numerals. Lead lines run straight from the numeral to the feature
    and end in an arrowhead; per the convention, no two of them cross. */
@@ -76,6 +105,105 @@ const cbLeads = cbRefs
     const ux = dx / L;
     const uy = dy / L;
     return `M${r1(x + ux * 9)} ${r1(y + 3 + uy * 9)}L${r1(to[0] - ux * 5)} ${r1(to[1] - uy * 5)}`;
+  })
+  .join("");
+
+/* --- Game of Life: a two-glider synthesis of a block ----------------------
+   The collision is Catagolue's canonical minimal synthesis of xs4_33 — the
+   block — recorded there as "costs 2 gliders (true)". Its two gliders start
+   almost touching, so each is backed three periods down its own flight line;
+   the Life Lexicon asks for exactly that, the gliders "arranged so that they
+   could come from infinity".
+
+   One runs south-east, the other north-east, they meet at a right angle, and
+   26 generations of debris later there is a block and nothing else. Backed
+   apart it takes 38. Stepped below by the same lib/life.ts the hero runs on,
+   so the plate carries the real generations rather than a tween through them.
+   Nothing ever reaches the border, so the bounded board and an unbounded one
+   agree. */
+const GOL = { w: 18, h: 14, pitch: 15, cell: 9 };
+/* One clear cell of border all round is enough for the bounded board to agree
+   with an unbounded one: no live cell ever comes within one of an edge, so no
+   birth is ever wanted off the board. */
+const GOL_START: [number, number][] = [
+  [1, 1],
+  [2, 2],
+  [3, 2],
+  [1, 3],
+  [2, 3],
+  [5, 10],
+  [6, 10],
+  [7, 10],
+  [7, 11],
+  [6, 12],
+];
+/* Where the two flight lines cross, and where the block ends up. Both are
+   read off the run below rather than placed by eye. */
+const GOL_VEL: [number, number][] = [
+  [1, 1],
+  [1, -1],
+];
+
+const golFrames: number[][] = [];
+{
+  const live = (b: Uint8Array) => {
+    const out: number[] = [];
+    for (let i = 0; i < b.length; i++) if (b[i]) out.push(i);
+    return out;
+  };
+  let board = new Uint8Array(GOL.w * GOL.h);
+  for (const [x, y] of GOL_START) board[y * GOL.w + x] = 1;
+  golFrames.push(live(board));
+  for (let g = 0; g < 200; g++) {
+    const next = step(board, GOL.w, GOL.h);
+    if (next.every((v, i) => v === board[i])) break;
+    board = next;
+    golFrames.push(live(board));
+  }
+}
+const GOL_INSET = (GOL.pitch - GOL.cell) / 2;
+const golPath = (frame: number[]) =>
+  frame
+    .map((n) => {
+      const x = (n % GOL.w) * GOL.pitch + GOL_INSET;
+      const y = Math.floor(n / GOL.w) * GOL.pitch + GOL_INSET;
+      return `M${x} ${y}h${GOL.cell}v${GOL.cell}h-${GOL.cell}z`;
+    })
+    .join("");
+const golDots = Array.from({ length: GOL.w * GOL.h }, (_, i) => ({
+  cx: (i % GOL.w) * GOL.pitch + GOL.pitch / 2,
+  cy: Math.floor(i / GOL.w) * GOL.pitch + GOL.pitch / 2,
+}));
+const golBoardH = GOL.h * GOL.pitch;
+
+/* The flight lines. Each runs from its glider's centroid along that glider's
+   own velocity to the point where the two paths cross, which is where the
+   collision happens — so the plate says what it is about before it moves. */
+const golCentroid = (cells: [number, number][]) =>
+  cells.reduce(
+    (a, [x, y]) => [a[0] + x / cells.length, a[1] + y / cells.length],
+    [0, 0] as [number, number],
+  );
+const golA = golCentroid(GOL_START.slice(0, 5));
+const golBc = golCentroid(GOL_START.slice(5));
+/* A: golA + t·v0, B: golBc + s·v1. Solved for t, one line of algebra. */
+const golT =
+  (GOL_VEL[1]![0] * (golBc[1] - golA[1]) -
+    GOL_VEL[1]![1] * (golBc[0] - golA[0])) /
+  (GOL_VEL[1]![0] * GOL_VEL[0]![1] - GOL_VEL[1]![1] * GOL_VEL[0]![0]);
+const golPx = (x: number, y: number) =>
+  [
+    r1(x * GOL.pitch + GOL.pitch / 2),
+    r1(y * GOL.pitch + GOL.pitch / 2),
+  ] as const;
+const golHit = golPx(
+  golA[0] + golT * GOL_VEL[0]![0],
+  golA[1] + golT * GOL_VEL[0]![1],
+);
+const golLeads = [golA, golBc]
+  .map((c) => {
+    const [x0, y0] = golPx(c[0], c[1]);
+    return `M${x0} ${y0}L${golHit[0]} ${golHit[1]}`;
   })
   .join("");
 
@@ -211,28 +339,47 @@ const cbHeads = cbRefs
       aria-hidden="true"
     >
       <defs>
-        {/* The shading breaks where a feature interrupts it. */}
-        <mask id="cb-shade">
+        {/* The shading breaks where a feature interrupts it, and is cut at the
+          band so the half that belongs to the shell can lift with it. */}
+        <mask id="cb-shade-top">
           <rect x="0" y="0" width="300" height="250" fill="#000" />
           <circle cx={cb.cx} cy={cb.cy} r={cb.R} fill="#fff" />
           <rect
             x="0"
             y={r1(cb.cy - cbB)}
             width="300"
-            height={r1(cbB * 2)}
+            height="250"
             fill="#000"
           />
           <circle cx={cb.cx} cy={cb.cy} r={r1(cb.R * 0.36)} fill="#000" />
         </mask>
+        <mask id="cb-shade-bot">
+          <rect x="0" y="0" width="300" height="250" fill="#000" />
+          <circle cx={cb.cx} cy={cb.cy} r={cb.R} fill="#fff" />
+          <rect x="0" y="0" width="300" height={r1(cb.cy + cbB)} fill="#000" />
+          <circle cx={cb.cx} cy={cb.cy} r={r1(cb.R * 0.36)} fill="#000" />
+        </mask>
       </defs>
-
-      <g mask="url(#cb-shade)">
-        <path class="h" d={cbShade} />
-      </g>
 
       {/* Object lines carry the drawing; shading and annotation stay under it,
         which is the same hierarchy a real sheet uses. */}
-      <circle class="i" cx={cb.cx} cy={cb.cy} r={cb.R} />
+      <g mask="url(#cb-shade-bot)">
+        <path class="h" d={cbShade} />
+      </g>
+      <path class="i" d={cbLower} />
+      {/* The cavity is hidden behind the shell, so it goes in broken line. */}
+      <path class="d" d={cbCavityLower} />
+
+      {/* Everything that swings clear of the band when the device opens. Its
+        mask travels with it, so the shading stays stuck to the shell. */}
+      <g class="cb-lid">
+        <g mask="url(#cb-shade-top)">
+          <path class="h" d={cbShade} />
+        </g>
+        <path class="i" d={cbUpper} />
+        <path class="d" d={cbCavityUpper} />
+      </g>
+
       {/* The release stands proud of the band, so the band breaks at it. */}
       <path class="i" d={cbBand} />
       <circle class="i" cx={cb.cx} cy={cb.cy} r={r1(cb.R * 0.33)} />
@@ -242,11 +389,6 @@ const cbHeads = cbRefs
         cx={r1(cb.cx - cb.R - cb.R * 0.07)}
         cy={cb.cy}
         r={r1(cb.R * 0.07)}
-      />
-      {/* The cavity is hidden behind the shell, so it goes in broken line. */}
-      <path
-        class="d"
-        d={`M${cb.cx} ${r1(cb.cy - cbRC)}A${r1(cbRC)} ${r1(cbRC)} 0 0 0 ${cb.cx} ${r1(cb.cy + cbRC)}`}
       />
 
       <path class="h" d={cbLeads} />
@@ -379,62 +521,36 @@ const cbHeads = cbRefs
 
 {
   slug === "game-of-life" && (
-    <div class="matwrap">
-      <div class="dotmat" role="presentation" />
-      <svg
-        class="ins"
-        viewBox="0 0 220 118"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        <g class="f">
-          <rect x="16" y="5" width="7" height="7" />
-          <rect x="27" y="16" width="7" height="7" />
-          <rect x="5" y="27" width="7" height="7" />
-          <rect x="16" y="27" width="7" height="7" />
-          <rect x="27" y="27" width="7" height="7" />
-          <rect x="82" y="49" width="7" height="7" />
-          <rect x="93" y="60" width="7" height="7" />
-          <rect x="71" y="71" width="7" height="7" />
-          <rect x="82" y="71" width="7" height="7" />
-          <rect x="93" y="71" width="7" height="7" />
-          <rect x="159" y="27" width="7" height="7" />
-          <rect x="170" y="27" width="7" height="7" />
-          <rect x="159" y="38" width="7" height="7" />
-          <rect x="170" y="38" width="7" height="7" />
-          <rect x="192" y="82" width="7" height="7" />
-          <rect x="203" y="82" width="7" height="7" />
-          <rect x="192" y="93" width="7" height="7" />
-          <rect x="203" y="93" width="7" height="7" />
-        </g>
-        <g class="d">
-          <path d="M38 8L66 46M105 74L150 40" />
-        </g>
-      </svg>
-    </div>
+    <svg
+      class="ins"
+      viewBox={`0 0 ${GOL.w * GOL.pitch} ${golBoardH + 26}`}
+      style="width:100%;max-width:300px;height:auto"
+      aria-hidden="true"
+      data-synth
+      data-w={GOL.w}
+      data-pitch={GOL.pitch}
+      data-cell={GOL.cell}
+      data-frames={golFrames.map((f) => f.join(",")).join(";")}
+    >
+      <g class="mat">
+        {golDots.map((d) => (
+          <circle cx={d.cx} cy={d.cy} r="1" />
+        ))}
+      </g>
+      <path class="d" d={golLeads} />
+      {/* Generation 0 is server-rendered, so the plate is a correct still
+        with the script missing or blocked. */}
+      <path class="f" data-synth-cells d={golPath(golFrames[0]!)} />
+      <text x="2" y={golBoardH + 20} data-synth-gen>
+        Gen 00
+      </text>
+      <text x={GOL.w * GOL.pitch - 2} y={golBoardH + 20} text-anchor="end">
+        2 gliders · 1 block
+      </text>
+    </svg>
   )
 }
 
-<style>
-  .matwrap {
-    position: relative;
-  }
-
-  .matwrap svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
-
-  .dotmat {
-    height: 118px;
-    width: 100%;
-    background-image: radial-gradient(
-      circle at center,
-      var(--hair) 0 1px,
-      transparent 1.2px
-    );
-    background-size: 11px 11px;
-  }
-</style>
+<script>
+  import "../../scripts/synthesis.ts";
+</script>
