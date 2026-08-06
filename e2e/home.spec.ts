@@ -479,3 +479,45 @@ test("the studies figures are whole without JavaScript, and still under reduced 
     "the surface moved under reduce",
   ).toBe(before);
 });
+
+/**
+ * Fig. 00 is pure CSS, and CSS animations do not stop when their element
+ * scrolls out of view. This one is expensive enough to matter — 76ms/s of main
+ * thread, measured — so it is paused off screen. The figure itself is unchanged
+ * and still runs with no JavaScript at all.
+ */
+test("the orbital stops when it is off screen", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+
+  const state = () =>
+    page.evaluate(
+      () =>
+        getComputedStyle(document.querySelector(".orb .trail")!)
+          .animationPlayState,
+    );
+
+  await expect.poll(state).toBe("running");
+
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect.poll(state, { timeout: 5000 }).toBe("paused");
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect.poll(state, { timeout: 5000 }).toBe("running");
+});
+
+test("the orbital still animates with no JavaScript", async ({ browser }) => {
+  const ctx = await browser.newContext({ javaScriptEnabled: false });
+  const p = await ctx.newPage();
+  await p.goto("/");
+  // The pause is an enhancement, not a dependency: without the script the
+  // figure runs exactly as it did before there was one.
+  const play = await p.evaluate(
+    () =>
+      getComputedStyle(document.querySelector(".orb .trail")!)
+        .animationPlayState,
+  );
+  expect(play).toBe("running");
+  await expect(p.locator(".orb .trav")).toHaveCount(6);
+  await ctx.close();
+});

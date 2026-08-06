@@ -46,6 +46,11 @@
  * a wrapping <g transform>, so every element shares one coordinate frame. That
  * is what lets the N-01 callout ride the same path as its traveller and still
  * hold its label upright.
+ *
+ * The figure is pure CSS. src/scripts/orbit.ts only pauses it when it scrolls
+ * out of view, which is worth 76 ms/s of main thread — see the note there, and
+ * docs/perf-home-renders.md for what the cheaper animation mechanics cost in
+ * design terms.
  */
 ---
 
@@ -199,6 +204,10 @@
   </div>
 </header>
 
+<script>
+  import "../../scripts/orbit.ts";
+</script>
+
 <style>
   .head {
     display: grid;
@@ -266,6 +275,17 @@
   .orb svg {
     width: 100%;
     height: auto;
+  }
+
+  /* Paused whenever the masthead is off screen. CSS animations keep ticking
+     when their element scrolls away, and this one is expensive: a registered
+     custom property that two paint-level properties then calc() off, so every
+     frame is a style recalc and a repaint of the whole figure. Nothing about
+     the drawing changes here — the animations simply stop when there is nobody
+     to see them, and resume where they left off. */
+  .orb[data-still] .trail,
+  .orb[data-still] .rides {
+    animation-play-state: paused;
   }
 
   /* The axes are the faintest thing in the figure — they locate it, they are
