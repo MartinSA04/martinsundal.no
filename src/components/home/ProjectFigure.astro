@@ -112,15 +112,22 @@ const cbLeads = cbRefs
    Not a collision picked out of a catalogue. This is the one the generator
    itself fires, lifted from GameOfLifeText's construction.py — the two
    components of _BLOCK_SYNTHESIS_BASE_COMPONENTS, in the "north" orientation
-   its _ORIENTATION_TRANSFORMS defines, run out by four of the extra_periods
+   its _ORIENTATION_TRANSFORMS defines, run out by two of the extra_periods
    plan_block() takes.
 
    What makes it his is how contained it is. Ten cells go in, the two gliders
    touch for three generations, the population peaks at thirteen, and it is a
-   block — the whole reaction fits in a 14 by 11 box. extra_periods only backs
-   each glider down its own flight line so there is an approach to watch; the
-   synthesis underneath is the four generations his BLOCK_SYNTHESIS_BASE_GENERATIONS
-   names, and twenty here is those four plus the run-in.
+   block — the whole reaction fits a 10 by 9 box. extra_periods only backs each
+   glider down its own flight line so there is an approach to watch; the
+   synthesis underneath is the four generations his
+   BLOCK_SYNTHESIS_BASE_GENERATIONS names, and twelve here is those four plus
+   two periods of run-in. Two, because this has to read as a hover answering
+   rather than as something to sit and watch: a dozen generations at twenty
+   milliseconds is a quarter of a second, and every one of them still gets a
+   frame at 60Hz.
+
+   The board stays wider than the reaction on purpose. A Life plate should be a
+   field with something happening in it, not a box drawn around the something.
 
    Stepped below by the same lib/life.ts the hero runs on, so the plate carries
    the real generations rather than a tween through them. */
@@ -129,16 +136,16 @@ const GOL = { w: 16, h: 13, pitch: 18, cell: 11 };
    with an unbounded one: no live cell ever comes within one of an edge, so no
    birth is ever wanted off the board. */
 const GOL_START: [number, number][] = [
-  [13, 1],
-  [12, 2],
-  [12, 3],
-  [13, 3],
-  [14, 3],
-  [2, 4],
-  [3, 5],
-  [1, 6],
-  [2, 6],
-  [3, 6],
+  [11, 2],
+  [10, 3],
+  [10, 4],
+  [11, 4],
+  [12, 4],
+  [4, 5],
+  [5, 6],
+  [3, 7],
+  [4, 7],
+  [5, 7],
 ];
 /* The two glider velocities, once construction.py's rotation is applied. Both
    run downward and inward, which is what puts the block below the crossing. */

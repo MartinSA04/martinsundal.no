@@ -14,8 +14,13 @@
  * to instead of snapping it to either end.
  */
 
-/** Milliseconds a single generation is held. */
-const MS_PER_GEN = 46;
+/**
+ * Milliseconds a single generation is held. Twelve generations at twenty is a
+ * quarter of a second end to end, which is a hover answering rather than an
+ * animation playing. It is also slow enough that at 60Hz no generation is
+ * skipped — below about 17 the board would start jumping steps.
+ */
+const MS_PER_GEN = 20;
 
 function initSynthesis(): void {
   const svg = document.querySelector<SVGSVGElement>("[data-synth]");
