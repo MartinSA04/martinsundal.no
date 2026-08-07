@@ -41,9 +41,8 @@ dateModified: "2026-07-28"
 
 ## The premise
 
-Conway's Game of Life has no author. You set a starting state, and from then
-on the rules decide everything. So: pick a starting state whose future
-happens to spell a word.
+In Conway's Game of Life the starting state decides everything that follows.
+This picks a starting state whose future spells a word.
 
 ## How it actually works
 
@@ -73,5 +72,5 @@ like any other Life pattern.
 
 ## The one on the front page
 
-The header of this site is not a picture of the word "MARTIN". It is a board
-that becomes it, around generation 277.
+The board at the top of this site is not an image of the word "MARTIN". It
+runs the rule and settles into it at generation 276.

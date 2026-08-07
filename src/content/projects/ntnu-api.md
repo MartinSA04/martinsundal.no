@@ -64,8 +64,7 @@ Cloudflare Worker.
 | `programs` | ~400 study programs, per-cohort study plans | ntnu.no JSON |
 | `semesters` | term ids, teaching weeks, exam periods | TP |
 
-The awkward parts are the interesting parts. Exam information has no JSON
-upstream at all, so it is scraped from the course page and typed on the way
+Exam information has no JSON upstream at all, so it is scraped from the course page and typed on the way
 out. Catalog search returns duplicate entries, so `searchAll` dedups them.
 Grade lookups need DBH-versioned codes like `TDT4100-1`, so
 `get_course_versions` exists to bridge the two naming schemes.
@@ -79,8 +78,8 @@ serves public data.
 Two of them are the reason it exists. `compare_courses` lines candidates up
 side by side with exam dates, weekly teaching hours and recent grade
 distributions. `check_timetable_conflicts` catches weekly clashes and exam
-collisions across a set of courses **before** you register, which is the
-question every student actually has and no official tool answers.
+collisions across a set of courses **before** you register, which no official
+tool does.
 
 ## Try it
 

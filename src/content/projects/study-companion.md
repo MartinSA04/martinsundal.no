@@ -43,9 +43,8 @@ dateModified: "2026-07-28"
 
 ## The problem
 
-A study guide for one course is a weekend of work. A study guide for eight
-courses is eight codebases drifting apart, each with its own half-finished
-design and its own broken KaTeX.
+One course's study guide is a weekend of work. Eight of them is eight
+codebases drifting apart, each with its own design and its own broken KaTeX.
 
 ## The shape
 
@@ -71,11 +70,11 @@ what each release needs.
 
 **The build fails on a dead cross-reference.** A `<Term>` or `<FormulaRef>`
 with no matching `course.yaml` entry, or a duplicate anchor, stops the build
-and names the offending section file. Broken internal links in study material
-are worse than useless, because you trust them and they lie.
+and names the offending section file. A broken cross-reference in study
+material is worse than no link at all.
 
 **KaTeX runs on the server.** Formulas are HTML by the time they reach the
-browser, so they are searchable, selectable, and free.
+browser, so they are searchable and selectable, and cost nothing at runtime.
 
 **The hub owns the course list.** A pinned course build never bakes in its
 siblings, so adding a ninth course does not require rebuilding the other

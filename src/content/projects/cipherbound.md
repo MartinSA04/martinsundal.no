@@ -46,10 +46,9 @@ dateModified: "2026-07-28"
 A tile-based creature-collecting RPG, in the shape everyone recognises: walk
 a map, talk to people, get into fights, win, save, continue.
 
-None of that comes free in C++. There is no scene graph, no entity system, no
-dialogue runtime. Every one of those had to be designed before a single
-Pokémon-like moment could exist, and that is the actual subject of the
-project.
+None of that comes free in C++. There is no scene graph, no entity system and
+no dialogue runtime, so all of it had to be designed and written first. That
+is the actual subject of the project.
 
 ## The systems underneath
 
@@ -60,18 +59,16 @@ data rather than a hard-coded set of walls, and a new area is a new file.
 and damage resolution kept separate from how any of it is drawn.
 
 **Dialogue.** Scripted conversations that can branch and can change world
-state, which is what makes an NPC feel like part of the game rather than a
-sign.
+state, so an NPC can affect the game rather than only print text.
 
 **Persistence.** Save and load across sessions, which quietly constrains every
 other system: anything that matters has to be serialisable.
 
 ## Why it won
 
-Procedural and Object-Oriented Programming is where most students meet C++
-properly for the first time, and most projects stop at getting one mechanic
-working. This one is an architecture of systems with clean seams that can be
-extended without reaching into each other. It took **Best Project** in the
-course.
+TDT4102 is where most students meet C++ properly, and most projects stop at
+one working mechanic. This one is a set of systems with clean seams between
+them, each extendable without reaching into the others. It took **Best
+Project** in the course.
 
 The sprite walking around the margin of this page is from it.

@@ -51,15 +51,12 @@ Schwarzschild metric. Follow each ray until it either falls through the event
 horizon, escapes to the sky, or hits the accretion disc, and shade the pixel
 with whatever it found.
 
-## What that buys you
+## What it produces
 
-Everything recognisable about a black hole image appears without being drawn.
-The Einstein ring, the disc bent up over the top of the hole and back under
+Everything recognisable about a black hole image appears without being drawn:
+the Einstein ring, the disc bent up over the top of the hole and back under
 the bottom, the photon sphere hairline at `r = 1.5 rs` where light can orbit.
-None of these are effects. They are what the integration returns.
-
-That is the appeal. You do not model the appearance; you model the geometry,
-and the appearance is a consequence.
+None of it is drawn in as an effect. It is what the integration returns.
 
 ## The equation it all comes down to
 
@@ -72,7 +69,6 @@ d²u/dφ² = -u + (3/2) rs u²      where u = 1/r
 Drop the second term and you get a straight line. Keep it and you get every
 bend in the image above.
 
-The diagram under the render traces that equation for a fan of rays. It shows
-the threshold that makes the shadow: light aimed within
-**b = 2.598 r<sub>s</sub>** spirals in and never comes back, and everything
-outside it escapes, however sharply it is bent.
+The diagram under the render traces that equation for a fan of rays. Light
+aimed within **b = 2.598 r<sub>s</sub>** spirals in and never comes back;
+anything outside that escapes, however sharply it is bent.
