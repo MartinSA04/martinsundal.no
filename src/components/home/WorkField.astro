@@ -561,6 +561,9 @@ const fan = Array.from({ length: 15 }, (_, i) => {
   .spec[data-spec="cipherbound"] {
     --fig-cap: 560px;
     --ins-type: 6.7px;
+    /* How long the shell takes to fall shut. The rim waits exactly this long
+       before it stops being inked, so the two have to be one number. */
+    --cb-close: 0.26s;
   }
 
   .spec[data-spec="game-of-life"] {
@@ -626,17 +629,42 @@ const fan = Array.from({ length: 15 }, (_, i) => {
 
   /* The capture device opens a little when its specimen is hovered. The pivot
      is the hinge pin itself, in viewBox units, so the shell swings on the part
-     the drawing says it swings on. Six degrees is enough to break the seam and
-     show the cavity behind it without the figure becoming a cartoon. */
+     the drawing says it swings on. Eight degrees is enough to break the seam
+     and show the cavity behind it without the figure becoming a cartoon.
+
+     Opening and closing are not the same motion, because a sprung lid is not
+     eased shut — it is let go. So the return is the shorter, harder curve, and
+     the rule below states it: the resting declaration is the close, and hover
+     overrides it with the longer, softer one it opens on. */
   .spec :global(.cb-lid) {
     transform-box: view-box;
     transform-origin: 44.3px 128px;
-    transition: transform 0.42s cubic-bezier(0.2, 0.7, 0.2, 1);
+    transition: transform var(--cb-close) cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .spec:hover :global(.cb-lid),
   .spec:focus-within :global(.cb-lid) {
-    transform: rotate(-6deg);
+    transform: rotate(-8deg);
+    transition-duration: 0.5s;
+    transition-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  /* The rim that closes the shell. Closed, it lies exactly along the band and
+     over the release, and inking it there on top of them would put a heavier
+     line on the top of the band than on the bottom — on a sheet drawn at one
+     line weight throughout, that reads. So it is only inked while the shell is
+     off the band: in at the instant the swing starts, while it is still
+     coincident and so cannot be seen to arrive, and out again only once the
+     shell has landed back on it. */
+  .spec :global(.cb-rim) {
+    stroke-opacity: 0;
+    transition: stroke-opacity 0s linear var(--cb-close);
+  }
+
+  .spec:hover :global(.cb-rim),
+  .spec:focus-within :global(.cb-rim) {
+    stroke-opacity: 1;
+    transition-delay: 0s;
   }
 
   .spec .coord {

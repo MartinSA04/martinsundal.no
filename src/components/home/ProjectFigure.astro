@@ -54,7 +54,8 @@ const cbShade = Array.from({ length: 15 }, (_, i) => {
 }).join("");
 
 /* The silhouette and the cavity, each split at the band: the half above it
-   belongs to the shell that lifts, the half below stays with the body. */
+   belongs to the shell that lifts, the half below stays with the body. The
+   band itself is a ring and belongs to neither — the shell lifts off it. */
 const cbUpper =
   `M${r1(cb.cx - cbHW)} ${r1(cb.cy - cbB)}` +
   `A${cb.R} ${cb.R} 0 0 1 ${r1(cb.cx + cbHW)} ${r1(cb.cy - cbB)}`;
@@ -70,7 +71,8 @@ const cbCavityLower =
   `A${r1(cbRC)} ${r1(cbRC)} 0 0 0 ${cb.cx} ${r1(cb.cy + cbRC)}`;
 
 /* The band, interrupted where the release bezel stands over it. */
-const cbBez = Math.sqrt(Math.pow(cb.R * 0.33, 2) - cbB * cbB);
+const cbBezR = cb.R * 0.33;
+const cbBez = Math.sqrt(cbBezR * cbBezR - cbB * cbB);
 const cbBand =
   [cb.cy - cbB, cb.cy + cbB]
     .map(
@@ -84,6 +86,18 @@ const cbBand =
   `A${cb.R} ${cb.R} 0 0 0 ${r1(cb.cx - cbHW)} ${r1(cb.cy + cbB)}` +
   `M${r1(cb.cx + cbHW)} ${r1(cb.cy - cbB)}` +
   `A${cb.R} ${cb.R} 0 0 1 ${r1(cb.cx + cbHW)} ${r1(cb.cy + cbB)}`;
+
+/* The shell's own rim, which is what makes it a shell rather than an arc. It
+   runs along the top of the band and scallops over the release at exactly the
+   bezel radius, so closed it lies on ink already on the sheet and the resting
+   figure is unchanged — which is why the sheet only inks it while the shell is
+   off the band; see .cb-rim. Open, it is the rim that carries the reading: the
+   cutout swings clear of the release, and the seam is a wedge bounded by the
+   rim above and the band below instead of a hole torn in the silhouette. */
+const cbRim =
+  `M${r1(cb.cx - cbHW)} ${r1(cb.cy - cbB)}H${r1(cb.cx - cbBez)}` +
+  `A${r1(cbBezR)} ${r1(cbBezR)} 0 0 1 ${r1(cb.cx + cbBez)} ${r1(cb.cy - cbB)}` +
+  `H${r1(cb.cx + cbHW)}`;
 
 /* Reference numerals. Lead lines run straight from the numeral to the feature
    and end in an arrowhead; per the convention, no two of them cross. */
@@ -385,19 +399,21 @@ const cbHeads = cbRefs
       {/* The cavity is hidden behind the shell, so it goes in broken line. */}
       <path class="d" d={cbCavityLower} />
 
-      {/* Everything that swings clear of the band when the device opens. Its
-        mask travels with it, so the shading stays stuck to the shell. */}
+      {/* Everything that swings clear of the band when the device opens: a
+        closed shell, rim and all, not a loose arc. Its mask travels with it,
+        so the shading stays stuck to the shell. */}
       <g class="cb-lid">
         <g mask="url(#cb-shade-top)">
           <path class="h" d={cbShade} />
         </g>
         <path class="i" d={cbUpper} />
+        <path class="i cb-rim" d={cbRim} />
         <path class="d" d={cbCavityUpper} />
       </g>
 
       {/* The release stands proud of the band, so the band breaks at it. */}
       <path class="i" d={cbBand} />
-      <circle class="i" cx={cb.cx} cy={cb.cy} r={r1(cb.R * 0.33)} />
+      <circle class="i" cx={cb.cx} cy={cb.cy} r={r1(cbBezR)} />
       <circle class="i" cx={cb.cx} cy={cb.cy} r={r1(cb.R * 0.17)} />
       <circle
         class="i"
