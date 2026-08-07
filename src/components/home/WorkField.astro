@@ -667,6 +667,233 @@ const fan = Array.from({ length: 15 }, (_, i) => {
     transition-delay: 0s;
   }
 
+  /* --- Study Companion: the build runs -------------------------------------
+     A read head passes down the authored rows, the compile fires behind it,
+     and the four pages ink one at a time. Nothing here is a progress bar
+     pretending to measure something: the whole pass is under four tenths of a
+     second, which is short enough to read as an answer rather than as work
+     being done in front of you.
+
+     All of it is declared on hover rather than on a class, so it is one
+     animation per element with no state to keep and no script at all. */
+  .spec:hover :global(.sc-row),
+  .spec:focus-within :global(.sc-row) {
+    animation: sc-sweep 0.15s linear;
+    animation-delay: calc(var(--i) * 0.022s);
+  }
+
+  @keyframes sc-sweep {
+    0% {
+      stroke: var(--hair);
+    }
+    45% {
+      stroke: var(--ink);
+    }
+    100% {
+      stroke: var(--hair);
+    }
+  }
+
+  .spec :global(.sc-dot) {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .spec:hover :global(.sc-dot),
+  .spec:focus-within :global(.sc-dot) {
+    animation: sc-pop 0.19s cubic-bezier(0.3, 0.8, 0.3, 1);
+    animation-delay: 0.2s;
+  }
+
+  @keyframes sc-pop {
+    0% {
+      transform: scale(1);
+    }
+    40% {
+      transform: scale(2.1);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* Leaving is not the same motion as arriving: the pages ink one at a time
+     because that is the build, but they go back to paper together. Both the
+     rows and the pages keep .h, so the drawing is a correct plate on its own
+     and this file only says what happens to it under a pointer. */
+  .spec :global(.sc-plate) {
+    transition: stroke 0.2s ease;
+  }
+
+  .spec:hover :global(.sc-plate),
+  .spec:focus-within :global(.sc-plate) {
+    stroke: var(--ink);
+    transition-duration: 0.1s;
+    transition-delay: calc(0.24s + var(--i) * 0.05s);
+  }
+
+  /* The count. Four readouts on the same baseline, of which only the last is
+     inked at rest; hovering hides that one for as long as the build takes and
+     hands the line to 01, 02 and 03 in turn. Each is shown by an animation
+     with no fill mode, so when it ends the element simply returns to whatever
+     the resting rule says — which is the whole trick. */
+  .spec :global(.sc-count) {
+    opacity: 0;
+  }
+
+  .spec :global(.sc-count--4) {
+    opacity: 1;
+  }
+
+  .spec:hover :global(.sc-count--1),
+  .spec:focus-within :global(.sc-count--1) {
+    animation: sc-show 0.05s step-end 0.24s;
+  }
+
+  .spec:hover :global(.sc-count--2),
+  .spec:focus-within :global(.sc-count--2) {
+    animation: sc-show 0.05s step-end 0.29s;
+  }
+
+  .spec:hover :global(.sc-count--3),
+  .spec:focus-within :global(.sc-count--3) {
+    animation: sc-show 0.05s step-end 0.34s;
+  }
+
+  .spec:hover :global(.sc-count--4),
+  .spec:focus-within :global(.sc-count--4) {
+    animation: sc-hold 0.39s step-end;
+  }
+
+  @keyframes sc-show {
+    from,
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes sc-hold {
+    from,
+    to {
+      opacity: 0;
+    }
+  }
+
+  /* --- NTNU API: a request travels -----------------------------------------
+     Eight requests ride the leaders already on the plate, leave on their own
+     schedules, and converge. The hub answers once they are in, and one request
+     leaves again on the MCP line — the surface the project exists for, which
+     is why it is the one that carries the reply.
+
+     `--i` is the departure in milliseconds, authored per source in the figure.
+     The packets rest invisible and the keyframes fade them in and out, so with
+     the animation gone they leave nothing behind. */
+  .spec :global(.na-pkt) {
+    fill: var(--ink);
+    opacity: 0;
+    offset-rotate: 0deg;
+  }
+
+  .spec:hover :global(.na-pkt),
+  .spec:focus-within :global(.na-pkt) {
+    animation: na-ride 0.34s cubic-bezier(0.4, 0, 0.35, 1);
+    animation-delay: calc(var(--i, 0) * 1ms);
+  }
+
+  .spec :global(.na-pkt--out) {
+    --i: 420;
+  }
+
+  @keyframes na-ride {
+    0% {
+      offset-distance: 0%;
+      opacity: 0;
+    }
+    12% {
+      opacity: 1;
+    }
+    88% {
+      opacity: 1;
+    }
+    100% {
+      offset-distance: 100%;
+      opacity: 0;
+    }
+  }
+
+  /* A source inks as its own request leaves it, not when the pointer arrives,
+     so the column lights unevenly — which is the point being made. */
+  .spec :global(.na-src) {
+    transition: fill 0.2s ease;
+  }
+
+  .spec:hover :global(.na-src),
+  .spec:focus-within :global(.na-src) {
+    fill: var(--ink);
+    transition-delay: calc(var(--i) * 1ms);
+  }
+
+  .spec :global(.na-hub) {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .spec:hover :global(.na-hub),
+  .spec:focus-within :global(.na-hub) {
+    animation: na-pulse 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) 0.42s;
+  }
+
+  @keyframes na-pulse {
+    0% {
+      transform: scale(1);
+      stroke: var(--hair);
+    }
+    45% {
+      transform: scale(1.22);
+      stroke: var(--ink);
+    }
+    100% {
+      transform: scale(1);
+      stroke: var(--hair);
+    }
+  }
+
+  /* --- Black hole: the captured ray ----------------------------------------
+     The ray itself is drawn in by scripts/capture.ts, which has to own it:
+     the sheet's strokes are non-scaling, and that puts dash arithmetic in
+     screen space while every length the DOM will tell you about is in viewBox
+     units. All that is left here is the label, which is hidden with the ray it
+     names and arrives once the ray is well past the photon ring — a threshold
+     announced before anything has crossed it is a caption, not a reading. */
+  .spec :global([data-capture="live"] .bh-caplbl) {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .spec:hover :global([data-capture="live"] .bh-caplbl),
+  .spec:focus-within :global([data-capture="live"] .bh-caplbl) {
+    opacity: 1;
+    transition-delay: 0.26s;
+  }
+
+  /* kernel.css already collapses every duration for a visitor who has asked
+     for less motion, but it leaves the delays alone — and a sequence is still
+     a sequence when each step is instant and the steps are staggered over four
+     tenths of a second. These are the only staggers on the sheet, so they are
+     cleared here rather than globally. */
+  @media (prefers-reduced-motion: reduce) {
+    .spec :global(.sc-row),
+    .spec :global(.sc-dot),
+    .spec :global(.sc-plate),
+    .spec :global(.sc-count),
+    .spec :global(.na-pkt),
+    .spec :global(.na-src),
+    .spec :global(.na-hub) {
+      animation-delay: 0s !important;
+      transition-delay: 0s !important;
+    }
+  }
+
   .spec .coord {
     margin-top: 6px;
   }

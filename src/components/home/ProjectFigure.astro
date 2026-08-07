@@ -6,10 +6,13 @@
  * for the API, a stipple terminator only for the renderer. Each is authored
  * once and read at build time, so nothing is generated in the browser.
  *
- * Two of them move when their specimen is hovered. The capture device's shell
- * lifts off its band, which is a CSS transform and needs no script. The Game
- * of Life plate plays its synthesis, which needs one — but the generations it
- * plays are still computed here, at build time, not in the browser.
+ * All five move when their specimen is hovered, and none of them computes
+ * anything in the browser to do it. The capture device's shell lifts off its
+ * band and the Study Companion build runs, both pure CSS. The NTNU requests
+ * ride `offset-path` along leaders that were already on the plate. The Game of
+ * Life synthesis and the black hole's captured ray both play a sequence that
+ * was computed here, at build time, by the same libraries the rest of the site
+ * runs on.
  *
  * The small plates stop growing at 300px so they stay small next to the two
  * that don't stop at all. That ceiling is `--fig-cap`, so the sheet that places
@@ -17,6 +20,7 @@
  * the cell it sits in, and only the sheet knows the cell.
  */
 import { step } from "../../lib/life.ts";
+import { traceRay, criticalImpactParameter } from "../../lib/lensing.ts";
 
 interface Props {
   slug: string;
@@ -43,6 +47,14 @@ const cbRC = cb.R * 0.82; // cavity wall, hidden behind the shell
 const r1 = (v: number) => Math.round(v * 10) / 10;
 const cbPt = (r: number, a: number) =>
   [r1(cb.cx + r * Math.cos(a)), r1(cb.cy + r * Math.sin(a))] as const;
+
+/* --- Study Companion: the course, and what the build makes of it ----------
+   Authored as flat tables rather than as markup, because the plate has to be
+   able to walk them: the rows are read in order, the compile fires once, and
+   the pages ink one at a time behind it. */
+const SC_ROWS = [96, 74, 96, 58, 88, 70, 96, 50];
+const SC_PLATE_Y = [58, 96, 134, 172];
+const SC_NODE_Y = [49, 87, 125, 163];
 
 const cbShade = Array.from({ length: 15 }, (_, i) => {
   const t = i / 14;
@@ -236,6 +248,93 @@ const golLeads = [golA, golBc]
   })
   .join("");
 
+/* --- NTNU API: eight upstreams, one interface, three surfaces -------------
+   `leaves` is when a request departs, in milliseconds after the hover. It is
+   not a stagger for the look of it: the sources are genuinely different
+   systems, and the two that come off scraped HTML are the two that keep you
+   waiting. Ordered here by how the plate reads, not by latency, so the
+   departures land unevenly down the column rather than in a wave. */
+const NA_SOURCES = [
+  { y: 34, leaves: 0, d: "M28 34C160 34 210 155 300 155" },
+  { y: 71, leaves: 34, d: "M28 71C160 71 212 155 300 155" },
+  { y: 108, leaves: 12, d: "M28 108C160 108 214 155 300 155" },
+  { y: 145, leaves: 78, d: "M28 145C160 145 216 155 300 155" },
+  { y: 182, leaves: 22, d: "M28 182C160 182 216 155 300 155" },
+  { y: 219, leaves: 96, d: "M28 219C160 219 214 155 300 155" },
+  { y: 256, leaves: 8, d: "M28 256C160 256 212 155 300 155" },
+  { y: 293, leaves: 52, d: "M28 293C160 293 210 155 300 155" },
+];
+
+const NA_OUT = [
+  { y: 96, label: "API", d: "M300 155C356 155 380 96 442 96" },
+  { y: 155, label: "MCP", d: "M300 155h142" },
+  { y: 214, label: "LLM", d: "M300 155C356 155 380 214 442 214" },
+];
+
+/* --- Black hole: the capture threshold, at true scale ---------------------
+   The plate used to draw its rays as hand-authored béziers around a hole 96px
+   across. At that radius every ray on the figure is aimed inside b_crit — all
+   four would have fallen in, and the drawing quietly asserted the opposite of
+   what the project is about. So the hole is drawn at the size that makes the
+   rest of the figure true: rs = 28px puts the plate's own ray heights, 46 and
+   92 either side of the axis, at b = 5.50 rs and b = 3.86 rs, both outside the
+   2.598 rs threshold, and every curve below is now integrated rather than
+   drawn.
+
+   Same lib/lensing.ts the project page runs on, called at build time. Nothing
+   integrates in the browser. */
+const BH = { cx: 230, cy: 200, rs: 28 };
+const bhCrit = criticalImpactParameter(1);
+/* Just inside the threshold: close enough that its neighbours look no
+   different, far enough that the plunge does not take a dozen windings to
+   resolve. Printed on the plate as 2.52, because that is what is drawn. */
+const bhCapB = bhCrit * 0.97;
+const bhEscB = [154 / BH.rs, 108 / BH.rs];
+
+/* Physics coordinates are in units of rs with the ray arriving from +x, so the
+   drawing mirrors x to bring it in from the left, and mirrors y for the pair
+   below the axis. */
+const bhMap = (p: readonly [number, number], flip: boolean) =>
+  [
+    r1(BH.cx - p[0] * BH.rs),
+    r1(BH.cy - (flip ? -p[1] : p[1]) * BH.rs),
+  ] as const;
+
+/* An integrated ray runs from r ≈ b/dφ — effectively infinity — to wherever it
+   ends, so most of it is nowhere near the sheet. Only what lands on the plate
+   is kept, and every ray here enters once and leaves once, so trimming the
+   ends cannot punch a hole in the middle of one. */
+function bhTrace(b: number, flip: boolean, dphi: number, stride: number) {
+  const { points } = traceRay(b, { dphi });
+  const out: (readonly [number, number])[] = [];
+  for (let i = 0; i < points.length; i++) {
+    if (i % stride !== 0 && i !== points.length - 1) continue;
+    const [X, Y] = bhMap(points[i]!, flip);
+    if (X < -30 || X > 490 || Y < -30 || Y > 430) continue;
+    out.push([X, Y]);
+  }
+  return out;
+}
+
+const bhPoly = (pts: (readonly [number, number])[]) =>
+  pts.map(([x, y], i) => `${i ? "L" : "M"}${x} ${y}`).join("");
+
+const bhEscaping = bhEscB.flatMap((b) => [
+  bhTrace(b, false, 0.02, 3),
+  bhTrace(b, true, 0.02, 3),
+]);
+
+/* Finer than the escaping rays need. A capture spiral turns fastest at the
+   end, and stepped as coarsely as a ray that merely bends it arrives at the
+   horizon as a run of visible facets. */
+const bhCaptured = bhTrace(bhCapB, false, 0.006, 3);
+const bhCapEntryY = r1(BH.cy - bhCapB * BH.rs);
+
+/* The stipple bands. A ring of clear paper is left between the photon ring and
+   the innermost band, or the ring stops being the finest thing in the middle
+   of the figure and becomes one texture among several. */
+const bhBands = [58, 78, 102, 134];
+
 const cbHeads = cbRefs
   .map(({ x, y, to }) => {
     const dx = to[0] - x;
@@ -261,9 +360,17 @@ const cbHeads = cbRefs
       style="width:100%;max-width:var(--fig-cap, 300px);height:auto"
       aria-hidden="true"
     >
-      {/* The course, authored as data rows */}
-      <g class="h">
-        <path d="M14 40h96M14 58h74M14 76h96M14 94h58M14 112h88M14 130h70M14 148h96M14 166h50" />
+      {/* The course, authored as data rows. One path per row rather than one
+        path for all eight, because the build has to be able to pass down them
+        a row at a time. */}
+      <g>
+        {SC_ROWS.map((w, i) => (
+          <path
+            class="h sc-row"
+            style={`--i:${i}`}
+            d={`M14 ${40 + i * 18}h${w}`}
+          />
+        ))}
       </g>
       <path class="d" d="M8 30h112v148H8z" />
       <text x="8" y="22">
@@ -271,25 +378,32 @@ const cbHeads = cbRefs
       </text>
       {/* One source, compiled */}
       <path class="h" d="M126 104h26" />
-      <circle class="f" cx="156" cy="104" r="3" />
+      <circle class="f sc-dot" cx="156" cy="104" r="3" />
       <path class="h" d="M160 104h14" />
       {/* Out to a stack of registered plates */}
-      <g class="h">
-        <path d="M186 58l72-18 34 18-72 18z" />
-        <path d="M186 96l72-18 34 18-72 18z" />
-        <path d="M186 134l72-18 34 18-72 18z" />
-        <path d="M186 172l72-18 34 18-72 18z" />
+      <g>
+        {SC_PLATE_Y.map((y, i) => (
+          <path
+            class="h sc-plate"
+            style={`--i:${i}`}
+            d={`M186 ${y}l72-18 34 18-72 18z`}
+          />
+        ))}
       </g>
       <g class="d">
         <path d="M186 58v114M292 76v114M258 40v114" />
       </g>
-      <circle class="node" cx="222" cy="49" r="4" />
-      <circle class="node" cx="222" cy="87" r="4" />
-      <circle class="node" cx="222" cy="125" r="4" />
-      <circle class="node" cx="222" cy="163" r="4" />
-      <text x="186" y="212">
-        04 plates
-      </text>
+      {SC_NODE_Y.map((y) => (
+        <circle class="node" cx="222" cy={y} r="4" />
+      ))}
+      {/* The count, as four stacked readouts. Only the last is inked at rest,
+        so the still says what a finished build produced; hovering hands the
+        line to 01, 02 and 03 on the way back to it. */}
+      {SC_PLATE_Y.map((_, i) => (
+        <text class={`sc-count sc-count--${i + 1}`} x="186" y="212">
+          {String(i + 1).padStart(2, "0")} plates
+        </text>
+      ))}
       <text x="0" y="252">
         Astro
       </text>
@@ -311,49 +425,61 @@ const cbHeads = cbRefs
       >
         <path class="d" d="M28 18v274M300 18v274M442 18v274" />
         <g class="h">
-          <path d="M28 34C160 34 210 155 300 155" />
-          <path d="M28 71C160 71 212 155 300 155" />
-          <path d="M28 108C160 108 214 155 300 155" />
-          <path d="M28 145C160 145 216 155 300 155" />
-          <path d="M28 182C160 182 216 155 300 155" />
-          <path d="M28 219C160 219 214 155 300 155" />
-          <path d="M28 256C160 256 212 155 300 155" />
-          <path d="M28 293C160 293 210 155 300 155" />
-          <path d="M300 155C356 155 380 96 442 96" />
-          <path d="M300 155h142" />
-          <path d="M300 155C356 155 380 214 442 214" />
+          {NA_SOURCES.map((s) => (
+            <path d={s.d} />
+          ))}
+          {NA_OUT.map((o) => (
+            <path d={o.d} />
+          ))}
         </g>
         <g>
-          <circle class="node" cx="28" cy="34" r="3.4" />
-          <circle class="node" cx="28" cy="71" r="3.4" />
-          <circle class="node" cx="28" cy="108" r="3.4" />
-          <circle class="node" cx="28" cy="145" r="3.4" />
-          <circle class="node" cx="28" cy="182" r="3.4" />
-          <circle class="node" cx="28" cy="219" r="3.4" />
-          <circle class="node" cx="28" cy="256" r="3.4" />
-          <circle class="node" cx="28" cy="293" r="3.4" />
+          {NA_SOURCES.map((s) => (
+            <circle
+              class="node na-src"
+              style={`--i:${s.leaves}`}
+              cx="28"
+              cy={s.y}
+              r="3.4"
+            />
+          ))}
         </g>
-        <circle class="h" cx="300" cy="155" r="15" />
+        <circle class="h na-hub" cx="300" cy="155" r="15" />
         <circle class="h" cx="300" cy="155" r="8" />
         <circle class="f" cx="300" cy="155" r="2.6" />
-        <circle class="f" cx="442" cy="96" r="3" />
-        <circle class="f" cx="442" cy="155" r="3" />
-        <circle class="f" cx="442" cy="214" r="3" />
+        {NA_OUT.map((o) => (
+          <circle class="f" cx="442" cy={o.y} r="3" />
+        ))}
+
+        {/* The requests. Each rides the leader its own source is already drawn
+          on, so there is no second copy of the geometry to keep in step, and
+          they leave on their own schedules — a scraped course page and a JSON
+          endpoint do not answer together. Making them look as though they did
+          is the whole project, so the plate is careful not to pretend it here:
+          the convergence happens at the hub, not at the sources. */}
+        {NA_SOURCES.map((s) => (
+          <circle
+            class="na-pkt"
+            r="2.6"
+            style={`--i:${s.leaves};offset-path:path('${s.d}')`}
+          />
+        ))}
+        <circle
+          class="na-pkt na-pkt--out"
+          r="2.6"
+          style={`offset-path:path('${NA_OUT[1]!.d}')`}
+        />
+
         <text x="0" y="12">
           Scattered public sources
         </text>
         <text x="272" y="12">
           One typed interface
         </text>
-        <text x="452" y="99">
-          API
-        </text>
-        <text x="452" y="158" class="t-ink">
-          MCP
-        </text>
-        <text x="452" y="217">
-          LLM
-        </text>
+        {NA_OUT.map((o) => (
+          <text x="452" y={o.y + 3} class={o.label === "MCP" ? "t-ink" : ""}>
+            {o.label}
+          </text>
+        ))}
       </svg>
     </div>
   )
@@ -464,16 +590,16 @@ const cbHeads = cbRefs
           <circle cx="7.5" cy="7.5" r=".7" fill="currentColor" />
         </pattern>
         <mask id="bandA">
-          <circle cx="230" cy="200" r="132" fill="#fff" />
-          <circle cx="230" cy="200" r="106" fill="#000" />
+          <circle cx="230" cy="200" r={bhBands[1]} fill="#fff" />
+          <circle cx="230" cy="200" r={bhBands[0]} fill="#000" />
         </mask>
         <mask id="bandB">
-          <circle cx="230" cy="200" r="158" fill="#fff" />
-          <circle cx="230" cy="200" r="132" fill="#000" />
+          <circle cx="230" cy="200" r={bhBands[2]} fill="#fff" />
+          <circle cx="230" cy="200" r={bhBands[1]} fill="#000" />
         </mask>
         <mask id="bandC">
-          <circle cx="230" cy="200" r="188" fill="#fff" />
-          <circle cx="230" cy="200" r="158" fill="#000" />
+          <circle cx="230" cy="200" r={bhBands[3]} fill="#fff" />
+          <circle cx="230" cy="200" r={bhBands[2]} fill="#000" />
         </mask>
         <clipPath id="term">
           <rect x="196" y="0" width="264" height="400" />
@@ -512,39 +638,53 @@ const cbHeads = cbRefs
         Terminator
       </text>
 
-      <circle class="h" cx="230" cy="200" r="188" />
-      <circle class="h" cx="230" cy="200" r="96" />
-      {/* ACCENT 2 of 2 — the photon ring. */}
-      <circle class="acc-ring" cx="230" cy="200" r="105" />
+      <circle class="h" cx="230" cy="200" r={bhBands[3]} />
+      <circle class="h" cx={BH.cx} cy={BH.cy} r={BH.rs} />
+      {/* ACCENT 2 of 2 — the photon ring, at 1.5 rs where it belongs. */}
+      <circle class="acc-ring" cx={BH.cx} cy={BH.cy} r={r1(BH.rs * 1.5)} />
 
+      {/* Each escaping ray against the straight line it would have been. */}
       <g class="d">
-        <path d="M0 46h460" />
-        <path d="M0 92h460" />
-        <path d="M0 308h460" />
-        <path d="M0 354h460" />
+        {bhEscB.flatMap((b) => [
+          <path d={`M0 ${r1(BH.cy - b * BH.rs)}h460`} />,
+          <path d={`M0 ${r1(BH.cy + b * BH.rs)}h460`} />,
+        ])}
       </g>
       <g class="h">
-        <path d="M0 46C150 46 300 78 460 132" />
-        <path d="M0 92C160 92 300 152 460 246" />
-        <path d="M0 354C150 354 300 322 460 268" />
-        <path d="M0 308C160 308 300 248 460 154" />
+        {bhEscaping.map((pts) => (
+          <path d={bhPoly(pts)} />
+        ))}
       </g>
+
       <path class="d" d="M230 0v400M42 200h376" />
       <circle class="f" cx="230" cy="200" r="2.4" />
+
+      {/* The one ray on the plate that does not come back, and the only thing
+        on it drawn in ink. It ships whole: with the script missing or blocked
+        the figure is a correct still that has already made its point, and the
+        player below retracts it before it offers to draw it again. */}
+      <path
+        class="i"
+        data-capture-ray
+        data-points={bhCaptured.map(([x, y]) => `${x},${y}`).join(" ")}
+        d={bhPoly(bhCaptured)}
+      />
+
+      <path class="h" d="M282 175L261.4 170.9M282 211L252.4 218.6" />
       <text x="0" y="38">
         Undeflected
       </text>
-      <text x="0" y="200" dy="-6">
-        Deflected
+      <text x="0" y={bhCapEntryY - 8} class="t-ink bh-caplbl">
+        b 2.52 rs · captured
       </text>
-      <text x="248" y="196">
-        Event horizon
-      </text>
-      <text x="248" y="184">
+      <text class="halo" x="286" y="178">
         Photon ring
       </text>
+      <text class="halo" x="286" y="214">
+        Horizon
+      </text>
       <text x="460" y="392" text-anchor="end">
-        Schwarzschild · Ø 376
+        Schwarzschild · b crit 2.598 rs
       </text>
     </svg>
   )
@@ -584,4 +724,5 @@ const cbHeads = cbRefs
 
 <script>
   import "../../scripts/synthesis.ts";
+  import "../../scripts/capture.ts";
 </script>

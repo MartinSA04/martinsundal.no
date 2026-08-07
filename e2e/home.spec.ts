@@ -348,6 +348,99 @@ test("hovering a specimen lights its point, leader and callout", async ({
 });
 
 /**
+ * The black hole plate asserts a threshold, so the drawing has to obey it. It
+ * used to draw its hole at 96px, which put every ray on the figure inside
+ * b_crit — the plate showed four rays escaping that would all have fallen in.
+ * The rays and the hole are now drawn to one scale, and this is the guard on
+ * it: read the geometry back off the built page and check it against the
+ * physics rather than against a number typed twice.
+ */
+test("the black hole plate is drawn to one scale", async ({ page }) => {
+  await page.goto("/");
+  const plate = page.locator('[data-spec="black-hole"] svg');
+
+  const rs = Number(await plate.locator("circle.h").nth(1).getAttribute("r"));
+  const ring = Number(await plate.locator("circle.acc-ring").getAttribute("r"));
+  // The photon sphere sits at 1.5 rs by definition, not by eye.
+  expect(ring / rs).toBeCloseTo(1.5, 2);
+
+  const bCrit = ((3 * Math.sqrt(3)) / 2) * rs;
+
+  // Every ray drawn as escaping is aimed outside the threshold...
+  const refs = await plate
+    .locator("g.d path")
+    .evaluateAll((paths) =>
+      paths.map((p) =>
+        Number(/M0 ([\d.]+)h460/.exec(p.getAttribute("d")!)![1]),
+      ),
+    );
+  expect(refs.length).toBe(4);
+  for (const y of refs) expect(Math.abs(y - 200)).toBeGreaterThan(bCrit);
+
+  // ...and the one drawn as captured is aimed inside it, and reaches the
+  // horizon rather than stopping somewhere short of it.
+  const points = (await plate
+    .locator("[data-capture-ray]")
+    .getAttribute("data-points"))!
+    .split(" ")
+    .map((p) => p.split(",").map(Number) as [number, number]);
+
+  expect(Math.abs(points[0]![1] - 200)).toBeLessThan(bCrit);
+  const [ex, ey] = points[points.length - 1]!;
+  expect(Math.hypot(ex - 230, ey - 200)).toBeCloseTo(rs, 0);
+});
+
+/**
+ * The ray ships whole, so the plate is a complete drawing with the script
+ * blocked, and the label that names it ships with it. Both are the script's to
+ * take away — see scripts/capture.ts, which cannot use a dash reveal because
+ * the sheet's strokes are non-scaling, and which declines to take anything at
+ * all from a pointer that could never ask for it back.
+ */
+test("the captured ray is whole without script, and drawn in with it", async ({
+  browser,
+  page,
+}) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const still = await context.newPage();
+  await still.goto("/");
+  const shipped = await still.locator("[data-capture-ray]").getAttribute("d");
+  expect(shipped!.split("L").length).toBeGreaterThan(100);
+  await expect(still.locator(".bh-caplbl")).toBeVisible();
+  await context.close();
+
+  await page.goto("/");
+  const plate = page.locator('[data-spec="black-hole"] svg');
+  const ray = page.locator("[data-capture-ray]");
+
+  // The player marks the plate either way, so waiting on it cannot pass by
+  // simply never running.
+  await expect(plate).toHaveAttribute("data-capture", /live|still/);
+
+  if ((await plate.getAttribute("data-capture")) === "still") {
+    // Nothing here can hover, so the whole ray is the still and stays it.
+    expect(await ray.getAttribute("d")).toBe(shipped);
+    await expect(page.locator(".bh-caplbl")).toBeVisible();
+    return;
+  }
+
+  // Demoted to nothing the moment the player takes it over.
+  await expect.poll(() => ray.getAttribute("d"), { timeout: 5000 }).toBe("");
+
+  const spec = page.locator('[data-spec="black-hole"]');
+  await spec.scrollIntoViewIfNeeded();
+  await spec.hover();
+  await expect
+    .poll(() => ray.evaluate((p: SVGPathElement) => p.getTotalLength()), {
+      timeout: 5000,
+    })
+    .toBeGreaterThan(300);
+
+  await page.locator("h1").hover();
+  await expect.poll(() => ray.getAttribute("d"), { timeout: 5000 }).toBe("");
+});
+
+/**
  * The instruments are the page's anchors, not row markers. Each specimen's
  * figure has to stay substantial next to the name it sits above.
  */

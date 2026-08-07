@@ -320,6 +320,16 @@
   fill: var(--ink);
 }
 
+/* A label that has to sit over stipple gets the ground knocked out behind it,
+   which is what a draughtsman does rather than moving the label somewhere it
+   means less. */
+.ins .halo {
+  paint-order: stroke;
+  stroke: var(--sub);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
 /* The Game of Life plate's dot matrix. Deliberately not .node: that one lights
    up on hover, and a whole board of it would flood the figure. */
 .ins .mat {
