@@ -2,7 +2,6 @@
 import "../styles/kernel.css";
 import Seo from "../components/seo/Seo.astro";
 import JsonLd from "../components/seo/JsonLd.astro";
-import Barcode from "../components/micro/Barcode.astro";
 import Icon from "../components/micro/Icon.astro";
 import { STORAGE_KEY, THEMES } from "../scripts/theme.ts";
 
@@ -23,6 +22,14 @@ interface Props {
   world?: { sub: string; ink: string; hair: string; sig: string };
   /** Replaces the theme toggle on world pages, which are theme-invariant. */
   chromeTag?: string;
+  /**
+   * Set by a page that draws its own ending, which suppresses the site footer.
+   *
+   * The plate's Fig. 06 carries a terminus — datum, coordinates, colophon, all
+   * on one rule. Printing the site footer under it said the same three facts a
+   * second time, eleven lines and a dead gap later.
+   */
+  terminus?: boolean;
 }
 
 const {
@@ -36,6 +43,7 @@ const {
   bodyClass,
   world,
   chromeTag,
+  terminus,
 } = Astro.props;
 
 const year = new Date().getFullYear();
@@ -158,13 +166,21 @@ const worldStyle = world
       <slot />
     </main>
 
-    <footer class="site-footer">
-      <div class="wrap footer-inner">
-        <span class="micro-label">© {year} Martin Sundal Aspås</span>
-        <Barcode seed={`msa-${year}`} bars={18} />
-        <span class="micro-label">Trondheim · NO</span>
-      </div>
-    </footer>
+    {
+      /* A page that draws its own ending does not get a second one. The
+         barcode that used to sit in the middle of this row is gone with it:
+         it was seeded on the year and encoded nothing, on a site where every
+         other mark is computed from something true. */
+      !terminus && (
+        <footer class="site-footer">
+          <div class="wrap footer-inner">
+            <span class="micro-label">© {year} Martin Sundal Aspås</span>
+            <hr class="micro-rule foot-rule" />
+            <span class="micro-label">Trondheim · NO</span>
+          </div>
+        </footer>
+      )
+    }
 
     <script>
       import { initTheme } from "../scripts/theme.ts";
@@ -307,6 +323,12 @@ const worldStyle = world
         gap: var(--space-3);
         flex-wrap: wrap;
         padding-block: var(--space-4);
+      }
+
+      .foot-rule {
+        flex: 1 1 60px;
+        min-width: 40px;
+        width: auto;
       }
 
       @media (max-width: 34rem) {

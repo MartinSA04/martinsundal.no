@@ -2,66 +2,214 @@
 /**
  * FIG. 06 — Contact.
  *
- * A knockout bar: four cells of reversed mono, one per channel. The heaviest
- * mark on the plate, and the last thing on it.
+ * The plate opens on a sphere it computed and closes on another. Fig. 00
+ * asserts a datum — "Norway · 63.4°N" — and never draws it; this draws it, as
+ * an orthographic globe turning once a day at 120 seconds to the day, with the
+ * origin marked and the graticule solid where it passes in front and broken
+ * where it runs behind. That is the construction Fig. 05b already uses for the
+ * Bloch sphere, which is what makes the two read as a pair.
+ *
+ * The geometry is all in src/lib/globe.ts and evaluated here, on the server, so
+ * the figure is a correct plate with JavaScript off. src/scripts/globe.ts then
+ * takes over the meridians — and only the meridians, since every parallel, the
+ * limb, the axis and both poles are invariant under the turn.
+ *
+ * This is also where the plate ends. It carries its own terminus: the origin
+ * datum, the coordinates and the colophon on one rule. Base.astro is told not
+ * to print the site footer under it, because the page that ends itself does not
+ * need ending twice — the old arrangement said "Plate 001 · Martin Sundal Aspås
+ * · Trondheim" and then, eleven lines later, "© Martin Sundal Aspås" and
+ * "Trondheim · NO".
  */
+import {
+  CALLOUT,
+  MERIDIANS,
+  MERIDIAN_SLOTS,
+  ORIGIN,
+  PANEL,
+  PARALLEL_STEP,
+  START_LON,
+  TURN,
+  crosshair,
+  leader,
+  meridianRuns,
+  originAt,
+  parallelRuns,
+  poles,
+} from "../../lib/globe.ts";
+
+const parallels = parallelRuns();
+const { north, south } = poles();
+const origin = originAt(START_LON);
+const lead = leader(origin);
+
+/* Rendered at MERIDIAN_SLOTS paths apiece whether or not a slot is used, so the
+   script never has to create a node: a meridian breaks into at most three runs,
+   and which three changes as the globe turns. */
+const meridians = Array.from({ length: MERIDIANS }, (_, k) =>
+  Array.from(
+    { length: MERIDIAN_SLOTS },
+    (_, j) => meridianRuns(k, START_LON)[j],
+  ),
+);
+
 const links = [
-  {
-    label: "Mail",
-    value: "martin.s.aspas@gmail.com",
-    href: "mailto:martin.s.aspas@gmail.com",
-    wrap: true,
-  },
   {
     label: "GitHub",
     value: "MartinSA04",
+    note: "Source",
     href: "https://github.com/MartinSA04",
   },
   {
     label: "LinkedIn",
     value: "martinsa04",
+    note: "Record",
     href: "https://linkedin.com/in/martinsa04",
   },
   {
     label: "npm",
     value: "~martinsa04",
+    note: "Packages",
     href: "https://www.npmjs.com/~martinsa04",
   },
 ];
+
+const year = new Date().getFullYear();
 ---
 
 <footer id="contact" class="zone contact" aria-labelledby="con-h">
   <div class="sec-head">
     <h2 id="con-h" class="p-u p-u--lg p-u--ink zh">Fig. 06 — Contact</h2>
-    <span class="p-u p-tag">{links.length} channels</span>
+    <span class="p-u p-tag"
+      >{ORIGIN.lat.toFixed(4)}°N {ORIGIN.lon.toFixed(4)}°E</span
+    >
     <span class="p-scale" aria-hidden="true"></span>
   </div>
 
-  <div class="p-knock">
-    {
-      links.map((l) => (
-        <p class="cell p-u">
-          <span class="p-u--hair">{l.label}</span>
-          <br />
-          <a
-            href={l.href}
-            rel={l.href.startsWith("http") ? "me noopener" : undefined}
-            style={l.wrap ? "word-break:break-all" : undefined}
-          >
-            {l.value}
-          </a>
-        </p>
-      ))
-    }
+  <div class="band" data-globe>
+    <figure class="globe ins">
+      <svg
+        viewBox={`0 0 ${PANEL} ${PANEL}`}
+        role="img"
+        aria-label={`A globe in orthographic projection, turning once every ${TURN} seconds, with Trondheim marked at ${ORIGIN.lat}° north, ${ORIGIN.lon}° east.`}
+      >
+        <!-- The limb. -->
+        <circle class="h" cx={PANEL / 2} cy={PANEL / 2} r="155"></circle>
+
+        <!-- Parallels. Drawn once: a circle of latitude is symmetric about the
+             polar axis, so turning the globe slides points along it without
+             changing the arc. The equator is the one inked line on the figure. -->
+        <g class="par">
+          {
+            parallels.map(({ lat, runs }) =>
+              runs.map((run) => (
+                <path
+                  class={run.front ? (lat === 0 ? "i" : "h") : "d"}
+                  d={run.d}
+                />
+              )),
+            )
+          }
+        </g>
+
+        <!-- Meridians. The only thing the turn moves. -->
+        <g class="mer">
+          {
+            meridians.map((slots) =>
+              slots.map((run) => (
+                <path
+                  class={run ? (run.front ? "h" : "d") : "h"}
+                  d={run?.d}
+                  data-mer
+                />
+              )),
+            )
+          }
+        </g>
+
+        <!-- The axis and the poles, the far one in broken line. -->
+        <path class="h" d={`M${PANEL / 2} ${PANEL / 2}L${north.x} ${north.y}`}
+        ></path>
+        <path class="d" d={`M${PANEL / 2} ${PANEL / 2}L${south.x} ${south.y}`}
+        ></path>
+        <circle class="f" cx={north.x} cy={north.y} r="2.2"></circle>
+        <circle class="fh" cx={south.x} cy={south.y} r="2.2"></circle>
+        <text
+          class="t-ink halo"
+          x={north.x}
+          y={north.y - 9}
+          text-anchor="middle">N</text
+        >
+        <text class="halo" x={south.x} y={south.y + 15} text-anchor="middle"
+          >S</text
+        >
+
+        <!-- The origin, and the callout that tracks it. The marker gives way to
+             a hollow ring for the part of each turn it spends on the far side;
+             the coordinates never move, because where the point is on screen is
+             a function of the clock and what its coordinates are is not. -->
+        <path class="h" data-lead d={lead.line}></path>
+        <path class="fh" data-lead-head d={lead.head}></path>
+        <path class="i" data-origin-cross d={crosshair(origin)}></path>
+        <circle class="f" data-origin-dot cx={origin.x} cy={origin.y} r="3.2"
+        ></circle>
+        <circle class="h" data-origin-ring cx={origin.x} cy={origin.y} r="0"
+        ></circle>
+
+        <text class="t-ink" x={CALLOUT.x} y={CALLOUT.y}>Origin</text>
+        <text class="sym" x={CALLOUT.x} y={CALLOUT.y + 13}
+          >{ORIGIN.lat.toFixed(4)} N</text
+        >
+        <text class="sym" x={CALLOUT.x} y={CALLOUT.y + 24}
+          >{ORIGIN.lon.toFixed(4)} E</text
+        >
+
+        <text x="0" y={PANEL - 8}
+          >Orthographic · graticule {PARALLEL_STEP}°</text
+        >
+        <text x={PANEL} y={PANEL - 8} text-anchor="end"
+          >1 turn = 1 day = {TURN} s</text
+        >
+      </svg>
+    </figure>
+
+    <div class="read">
+      <p class="p-u">Write</p>
+      <a class="addr" href="mailto:martin.s.aspas@gmail.com"
+        >martin.s.aspas@gmail.com</a
+      >
+      <ul class="chan">
+        {
+          links.map((l) => (
+            <li>
+              <span class="p-u">{l.label}</span>
+              <a href={l.href} rel="me noopener">
+                {l.value}
+              </a>
+              <span class="p-u">{l.note}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
   </div>
 
-  <div class="colophon">
-    <span class="p-u p-u--hair"
-      >Plate 001 · Martin Sundal Aspås · Trondheim</span
+  <div class="terminus">
+    <span class="datum" aria-hidden="true"></span>
+    <span class="p-u p-u--ink">Origin</span>
+    <span class="p-u sym-n"
+      >{ORIGIN.lat.toFixed(4)} N · {ORIGIN.lon.toFixed(4)} E · WGS 84</span
     >
-    <span class="p-u p-u--hair">Drawn in SVG and CSS · no images</span>
+    <span class="p-rule term-rule" aria-hidden="true"></span>
+    <span class="p-u"
+      >Plate 001 · © {year} Martin Sundal Aspås · Trondheim · drawn in SVG and CSS</span
+    >
   </div>
 </footer>
+
+<script>
+  import "../../scripts/globe.ts";
+</script>
 
 <style>
   .contact {
@@ -73,7 +221,7 @@ const links = [
     align-items: baseline;
     gap: 16px;
     flex-wrap: wrap;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
 
   .sec-head .p-scale {
@@ -84,11 +232,161 @@ const links = [
     top: -2px;
   }
 
-  .colophon {
+  /* Globe · readout. The globe holds the size it was drawn for and the readout
+     takes the slack, the same way Fig. 05's band is arranged. */
+  .band {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: clamp(28px, 4.5vw, 70px);
+    align-items: start;
+    margin-top: 26px;
+  }
+
+  .globe {
+    width: clamp(258px, 33vw, 428px);
+    aspect-ratio: 1;
+    margin: 0;
+  }
+
+  .globe svg {
+    width: 100%;
+    height: auto;
+    /* The N and S labels and the bottom lettering sit outside the limb. */
+    overflow: visible;
+  }
+
+  /* The graticule locates the sphere, it is not the subject — same weighting
+     the node map gives its own reference lines. */
+  .globe .par path,
+  .globe .mer path {
+    opacity: 0.6;
+  }
+
+  .globe .par path.d,
+  .globe .mer path.d {
+    opacity: 0.42;
+  }
+
+  /* The coordinates are values, not labels, and .ins text uppercases. */
+  .globe .sym {
+    text-transform: none;
+    letter-spacing: 0.05em;
+  }
+
+  .addr {
+    display: inline-block;
+    font-weight: 500;
+    font-size: clamp(21px, 2.45vw, 34px);
+    line-height: 1.04;
+    letter-spacing: -0.032em;
+    text-decoration: none;
+    border-bottom: var(--rule) solid var(--hair);
+    padding-bottom: 4px;
+    margin-top: 12px;
+    word-break: break-word;
+    transition: border-color 0.18s ease;
+  }
+
+  .addr:hover,
+  .addr:focus-visible {
+    border-bottom-color: var(--ink);
+  }
+
+  .chan {
+    list-style: none;
+    margin: 26px 0 0;
+    padding: 0;
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+  }
+
+  .chan li {
+    display: grid;
+    grid-template-columns: minmax(72px, auto) minmax(0, 1fr) auto;
+    align-items: baseline;
     gap: 14px;
+    padding-block: 10px;
+    border-bottom: var(--rule) solid var(--hair);
+  }
+
+  .chan li:first-child {
+    border-top: var(--rule) solid var(--hair);
+  }
+
+  .chan a {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+    border-bottom: var(--rule) solid transparent;
+    justify-self: start;
+  }
+
+  .chan a:hover,
+  .chan a:focus-visible {
+    border-bottom-color: var(--ink);
+  }
+
+  /* The plate's ending. One rule, the datum it has been counting toward, and
+     the colophon — which is also the site footer for this page. */
+  .terminus {
+    display: flex;
+    align-items: center;
+    gap: 8px 18px;
     flex-wrap: wrap;
-    margin-top: 10px;
+    margin-top: clamp(40px, 5vw, 68px);
+  }
+
+  .terminus .datum {
+    width: 9px;
+    height: 9px;
+    background: var(--ink);
+    flex: none;
+  }
+
+  .terminus .term-rule {
+    flex: 1 1 90px;
+    min-width: 50px;
+  }
+
+  .sym-n {
+    text-transform: none;
+    letter-spacing: 0.09em;
+  }
+
+  @media (max-width: 67rem) {
+    .band {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 38px;
+    }
+    .globe {
+      width: min(428px, 84vw);
+    }
+  }
+
+  /* Stacked, three rows per channel reads as three facts rather than one.
+     The label and its note keep a line to themselves, justified against each
+     other, and the handle gets the line under them. */
+  @media (max-width: 35rem) {
+    .chan li {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 3px 12px;
+    }
+
+    .chan li > .p-u:first-child {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .chan li > .p-u:last-child {
+      grid-column: 2;
+      grid-row: 1;
+      text-align: end;
+    }
+
+    .chan li > a {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
   }
 </style>

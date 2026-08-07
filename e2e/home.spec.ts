@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { MESH_LINES } from "../src/lib/quantum.ts";
+import { MERIDIANS, MERIDIAN_SLOTS } from "../src/lib/globe.ts";
 
 test("hero keeps the life canvas and states the name in real text", async ({
   page,
@@ -571,6 +572,115 @@ test("the studies figures are whole without JavaScript, and still under reduced 
     await mid.getAttribute("points"),
     "the surface moved under reduce",
   ).toBe(before);
+});
+
+/**
+ * Fig. 06. The globe is rendered on the server from src/lib/globe.ts and then
+ * turned by src/scripts/globe.ts, so the same two things hold as for the
+ * corral: the served frame is a whole globe, and it moves. The third is
+ * particular to this figure — only the meridians are allowed to move, because
+ * a circle of latitude is symmetric about the polar axis and every parallel is
+ * therefore drawn once and never touched again.
+ */
+test("the globe is served whole and then turns, moving only its meridians", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const zone = page.locator("[data-globe]");
+
+  // Every meridian slot is in the markup before any script runs on them, so
+  // there is nothing for the loop to allocate.
+  await expect(page.locator("[data-mer]")).toHaveCount(
+    MERIDIANS * MERIDIAN_SLOTS,
+  );
+  await zone.scrollIntoViewIfNeeded();
+
+  const meridians = page.locator("[data-mer]");
+  const parallels = page.locator(".par path");
+
+  const merBefore = await meridians.evaluateAll((els) =>
+    els.map((e) => e.getAttribute("d")),
+  );
+  const parBefore = await parallels.evaluateAll((els) =>
+    els.map((e) => e.getAttribute("d")),
+  );
+  const nodesBefore = await zone.locator("svg *").count();
+
+  await expect
+    .poll(
+      async () => {
+        const now = await meridians.evaluateAll((els) =>
+          els.map((e) => e.getAttribute("d")),
+        );
+        return now.filter((d, i) => d !== merBefore[i]).length;
+      },
+      { timeout: 8000 },
+    )
+    .toBeGreaterThan(0);
+
+  // The parallels are the whole reason this is affordable. If one of them ever
+  // moves, the invariant the loop is built on has been broken.
+  expect(
+    await parallels.evaluateAll((els) => els.map((e) => e.getAttribute("d"))),
+    "a parallel moved, so the turn is redrawing more than it needs to",
+  ).toEqual(parBefore);
+
+  // The DOM is the size it was served at: the loop rewrites attributes and
+  // never builds a node, which is what the preallocated slots are for.
+  expect(
+    await zone.locator("svg *").count(),
+    "the loop changed the node count",
+  ).toBe(nodesBefore);
+});
+
+test("the globe is whole without JavaScript, and still under reduced motion", async ({
+  browser,
+  page,
+}) => {
+  const ctx = await browser.newContext({ javaScriptEnabled: false });
+  const p = await ctx.newPage();
+  await p.goto("/");
+  // Served, not built. Every meridian slot is present and the used ones carry
+  // a path, so a visitor with no JavaScript gets a correct globe.
+  await expect(p.locator("[data-mer]")).toHaveCount(MERIDIANS * MERIDIAN_SLOTS);
+  expect(
+    await p
+      .locator("[data-mer]")
+      .evaluateAll((els) => els.filter((e) => e.getAttribute("d")).length),
+  ).toBeGreaterThan(MERIDIANS);
+  await expect(p.locator("[data-origin-cross]")).toHaveCount(1);
+  await ctx.close();
+
+  // Reduced motion never starts the loop, so the served frame just stays.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await page.locator("[data-globe]").scrollIntoViewIfNeeded();
+  const first = page.locator("[data-mer]").first();
+  const before = await first.getAttribute("d");
+  await page.waitForTimeout(1200);
+  expect(await first.getAttribute("d"), "the globe turned under reduce").toBe(
+    before,
+  );
+});
+
+/**
+ * The plate carries its own terminus, so Base.astro is told not to print the
+ * site footer under it. It used to say "Plate 001 · Martin Sundal Aspås ·
+ * Trondheim" and then, eleven lines and a dead gap later, "© Martin Sundal
+ * Aspås" and "Trondheim · NO".
+ */
+test("the plate ends once on home and still ends elsewhere", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".site-footer")).toHaveCount(0);
+  await expect(page.locator("#contact .terminus")).toHaveCount(1);
+  await expect(page.locator("#contact .terminus")).toContainText("WGS 84");
+
+  // Every other page still gets one, minus the barcode that encoded nothing.
+  await page.goto("/work/");
+  await expect(page.locator(".site-footer")).toHaveCount(1);
+  await expect(page.locator(".site-footer .micro-barcode")).toHaveCount(0);
 });
 
 /**
