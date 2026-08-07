@@ -65,24 +65,24 @@ const PLACE: Record<string, Placement> = {
     y: 0.62,
     leader: "M396.6 219.2 L366 252 H300",
     co: "right:72.4%;top:36.9%;width:26%;text-align:right",
-    size: "md",
-    cell: "grid-column:1/5;grid-row:3;margin-top:calc(var(--loose) * .5)",
+    size: "xl",
+    cell: "grid-column:1/8;grid-row:3;margin-top:calc(var(--loose) * .5)",
   },
   "game-of-life": {
     x: 0.7,
     y: 0.78,
     leader: "M589 164.8 L660 120 H730",
     co: "left:73.6%;top:16.3%;width:26%",
-    size: "sm",
-    cell: "grid-column:10/13;grid-row:3;margin-top:calc(var(--loose) * .9)",
+    size: "md",
+    cell: "grid-column:9/13;grid-row:3;margin-top:calc(var(--loose) * .9)",
   },
   "study-companion": {
     x: 0.8,
     y: 0.24,
     leader: "M626 348.4 L672 316 H730",
     co: "left:73.6%;top:46.9%;width:26%",
-    size: "lg",
-    cell: "grid-column:9/13;grid-row:1;margin-top:96px",
+    size: "xl",
+    cell: "grid-column:8/13;grid-row:1;margin-top:96px",
   },
   "ntnu-api": {
     x: 0.88,
@@ -124,9 +124,13 @@ const fan = Array.from({ length: 15 }, (_, i) => {
 <section id="projects" class="zone work" aria-labelledby="work-h">
   <div class="sec-head">
     <h2 id="work-h" class="p-u p-u--lg p-u--ink zh">
-      Fig. 02 — Selected work, plotted
+      Fig. 02 — Selected work<span class="plotted">, plotted</span>
     </h2>
-    <span class="p-u p-tag">{ordered.length} specimens · not uniform</span>
+    <span class="p-u p-tag"
+      >{ordered.length} specimens<span class="plotted">
+        · not uniform</span
+      ></span
+    >
     <span class="p-scale" aria-hidden="true"></span>
   </div>
 
@@ -321,6 +325,20 @@ const fan = Array.from({ length: 15 }, (_, i) => {
     max-width: 54ch;
   }
 
+  /* The words that only hold while the plot is on screen. Below the wide
+     layout the field is gone, so the heading stops calling the work plotted
+     and the tag stops claiming a range of sizes there is no longer room to
+     show. Off by default, earned by width. */
+  .plotted {
+    display: none;
+  }
+
+  @media (min-width: 68rem) {
+    .plotted {
+      display: inline;
+    }
+  }
+
   /* --- the field map ------------------------------------------------------ */
 
   .field-map {
@@ -488,22 +506,16 @@ const fan = Array.from({ length: 15 }, (_, i) => {
     }
   }
 
-  /* Below the callouts' room, the plot becomes a bare index map: the points
-     keep their numbers and the specimens below carry the same coordinates, so
-     nothing is lost and nothing is duplicated. */
+  /* Narrower than the callouts' room, the field goes rather than shrinks. Its
+     labels are sized in viewBox units, so a plot scaled to a phone sets its own
+     lettering at four pixels — it stops being a diagram and becomes a picture
+     of one. The specimens below say the same thing at a size that survives, and
+     the coordinates go with the plot: a cross-reference to a field that is not
+     on screen refers to nothing. */
   @media (max-width: 68rem) {
-    .field-map {
-      display: grid;
-      justify-items: center;
-    }
-    .plot {
-      max-width: 460px;
-      width: 100%;
-    }
-    .plot .leaders {
-      display: none;
-    }
-    .co {
+    .field-map,
+    .work-note,
+    .spec .coord {
       display: none;
     }
   }
@@ -526,10 +538,33 @@ const fan = Array.from({ length: 15 }, (_, i) => {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    /* Containing block for the stretched link below. */
+    position: relative;
   }
 
   .spec figure {
     margin: 0 0 6px;
+  }
+
+  /* These carry wide enough cells to be drawn past the small-plate ceiling. The
+     line work is non-scaling, so a drawing gains size without gaining weight —
+     it reads as a larger plate, not a heavier one. Its lettering does scale
+     though, which is what sets each ceiling: the labels are the first thing to
+     get too loud, well before the cell runs out of room. */
+  .spec[data-spec="study-companion"] {
+    --fig-cap: 420px;
+  }
+
+  /* Drawn at nearly twice the size it was authored at, so its type is authored
+     back down by the same factor — the device gets the room, its labels do not
+     inherit the promotion. */
+  .spec[data-spec="cipherbound"] {
+    --fig-cap: 560px;
+    --ins-type: 6.7px;
+  }
+
+  .spec[data-spec="game-of-life"] {
+    --fig-cap: 360px;
   }
 
   .spec .idx {
@@ -559,6 +594,18 @@ const fan = Array.from({ length: 15 }, (_, i) => {
     background-size: 0% 1px;
     transition: background-size 0.34s cubic-bezier(0.2, 0.7, 0.2, 1);
     padding-bottom: 2px;
+  }
+
+  /* The whole specimen answers to the pointer — the rule draws itself, the
+     numeral inks, the device opens — so the whole specimen has to be the
+     target. Anything that moves under the cursor and then refuses the click is
+     a broken promise. One anchor still carries the link: it is stretched over
+     its specimen rather than duplicated, so the accessibility tree keeps
+     exactly one entry per project, named by the heading. */
+  .spec h3 a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
   }
 
   .spec:hover h3 a,
@@ -640,7 +687,10 @@ const fan = Array.from({ length: 15 }, (_, i) => {
     max-width: 32ch;
   }
 
-  @media (max-width: 67rem) {
+  /* Stacked, the tiers say nothing. A specimen is only "xl" relative to a "sm"
+     sitting next to it, and in one column there is no next to it — the sizes
+     would just read as inconsistency. So the weights collapse to one. */
+  @media (max-width: 68rem) {
     .field {
       display: flex;
       flex-direction: column;
@@ -648,9 +698,21 @@ const fan = Array.from({ length: 15 }, (_, i) => {
     }
     .spec {
       margin-top: 0 !important;
+      /* Every plate off its ceiling, so all five drawings fill the same box. */
+      --fig-cap: 420px;
     }
     .spec figure {
       max-width: min(420px, 88vw);
+    }
+    .spec .idx {
+      font-size: clamp(40px, 11vw, 64px);
+    }
+    .spec h3 {
+      font-size: clamp(22px, 5.6vw, 30px);
+    }
+    .spec .cap {
+      font-size: 15px;
+      max-width: 38ch;
     }
   }
 </style>

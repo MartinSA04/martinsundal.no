@@ -303,9 +303,14 @@
   stroke: none;
 }
 
+/* Plate lettering is authored in viewBox units, so it scales with the drawing.
+   A plate drawn much larger than the rest would letter much larger than the
+   rest, and the sheet reads as one sheet only while every label is about the
+   same size. `--ins-type` lets a plate that is drawn big author its type down
+   to compensate; the sheet keeps its labels in a 10-13px band. */
 .ins text {
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: var(--ins-type, 8px);
   letter-spacing: 0.16em;
   fill: var(--muted);
   text-transform: uppercase;
@@ -332,7 +337,7 @@
    rather than muted: on a patent sheet the numerals are the only thing drawn
    heavier than the line work, and they have to read before the drawing does. */
 .ins .num {
-  font-size: 9px;
+  font-size: calc(var(--ins-type, 8px) * 1.125);
   letter-spacing: 0.04em;
   fill: var(--ink);
 }

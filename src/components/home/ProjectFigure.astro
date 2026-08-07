@@ -10,6 +10,11 @@
  * lifts off its band, which is a CSS transform and needs no script. The Game
  * of Life plate plays its synthesis, which needs one — but the generations it
  * plays are still computed here, at build time, not in the browser.
+ *
+ * The small plates stop growing at 300px so they stay small next to the two
+ * that don't stop at all. That ceiling is `--fig-cap`, so the sheet that places
+ * a specimen can raise it: how large a drawing wants to be is a question about
+ * the cell it sits in, and only the sheet knows the cell.
  */
 import { step } from "../../lib/life.ts";
 
@@ -239,7 +244,7 @@ const cbHeads = cbRefs
     <svg
       class="ins"
       viewBox="0 0 300 260"
-      style="width:100%;max-width:300px;height:auto"
+      style="width:100%;max-width:var(--fig-cap, 300px);height:auto"
       aria-hidden="true"
     >
       {/* The course, authored as data rows */}
@@ -345,7 +350,7 @@ const cbHeads = cbRefs
     <svg
       class="ins"
       viewBox="0 0 300 250"
-      style="width:100%;max-width:300px;height:auto"
+      style="width:100%;max-width:var(--fig-cap, 300px);height:auto"
       aria-hidden="true"
     >
       <defs>
@@ -534,7 +539,7 @@ const cbHeads = cbRefs
     <svg
       class="ins"
       viewBox={`0 0 ${GOL.w * GOL.pitch} ${golBoardH + 26}`}
-      style="width:100%;max-width:300px;height:auto"
+      style="width:100%;max-width:var(--fig-cap, 300px);height:auto"
       aria-hidden="true"
       data-synth
       data-w={GOL.w}
