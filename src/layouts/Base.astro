@@ -116,6 +116,10 @@ const worldStyle = world
       crossorigin
     />
 
+    <!-- The 2011 convention: robots.txt is for machines, this one is for
+         people. It is only findable if it is declared. -->
+    <link rel="author" type="text/plain" href="/humans.txt" />
+
     <Seo
       title={title}
       description={description}

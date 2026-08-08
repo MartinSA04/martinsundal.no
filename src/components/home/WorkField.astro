@@ -105,9 +105,13 @@ const ordered = projects
     Y: py(r.p.y),
   }));
 
-const ticks = Array.from({ length: 21 }, (_, n) => ({
-  v: n / 20,
-  major: n % 5 === 0,
+/* Graduations per axis. Numbered from 1 rather than 0, so the count is 42 and
+   the majors fall on the sixths — the origin needs no tick of its own, since
+   the two axes already meet there. */
+const TICKS = 42;
+const ticks = Array.from({ length: TICKS }, (_, n) => ({
+  v: (n + 1) / TICKS,
+  major: (n + 1) % 7 === 0,
 }));
 const dots = Array.from({ length: 19 }, (_, x) =>
   Array.from({ length: 17 }, (_, y) => ({

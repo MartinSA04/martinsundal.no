@@ -152,16 +152,37 @@
 
 /* --- rules and frames ----------------------------------------------------- */
 
+/* The filler rule in every section head, which used to be the one piece of
+   pure decoration on the plate: an even comb of ticks that measured nothing.
+
+   It is now an intensity ramp, graduated on the alphabet Big Ear's printout
+   used — 1-9 then A-Z for signal strength, so a bar's length is a value in a
+   real 35-step scale. Every head carries the linear wedge, 1 5 9 D H L P T X,
+   which is what a calibration bar is and what a calibration bar looks like.
+
+   Exactly one carries a reading instead. See .p-scale--wow.
+
+   Drawn as a mask rather than a background image, so the bars take --hair and
+   follow the theme; a data URI cannot read a custom property. The rule the
+   bars hang off is the first rect in the mask rather than a border, because a
+   mask clips an element's border along with everything else it paints. */
 .p-scale {
-  height: 8px;
-  border-top: var(--rule) solid var(--hair);
-  background: repeating-linear-gradient(
-    90deg,
-    var(--hair) 0 1px,
-    transparent 1px 9px
-  );
-  background-size: auto 4px;
-  background-repeat: repeat-x;
+  --scale-bars: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='81' height='11' fill='%23000'%3E%3Crect width='81' height='1'/%3E%3Crect x='0' width='1' height='2'/%3E%3Crect x='9' width='1' height='3'/%3E%3Crect x='18' width='1' height='4'/%3E%3Crect x='27' width='1' height='5'/%3E%3Crect x='36' width='1' height='6'/%3E%3Crect x='45' width='1' height='7'/%3E%3Crect x='54' width='1' height='8'/%3E%3Crect x='63' width='1' height='9'/%3E%3Crect x='72' width='1' height='10'/%3E%3C/svg%3E");
+  --scale-w: 81px;
+  height: 11px;
+  background: var(--hair);
+  -webkit-mask: var(--scale-bars) repeat-x 0 0 / var(--scale-w) 11px;
+  mask: var(--scale-bars) repeat-x 0 0 / var(--scale-w) 11px;
+}
+
+/* Big Ear, 15 August 1977, 72 seconds near the 1420 MHz hydrogen line: the
+   signal rose to U and fell away again, and was never heard a second time.
+   6 E Q U J 5 is that rise and fall, read off the same alphabet the wedge
+   above is graduated on — so this rule is a reading where the others are a
+   scale. It is on one head only; four of them would be a wallpaper. */
+.p-scale--wow {
+  --scale-bars: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='54' height='11' fill='%23000'%3E%3Crect width='54' height='1'/%3E%3Crect x='0' width='1' height='3'/%3E%3Crect x='9' width='1' height='5'/%3E%3Crect x='18' width='1' height='8'/%3E%3Crect x='27' width='1' height='9'/%3E%3Crect x='36' width='1' height='6'/%3E%3Crect x='45' width='1' height='3'/%3E%3C/svg%3E");
+  --scale-w: 54px;
 }
 
 .p-rule {

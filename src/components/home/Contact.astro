@@ -38,6 +38,9 @@ import {
   poles,
 } from "../../lib/globe.ts";
 
+/* The foot band, below the drawing rather than overflowing it. */
+const FOOT = 18;
+
 const parallels = parallelRuns();
 const { north, south } = poles();
 const origin = originAt(START_LON);
@@ -89,7 +92,7 @@ const year = new Date().getFullYear();
   <div class="band" data-globe>
     <figure class="globe ins">
       <svg
-        viewBox={`0 0 ${PANEL} ${PANEL}`}
+        viewBox={`0 0 ${PANEL} ${PANEL + FOOT}`}
         role="img"
         aria-label={`A globe in orthographic projection, turning once every ${TURN} seconds, with Trondheim marked at ${ORIGIN.lat}° north, ${ORIGIN.lon}° east.`}
       >
@@ -170,6 +173,10 @@ const year = new Date().getFullYear();
         <text x={PANEL} y={PANEL - 8} text-anchor="end"
           >1 turn = 1 day = {TURN} s</text
         >
+
+        <!-- The coastline the origin sits on, credited the way an engraved
+             plate credits whoever drew it. "del." is delineavit — he drew it. -->
+        <text x="0" y={PANEL + 12}>Coastline · Slartibartfast del.</text>
       </svg>
     </figure>
 
@@ -201,8 +208,14 @@ const year = new Date().getFullYear();
       >{ORIGIN.lat.toFixed(4)} N · {ORIGIN.lon.toFixed(4)} E · WGS 84</span
     >
     <span class="p-rule term-rule" aria-hidden="true"></span>
+    {
+      /* The year is computed at build time, so the colophon already states an
+        epoch; the second one is where it ends. 2038-01-19T03:14:07Z is the
+        last second a signed 32-bit time_t can hold, and it reads 03:14:07. */
+    }
     <span class="p-u"
-      >Plate 001 · © {year} Martin Sundal Aspås · Trondheim · drawn in SVG and CSS</span
+      >Plate 001 · © {year} Martin Sundal Aspås · Trondheim · drawn in SVG and CSS
+      · valid to 2038-01-19T03:14:07Z</span
     >
   </div>
 </footer>
@@ -242,9 +255,12 @@ const year = new Date().getFullYear();
     margin-top: 26px;
   }
 
+  /* Not square: the drawing is, and the foot band under it is the figure's
+     own, so the box holds both rather than letting the lettering overflow
+     into whatever is beneath. */
   .globe {
     width: clamp(258px, 33vw, 428px);
-    aspect-ratio: 1;
+    aspect-ratio: 400 / 418;
     margin: 0;
   }
 

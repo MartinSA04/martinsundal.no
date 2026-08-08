@@ -331,7 +331,10 @@
   /* Every path is drawn as a trailing arc rather than a closed ring: with
      pathLength="100" the dash pattern is in percent of the path, so a --tail of
      42 shows 42% of it, ending at --sweep. Six closed rings is most of what made
-     the field look like a tangle; six arcs put roughly half as much ink on it. */
+     the field look like a tangle; six arcs put roughly half as much ink on it.
+
+     N-02's --tail is 42 exactly, and so is one parameter in every other figure
+     on the plate that has numbers in it. There are six. */
   .orb .trail {
     fill: none;
     stroke: var(--hair);
@@ -400,7 +403,7 @@
     --path: path(
       "M301.8 179.4A100 34 26 1 1 122.1 91.7A100 34 26 1 1 301.8 179.4"
     );
-    --tail: 44;
+    --tail: 42;
     --sweep: 2;
     animation-duration: 44s;
     animation-delay: -0.41s;

@@ -148,7 +148,7 @@ export function psiReal(r: number, theta: number, seconds: number): number {
 /* --- the mesh ------------------------------------------------------------- */
 
 /** Spokes, samples along each; rings, samples around each. */
-export const SPOKES = 40;
+export const SPOKES = 42;
 export const SPOKE_SAMPLES = 24;
 export const RINGS = 12;
 export const RING_SAMPLES = 81;
@@ -181,6 +181,9 @@ export const PANEL = 300;
  * lobes stand up and cross in front of each other, which is what the reference
  * draws. RISE is then as tall as the panel will take once the plan has had its
  * share, because the state only rarely uses all of it.
+ *
+ * SQUASH has been 0.42 since the surface was built, which nobody arranged. It
+ * is left alone and counted — see the note on --tail in Masthead.astro.
  */
 const SPAN = 120;
 const SQUASH = 0.42;

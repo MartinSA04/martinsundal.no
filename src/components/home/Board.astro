@@ -45,13 +45,27 @@ const settledPop = countLive(cells);
    the top — a full ring would read as "complete scale", not "settled here". */
 const DIAL_MAX = 300;
 const settleDeg = (settledGen / DIAL_MAX) * 360;
+
+/* Graduations. The gauge shipped with three rings and an empty <g class="gticks">
+   — a dial with no scale on it, which is the one thing a dial cannot be. There
+   are 42 of them, major every seventh, so the six majors cut the ring into
+   sectors of 50 generations and the scale can actually be read off. */
+const GTICKS = 42;
+const gticks = Array.from({ length: GTICKS }, (_, n) => {
+  const a = ((n / GTICKS) * 360 - 90) * (Math.PI / 180);
+  const inner = n % 7 === 0 ? 83 : 88;
+  const r2 = (v: number) => Math.round(v * 10) / 10;
+  return `M${r2(100 + Math.cos(a) * 92)} ${r2(100 + Math.sin(a) * 92)}L${r2(
+    100 + Math.cos(a) * inner,
+  )} ${r2(100 + Math.sin(a) * inner)}`;
+}).join("");
 ---
 
 <section class="zone board" aria-labelledby="board-h">
   <div class="sec-head">
     <h2 id="board-h" class="p-u p-u--lg p-u--ink zh">Fig. 01 — The board</h2>
     <span class="p-u p-tag">Conway B3/S23</span>
-    <span class="p-scale" aria-hidden="true"></span>
+    <span class="p-scale p-scale--wow" aria-hidden="true"></span>
     <span class="p-u p-u--hair">{plan.width} × {plan.height} cells</span>
   </div>
 
@@ -83,7 +97,7 @@ const settleDeg = (settledGen / DIAL_MAX) * 360;
           <circle class="h" cx="100" cy="100" r="92"></circle>
           <circle class="h" cx="100" cy="100" r="80"></circle>
           <circle class="h" cx="100" cy="100" r="58"></circle>
-          <g class="gticks h"></g>
+          <g class="gticks h"><path d={gticks}></path></g>
           <circle
             cx="100"
             cy="100"

@@ -56,7 +56,13 @@ export const VIEW = { lat0: 22, R: 155, cx: PANEL / 2, cy: PANEL / 2 };
  * to look right.
  */
 export const TURN = 120;
-export const START_LON = 8;
+
+/**
+ * The longitude facing the viewer at load. Trondheim sits 31.6° off it, well
+ * inside the near face, so the plate opens with the origin already drawn and
+ * the leader already reaching it.
+ */
+export const START_LON = 42;
 
 /** Graticule spacing, and how finely each line is walked. */
 export const MERIDIANS = 24;
