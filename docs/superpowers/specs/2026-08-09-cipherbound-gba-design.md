@@ -51,79 +51,77 @@ Changing the tokens touches exactly three other places, all enumerated:
 
 ### Asset
 
-`Nintendo-Game-Boy-Advance-Purple-FL.png` from Wikimedia Commons — the
-original AGB-001 in Indigo, photographed by Evan Amos for the Vanamo Online
-Game Museum. 4200 × 2900, and the PNG carries a real alpha channel (measured
-alpha mean 0.50), so it is a clean cutout rather than a white-matted photo.
+A front elevation of the Indigo AGB-001 by blueamnesiac, supplied for this
+page. 1181 × 677, surround already transparent.
 
-Released **public domain** by the copyright holder: "I grant anyone the right
-to use this work for any purpose, without any conditions." No attribution is
-required. Provenance goes in a source comment regardless, because a fetched
-asset with no recorded origin is a liability later.
+It arrived with a screenshot of somebody else's game drawn on the screen. The
+shipped copy has that rectangle painted flat black, so none of that game
+survives and any edge the video does not reach reads as screen rather than as
+a seam. Ships as AVIF (22 KB) and WebP (38 KB), generated with `convert` only.
 
 Nintendo's trademarks on the hardware design are a separate matter from the
-photograph's copyright. Showing the console on a page about a Pokémon-like
+artwork's copyright. Showing the console on a page about a Pokémon-like
 student project is ordinary editorial use; the page makes no claim of
 affiliation and sells nothing.
 
-Ships as AVIF and WebP at 1280w and 2560w. Generated with `convert` only —
-no new tooling.
-
 ### Seating the video in the screen
 
-The photograph is a three-quarter view, so the screen is a quadrilateral. Every
-GBA shot Evan Amos took uses this same pose, and Commons has no straight-on
-purple one, so a perspective fit is not a stylistic choice — it is the only
-way to put a video in that screen.
+A front elevation makes the screen an **axis-aligned rectangle**, so the slot
+is a plain box at measured coordinates and the video is never skewed. That is
+the whole reason to prefer this artwork.
 
-Measured on a 1280 × 884 render by isolating the LCD's grey as a connected
-component, the screen's corners are:
+Measured on the supplied file by taking the black window as a connected
+component: **522 × 353 at (330, 127)**. Ratio 1.479 against the real panel's
+1.5, so the drawing is honest about its proportions and the video needs no
+correction to sit in it.
 
-```text
-TL 505,215    TR 913,351    BR 786,599    BL 368,447
-```
+Everything lives in a fixed 1181 × 677 stage, where all of it is exact, and
+the stage is scaled to the page by one uniform `transform: scale()` driven by
+container width, with `aspect-ratio` reserving the height.
 
-Edge lengths 430 × 279 = 1.54, which is the real 3:2 GBA panel. That the
-measurement recovers the hardware's true aspect ratio is the check that it
-found the screen and not a reflection.
+### Why not a photograph
 
-The composite lives in a **fixed 1280 × 884 stage**. Everything inside it —
-the photo, the screen element, the transform — is in those coordinates and
-therefore exact. The stage is then scaled to the page by a single uniform
-`transform: scale()` driven by container width, with `aspect-ratio` reserving
-the height. Uniform scale composes cleanly with the perspective transform;
-per-axis scaling would not.
+The first build used Evan Amos's public-domain photograph of the same console.
+It is a three-quarter view, so the screen was a quadrilateral and the video
+had to be projected onto it with a homography — legible, but the trailer was
+visibly slanted.
 
-The video sits in a 480 × 320 element (3:2, the panel's own ratio):
+Searching for a front-elevation replacement came up empty: all 72 files in
+Commons' Game Boy Advance category (enumerated via the API), Openverse by
+licence, Flickr's CC pool and Unsplash. The near misses were a CC BY-SA photo
+by gekkio whose grey backdrop cannot be keyed out — the lighting on the upper
+shell matches the background — and which is 17% vertically compressed anyway
+(circles render as 116 × 96 ellipses, a ~34° camera tilt); a Commons cutout
+that is front-on but white and ragged; and a crude hand-drawn purple vector.
 
-```css
-transform-origin: 0 0;
-transform: matrix3d(
-   0.77006080,  0.25260090, 0, -0.000087557,
-  -0.47032130,  0.67374520, 0, -0.000114664,
-   0,           0,          1,  0,
-   505,         215,        0,  1
-);
-```
-
-This is the homography from the element's rect onto the measured quad. It
-reproduces all four corners to the pixel; that verification is the acceptance
-test for the transform.
-
-**Considered and rejected:** de-skewing the photo to a straight-on view with
-`convert -distort perspective`, which would make the screen a plain rectangle
-and the CSS trivial. Rejected because the shell's shading, the button
-highlights and the foreshortened sides all encode the original camera angle;
-flattening only the outline leaves a photo that reads as wrong without the
-viewer being able to say why.
+Rectifying the perspective photo with `convert -distort perspective` was tried
+and rejected on sight: it smears the bottom edge into a band and squashes the
+shell, because the shading and the foreshortened sides encode the original
+camera angle and flattening only the outline leaves an image that reads as
+wrong.
 
 ### Size
 
 The console scales with the page. It is not pinned to a size that would make
-the video play near its native resolution — at typical widths the screen lands
-around 350–450 px and the pixel art softens, which is what a small handheld
-screen looks like. No lightbox, no expand-on-click. This drops a whole
-interaction and its state.
+the video play near its native resolution — at typical widths the pixel art
+softens, which is what a small handheld screen looks like. No lightbox, no
+expand-on-click. This drops a whole interaction and its state.
+
+The artwork is 1181 px wide and the console is drawn at up to 1088 CSS px, so
+it is never upscaled on a 1× display. On a 2× display there is no denser
+source to draw from and it will be correspondingly soft.
+
+### On a phone
+
+The shell is more than twice as wide as its own screen, so fitting the whole
+console to the viewport spends the display on plastic — the screen came out
+149 px wide. Below 48rem the console holds a constant width and runs off both
+edges instead, cropping the D-pad and the buttons: **304 px**, and constant
+from 320 px up to the breakpoint. The hero clips, so nothing reaches the
+document.
+
+The constant is 43rem because that is the width the console already has at the
+breakpoint, so it does not jump size as the viewport crosses it.
 
 ## The video is re-cut
 
@@ -217,9 +215,26 @@ what a game's own UI does anyway. The facade also defaults to putting it in the
 bottom-left corner, which is exactly where the game draws its text box, so
 inside the console it is centred instead.
 
+## The sprite
+
+It walks the page on its own: pick a heading, hold it a while, stop and look
+around, pick another. Headings that would walk into an edge are dropped rather
+than clamped, so it turns before it arrives instead of scuffing along the
+boundary. It is positioned in the page rather than the viewport and painted
+under the text boxes, so it passes behind them and comes out the other side.
+
+The first version was driven by scroll — it animated only while the wheel was
+turning and otherwise sat at a fixed viewport position, which reads as a decal
+being dragged down the page rather than as something walking, because nothing
+about it was ever going anywhere.
+
+The stylesheet hides it below 72rem, where the reading column fills the page
+and it would spend its whole life behind a box, and the frame loop does not
+run at those widths.
+
 ## Acceptance
 
-- The transform lands the screen element's four corners on the measured quad.
+- The video sits square in the screen with no transform on it.
 - `node scripts/check-contrast.mjs` passes with the new tokens.
 - The re-cut trailer shows the game's dialogue box uncropped.
 - The full Playwright suite passes, with `worlds.spec.ts` updated to the new

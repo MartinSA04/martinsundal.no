@@ -2,30 +2,26 @@
 /**
  * A Game Boy Advance with something playing on its screen.
  *
- * The photograph is Evan-Amos's shot of the Indigo AGB-001, made for the
- * Vanamo Online Game Museum and released into the public domain:
- * https://commons.wikimedia.org/wiki/File:Nintendo-Game-Boy-Advance-Purple-FL.png
+ * The artwork is a front elevation of the Indigo AGB-001 by blueamnesiac
+ * ("Nintendo Game Boy Advance (Indigo)"), supplied for this page. It arrived
+ * with the surround already transparent and a screenshot of somebody else's
+ * game drawn on the screen; the shipped copy has that screen painted flat
+ * black, so nothing of that game survives and the black the video does not
+ * cover is the console's own.
  *
- * It is a three-quarter view, so the screen is a quadrilateral rather than a
- * rectangle and the slot has to be projected onto it. Every GBA photograph in
- * that set uses the same pose and Commons has no straight-on purple one, so
- * this is the only way to put a video in that screen, not a stylistic choice.
+ * An earlier version of this page used a three-quarter photograph, which meant
+ * the screen was a quadrilateral and the video had to be projected onto it
+ * with a homography. A front elevation makes the screen an axis-aligned
+ * rectangle, so the slot is just a box at measured coordinates and the video
+ * is never skewed. That is the whole reason to prefer this artwork.
  *
- * Two measurements make it work, both taken on a 1280x884 render:
+ * The screen was measured on the supplied 1181x677 file by taking the black
+ * window as a connected component: 522x353 at (330,127). That is a ratio of
+ * 1.479 against the real panel's 1.5, so the drawing is honest about its
+ * proportions and the video needs no correction to sit in it.
  *
- *   1. The screen's corners, found by isolating the LCD's grey as a connected
- *      component: TL 505,215  TR 913,351  BR 786,599  BL 368,447. The edges
- *      measure 430 x 279 = 1.54, which recovers the real 3:2 GBA panel — that
- *      the number comes out right is the check that it found the screen and
- *      not a reflection.
- *
- *   2. The homography from a 480x320 element onto that quad, below. It lands
- *      all four corners to the pixel.
- *
- * Everything therefore lives in a fixed 1280x884 stage, where all of it is
- * exact, and the whole stage is then scaled to the page by ONE uniform factor.
- * Uniform scale composes cleanly with a perspective transform; scaling the
- * axes separately would shear it.
+ * Everything lives in a fixed 1181x677 stage, where all of it is exact, and
+ * the stage is scaled to the page by one uniform factor.
  */
 interface Props {
   /** Described to screen readers as the console itself, not its contents. */
@@ -39,18 +35,12 @@ const { alt, class: extraClass } = Astro.props;
 <div class:list={["gba", extraClass]}>
   <div class="stage">
     <picture>
-      <source
-        type="image/avif"
-        srcset="/cipherbound/gba-1280.avif 1280w, /cipherbound/gba-2560.avif 2560w"
-        sizes="(max-width: 72rem) 100vw, 68rem"
-      />
+      <source type="image/avif" srcset="/cipherbound/gba.avif" />
       <img
-        src="/cipherbound/gba-1280.webp"
-        srcset="/cipherbound/gba-1280.webp 1280w, /cipherbound/gba-2560.webp 2560w"
-        sizes="(max-width: 72rem) 100vw, 68rem"
+        src="/cipherbound/gba.webp"
         alt={alt}
-        width={1280}
-        height={884}
+        width={1181}
+        height={677}
         decoding="async"
         fetchpriority="high"
       />
@@ -65,85 +55,52 @@ const { alt, class: extraClass } = Astro.props;
 <style>
   /* cqi drives the scale, so the console needs no script to be responsive.
      overflow:hidden is insurance: if the scale ever fails to compute, the
-     stage clips instead of pushing a 1280px box through the page. */
+     stage clips instead of pushing a 1181px box through the page. */
   .gba {
     container-type: inline-size;
     width: 100%;
-    aspect-ratio: 1280 / 884;
+    aspect-ratio: 1181 / 677;
     overflow: hidden;
   }
 
   .stage {
     /* The one number the whole composite hangs off: how much smaller the page
-       is drawing the 1280px stage. Everything inside is authored in stage
+       is drawing the 1181px stage. Everything inside is authored in stage
        pixels and divided by this where it needs to survive the scaling. */
-    --k: calc(100cqi / 1280px);
+    --k: calc(100cqi / 1181px);
 
     position: relative;
-    width: 1280px;
-    height: 884px;
+    width: 1181px;
+    height: 677px;
     transform-origin: 0 0;
     transform: scale(var(--k));
   }
 
   .stage img {
     display: block;
-    width: 1280px;
-    height: 884px;
+    width: 1181px;
+    height: 677px;
   }
 
-  /* The slot, projected onto the LCD. The photograph's screen is an opaque
-     grey surface, so this sits over it rather than behind it. */
+  /* The measured black window. The artwork's screen is painted flat black
+     underneath, so any edge this does not reach reads as screen, not as a
+     seam. */
   .screen {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 480px;
-    height: 320px;
+    left: 330px;
+    top: 127px;
+    width: 522px;
+    height: 353px;
     overflow: hidden;
     background: #000;
-    transform-origin: 0 0;
-    transform: matrix3d(
-      0.7700608,
-      0.2526009,
-      0,
-      -0.000087556,
-      -0.4703213,
-      0.6737452,
-      0,
-      -0.000114664,
-      0,
-      0,
-      1,
-      0,
-      505,
-      215,
-      0,
-      1
-    );
-  }
-
-  /* The glass the photograph had before the video covered it. Kept faint —
-     it sits over a play button that has to stay readable. */
-  .screen::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(
-      104deg,
-      rgb(255 255 255 / 14%) 0%,
-      rgb(255 255 255 / 4%) 26%,
-      transparent 46%
-    );
   }
 
   /* The play control is the one thing in the screen that must not scale with
-     it. Drawn at stage size it is ~17px across on a phone, where the console
-     is a quarter of its authored width — legible on a desktop and invisible
-     on the device most likely to see it. Dividing by --k holds it at a fixed
-     apparent size instead, so it grows relative to the screen as the console
-     shrinks, the way a game's own UI does.
+     it. Drawn at stage size it is a few pixels across on a phone, where the
+     console is a fraction of its authored width — legible on a desktop and
+     invisible on the device most likely to see it. Dividing by --k holds it at
+     a fixed apparent size instead, so it grows relative to the screen as the
+     console shrinks, the way a game's own UI does.
 
      Centred, not in the corner the facade defaults to: that corner is where
      the game draws its text box, and the two sat on top of each other. */
