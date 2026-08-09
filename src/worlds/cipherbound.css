@@ -34,6 +34,8 @@
 .gb-box {
   --box-fill: #fff;
   position: relative;
+  /* Above the sprite, which walks the ground underneath. */
+  z-index: 1;
   background: var(--box-fill);
   border: 6px solid var(--hair);
   border-radius: 12px;
@@ -100,6 +102,27 @@
   width: min(100% - var(--gutter) * 2, 68rem);
   margin-inline: auto;
   margin-bottom: var(--space-4);
+  position: relative;
+  z-index: 1;
+  /* clip, not hidden: it must not become a scroll container. */
+  overflow-x: clip;
+}
+
+/* On a phone the console fits the width and the screen inside it is a postage
+   stamp — the shell is more than twice as wide as its own screen, so fitting
+   the shell spends the viewport on plastic. Below this width the console holds
+   a constant size instead and runs off both edges, cropping the D-pad and the
+   buttons to buy the screen back. The hero clips, so nothing reaches the
+   document.
+
+   43rem is not a bleed ratio, it is the width the console already has at the
+   breakpoint: the rule takes over exactly where the fluid width leaves off, so
+   the console does not jump size as the viewport crosses it. */
+@media (max-width: 48rem) {
+  .cb-bleed {
+    width: 43rem;
+    margin-inline: calc((100% - 43rem) / 2);
+  }
 }
 
 .cb-column {
@@ -297,13 +320,17 @@
 
 /* --- the sprite that walks the margin ------------------------------------ */
 
+/* Positioned in the page rather than the viewport, and under the text boxes,
+   so it walks the ground and passes behind them. cipherbound.ts drives the
+   transform; everything here is just the costume. */
 .cb-sprite {
-  position: fixed;
-  left: max(0.5rem, calc(50vw - 40rem));
-  bottom: 12vh;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 48px;
   height: 48px;
-  z-index: 3;
+  z-index: 0;
+  will-change: transform;
   pointer-events: none;
   background-image: url("/sprites/player_sheet.png");
   background-repeat: no-repeat;

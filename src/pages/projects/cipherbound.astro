@@ -22,20 +22,28 @@ const { Content } = await render(entry);
 }
 <ProjectShell entry={entry} class="cb">
   <div class="cb-hero">
-    <GbaConsole alt="An Indigo Game Boy Advance, seen from the front and left">
-      <VideoFacade
-        poster="/cipherbound/poster.avif"
-        webm="/cipherbound/trailer.webm"
-        mp4="/cipherbound/trailer.mp4"
-        width={1024}
-        height={770}
-        duration="0:33"
-        fill
-        fit="contain"
-        label="Play the Cipherbound trailer"
-        posterAlt="Cipherbound gameplay: a trainer facing a wild creature, over the line 'A wild Fibonib appeared!'"
-      />
-    </GbaConsole>
+    {
+      /* The console sizes itself to this wrapper, so widening the wrapper past
+        the viewport is what lets it run off both edges on a phone. */
+    }
+    <div class="cb-bleed">
+      <GbaConsole
+        alt="An Indigo Game Boy Advance, seen from the front and left"
+      >
+        <VideoFacade
+          poster="/cipherbound/poster.avif"
+          webm="/cipherbound/trailer.webm"
+          mp4="/cipherbound/trailer.mp4"
+          width={1024}
+          height={770}
+          duration="0:33"
+          fill
+          fit="contain"
+          label="Play the Cipherbound trailer"
+          posterAlt="Cipherbound gameplay: a trainer facing a wild creature, over the line 'A wild Fibonib appeared!'"
+        />
+      </GbaConsole>
+    </div>
   </div>
 
   <div class="cb-column">
@@ -82,9 +90,13 @@ const { Content } = await render(entry);
       </section>
     </div>
   </div>
-</ProjectShell>
 
-<div class="cb-sprite" data-cb-sprite aria-hidden="true"></div>
+  {
+    /* Inside the world, not after it: it is positioned against the page it
+      walks on, and it has to paint under the text boxes. */
+  }
+  <div class="cb-sprite" data-cb-sprite aria-hidden="true"></div>
+</ProjectShell>
 
 <script>
   import "../../worlds/cipherbound.ts";

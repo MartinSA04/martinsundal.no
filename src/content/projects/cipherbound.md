@@ -71,4 +71,4 @@ one working mechanic. This one is a set of systems with clean seams between
 them, each extendable without reaching into the others. It took **Best
 Project** in the course.
 
-The sprite walking around the margin of this page is from it.
+The sprite wandering around this page is from it.
