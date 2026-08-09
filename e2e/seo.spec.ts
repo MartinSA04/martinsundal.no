@@ -80,10 +80,21 @@ for (const path of PAGES) {
 test("sitemap lists all seven pages and excludes the kitchen sink", async ({
   request,
 }) => {
-  const index = await (await request.get("/sitemap-index.xml")).text();
-  const loc = index.match(/<loc>([^<]+sitemap-0\.xml)<\/loc>/)![1]!;
-  // The index carries absolute production URLs; fetch the same file locally.
-  const body = await (await request.get(new URL(loc).pathname)).text();
+  const body = await (await request.get("/sitemap.xml")).text();
   for (const p of PAGES) expect(body).toContain(`https://martinsundal.no${p}`);
   expect(body).not.toContain("kitchen-sink");
+});
+
+test("every project entry carries a lastmod, and none is invented", async ({
+  request,
+}) => {
+  const body = await (await request.get("/sitemap.xml")).text();
+  const entries = [...body.matchAll(/<url>(.*?)<\/url>/g)].map((m) => m[1]!);
+
+  for (const entry of entries.filter((e) => e.includes("/projects/"))) {
+    expect(entry).toMatch(/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/);
+  }
+  // Nothing on /work/ is dated, so it must not claim a freshness it has not
+  // earned. This is the assertion that fails if someone reaches for Date.now().
+  expect(entries.find((e) => e.includes("/work/"))).not.toContain("lastmod");
 });

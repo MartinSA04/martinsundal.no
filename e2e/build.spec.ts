@@ -13,7 +13,5 @@ test("CNAME survives the build", async () => {
 test("robots.txt points at the generated sitemap", async ({ request }) => {
   const res = await request.get("/robots.txt");
   expect(res.ok()).toBe(true);
-  expect(await res.text()).toContain(
-    "https://martinsundal.no/sitemap-index.xml",
-  );
+  expect(await res.text()).toContain("https://martinsundal.no/sitemap.xml");
 });

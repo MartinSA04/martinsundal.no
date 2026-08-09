@@ -22,7 +22,6 @@
   },
   "dependencies": {
     "@astrojs/mdx": "^5.0.6",
-    "@astrojs/sitemap": "^3.7.3",
     "astro": "^6.3.7",
     "katex": "^0.17.0",
     "rehype-katex": "^7.0.1",

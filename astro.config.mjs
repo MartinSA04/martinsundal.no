@@ -1,5 +1,4 @@
 import { defineConfig } from "astro/config";
-import sitemap from "@astrojs/sitemap";
 import mdx from "@astrojs/mdx";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -17,9 +16,6 @@ export default defineConfig({
        the pipeline a real course goes through. Every other page here is plain
        Markdown with no `$` in it, so nothing else changes. */
     mdx(),
-    sitemap({
-      filter: (page) => !page.includes("/kitchen-sink"),
-    }),
   ],
   markdown: {
     remarkPlugins: [remarkMath],
