@@ -1,0 +1,80 @@
+---
+import { getEntry, render } from "astro:content";
+import ProjectShell from "../../components/project/ProjectShell.astro";
+import ProjectHead from "../../components/project/ProjectHead.astro";
+import ProjectLinks from "../../components/project/ProjectLinks.astro";
+import SpecBlock from "../../components/micro/SpecBlock.astro";
+import "../../worlds/black-hole.css";
+
+const entry = await getEntry("projects", "black-hole");
+if (!entry) throw new Error("missing content: projects/black-hole");
+const { Content } = await render(entry);
+const img = entry.data.image!;
+---
+
+{
+  /* Shape: an observation plate. The render is the artifact the page argues
+    for, so it runs edge to edge before anything else and the title sits under
+    it as a caption would. The prose then sets in two narrow columns, which is
+    how the papers this is imitating actually set. */
+}
+<ProjectShell entry={entry}>
+  <div class="bh-plate">
+    <figure class="bh-render">
+      <img
+        src={img.src}
+        alt={img.alt}
+        width={img.width}
+        height={img.height}
+        decoding="async"
+      />
+    </figure>
+    <p class="bh-caption wrap">
+      <span>Rendered in C++</span>
+      <span>Schwarzschild metric</span>
+      <span>Null geodesic integration</span>
+    </p>
+  </div>
+
+  <div class="wrap">
+    <ProjectHead entry={entry} class="bh-head" />
+  </div>
+
+  <div class="wrap">
+    <div class="bh-diagram">
+      <div class="bh-diagram-head">
+        <span class="micro-label">How the rays get there</span>
+        <span class="micro-label">Cross-section, orbital plane</span>
+      </div>
+
+      <figure>
+        <canvas
+          class="bh-canvas"
+          data-bh-diagram
+          role="img"
+          aria-label="Cross-section diagram: parallel light rays arrive from the left and bend as they pass the black hole. Rays whose impact parameter is under 2.598 Schwarzschild radii are captured; the rest escape along bent paths."
+        ></canvas>
+      </figure>
+
+      <div class="bh-legend">
+        <span class="bh-key" data-key="escaped">Escapes, bent</span>
+        <span class="bh-key" data-key="captured">Captured</span>
+        <span class="bh-key" data-key="photon">Photon sphere</span>
+      </div>
+    </div>
+
+    <div class="prose bh-cols">
+      <Content />
+    </div>
+
+    {/* Apparatus as a plate footer, the way a figure carries its data. */}
+    <footer class="bh-apparatus">
+      <SpecBlock rows={entry.data.spec} />
+      <ProjectLinks entry={entry} />
+    </footer>
+  </div>
+</ProjectShell>
+
+<script>
+  import "../../worlds/black-hole.ts";
+</script>

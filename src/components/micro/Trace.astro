@@ -1,0 +1,125 @@
+---
+/**
+ * Live sparkline.
+ *
+ * node-sparkline, @fnando/sparkline and sparkline-svg all exist and all do
+ * the same thing: normalise an array and emit <polyline points="...">. That
+ * is a map and a join, and none of them can update in place afterwards,
+ * which is the half this actually needs. So the series is projected here and
+ * the same projection runs again in the browser on new samples.
+ *
+ * The polyline is emitted server-side from whatever series it is given, so
+ * the trace is a real shape before any script runs.
+ */
+interface Props {
+  /** Newest sample last. */
+  points: number[];
+  label?: string;
+  /** Printed to the right of the trace, e.g. the current value. */
+  value?: string;
+  /** Addressable by script: data-trace="<key>" on the root. */
+  key?: string;
+  width?: number;
+  height?: number;
+  class?: string;
+}
+
+const {
+  points,
+  label,
+  value,
+  key,
+  width = 120,
+  height = 28,
+  class: className,
+} = Astro.props;
+
+/**
+ * Project a series into viewBox coordinates. Kept as a named export shape so
+ * the browser-side updater can mirror it exactly — see the script in Hero.
+ *
+ * A flat series has no range to scale against, so it is pinned to the
+ * baseline rather than dividing by zero and collapsing to NaN.
+ */
+function project(series: number[], w: number, h: number): string {
+  if (series.length === 0) return "";
+  const lo = Math.min(...series);
+  const hi = Math.max(...series);
+  const span = hi - lo;
+  const stepX = series.length > 1 ? w / (series.length - 1) : 0;
+  return series
+    .map((n, i) => {
+      const y = span === 0 ? h - 1 : h - 1 - ((n - lo) / span) * (h - 2);
+      return `${(i * stepX).toFixed(2)},${y.toFixed(2)}`;
+    })
+    .join(" ");
+}
+
+const pts = project(points, width, height);
+---
+
+<div
+  class:list={["micro-trace", className]}
+  data-micro="trace"
+  data-trace={key}
+  data-width={width}
+  data-height={height}
+>
+  {label && <span class="micro-trace-label micro-label">{label}</span>}
+
+  <svg
+    viewBox={`0 0 ${width} ${height}`}
+    width={width}
+    height={height}
+    preserveAspectRatio="none"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <polyline points={pts} data-trace-line></polyline>
+  </svg>
+
+  {
+    value && (
+      <span class="micro-trace-value" data-trace-value>
+        {value}
+      </span>
+    )
+  }
+</div>
+
+<style>
+  .micro-trace {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .micro-trace-label {
+    font-size: var(--step--2);
+    flex: none;
+  }
+
+  /* The SVG carries width/height attributes as well as CSS so it reserves its
+     box before styles resolve — the trace must not shift the instrument
+     column while the page is loading. */
+  .micro-trace svg {
+    flex: none;
+    overflow: visible;
+  }
+
+  .micro-trace polyline {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .micro-trace-value {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    flex: none;
+  }
+</style>

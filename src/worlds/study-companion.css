@@ -1,0 +1,93 @@
+/* ---------------------------------------------------------------------------
+   World 01 — study-companion, wearing itself.
+
+   Every other world is a set of looks invented here. This one is not: the page
+   is a consumer of the framework it documents, pinned in package.json to the
+   same git tag a course pins, and it imports the framework's real stylesheets
+   instead of imitating them. The type, the colour, the panels, the disclosure
+   chrome and the code blocks below are the ones a student reads.
+
+   So this file must hold NO design decisions. Everything in it is either an
+   import or a hook — a name this site uses mapped onto the name the framework
+   uses. That is what makes `pnpm up study-companion` a restyle: bump the pin
+   and the page follows the framework wherever it went, with nothing here to
+   rewrite. A colour, a size or a border added below would be the one thing
+   that stops following, and would drift into a lie the next release.
+
+   Deliberately does NOT import project.css: that file styles [data-world]
+   prose, links and tables in this site's own idiom, which is exactly what this
+   page is not wearing. What it provided that is still needed is one margin,
+   restated at the bottom.
+   --------------------------------------------------------------------------- */
+
+/* KaTeX first, and not optional: it is what hides the MathML layer that
+   rehype-katex emits beside the glyphs. Without it every formula prints twice.
+   base.css overrides parts of it and says so, so it has to load ahead of base.
+   Same katex version the framework depends on, pinned in package.json. */
+@import "katex/dist/katex.min.css";
+
+/* Then the framework's own, in its load order (see its primitives.css header):
+   base needs the tokens, primitives rely on the element base, shell is last. */
+@import "study-companion/styles/fonts.css";
+@import "study-companion/styles/tokens.css";
+@import "study-companion/styles/base.css";
+@import "study-companion/styles/primitives.css";
+@import "study-companion/styles/shell.css";
+
+/* --- the hook: this site's four world tokens, aliased to the framework's ----
+
+   kernel.css builds every shared piece of chrome — the header, the footer, the
+   breadcrumb trail, the micrographic primitives — out of --sub --ink --hair
+   --sig. Pointed at the framework's tokens through var(), they resolve to
+   whatever the installed version says, and follow [data-theme] with it. So the
+   site chrome on this route is Flexoki paper too, and goes dark with the page.
+
+   No literal colour appears here, which is the point: a palette change
+   upstream arrives on its own. The frontmatter `world:` block still carries
+   the light values as flat hex, because the OG card is a single image and has
+   to pick a side — test/world-tokens.test.ts fails the build if the two ever
+   disagree.
+
+   Both selectors, because kernel.css sets these under [data-theme="dark"] at
+   the same specificity: matching it and landing later in the bundle is what
+   makes this win in dark mode. --muted is left alone; the framework has one. */
+:root,
+:root[data-theme="dark"] {
+  --sub: var(--bg);
+  --ink: var(--fg);
+  --hair: var(--border);
+  --sig: var(--accent);
+}
+
+/* The framework offsets a heading's scroll-margin by its own topbar height so
+   an anchored heading does not land under the bar. This route has this site's
+   sticky header instead, at the 3.5rem min-height set in Base.astro. Same
+   measurement, different bar. */
+:root {
+  --topbar-h: 3.5rem;
+}
+
+/* .layout is a two-column grid because a course needs a rail: twenty modules,
+   four tool pages, the hub link. This page has one article and no siblings
+   worth navigating, so it drops the first column and centres the second. The
+   framework's own outer max-width, padding and reading measure all still
+   apply — only the column count changes, which is why this is a modifier and
+   not a replacement layout. */
+.layout--solo {
+  grid-template-columns: minmax(0, var(--maxw));
+  justify-content: center;
+}
+
+/* .crumb-bar is shared markup from ProjectShell, and project.css — not imported
+   here — is what usually gives it room, both the [data-world] top padding and
+   its own margin. Without that the trail is pinned against the underside of the
+   sticky header.
+
+   Restated on the framework's terms: the same --maxw measure as the article, so
+   the two line up, and the layout's own --gap-7 above and below it, so the trail
+   sits in the page's rhythm rather than in the header's. The space underneath is
+   already there — it is .layout's padding-top. */
+.crumb-bar {
+  width: min(100% - var(--gutter) * 2, var(--maxw));
+  margin-top: var(--gap-7);
+}

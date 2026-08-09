@@ -1,0 +1,31 @@
+---
+/**
+ * Index rule, title, and tagline. A separate component rather than part of the
+ * shell so a page can put it wherever its own layout wants it: Study Companion
+ * opens with it, the black hole page leads with the render and states the
+ * title underneath.
+ */
+import type { CollectionEntry } from "astro:content";
+import Rule from "../micro/Rule.astro";
+
+interface Props {
+  entry: CollectionEntry<"projects">;
+  /** Rule caption after the index. Defaults to the project's first tag. */
+  eyebrow?: string;
+  class?: string;
+}
+
+const { entry, eyebrow, class: extraClass } = Astro.props;
+const p = entry.data;
+const idx = String(p.index).padStart(2, "0");
+---
+
+{
+  /* Prj_, not Idx_: the home page numbers its sections Idx_00..04, and reusing
+    that prefix here made Study Companion and the work page both read Idx_01. */
+}
+<header class:list={["head", extraClass]}>
+  <Rule label={`Prj_${idx} / ${eyebrow ?? p.tags[0]}`} />
+  <h1>{p.name}</h1>
+  <p class="lede">{p.tagline}</p>
+</header>

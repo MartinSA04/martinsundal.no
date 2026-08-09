@@ -1,0 +1,25 @@
+---
+interface Props {
+  variant?: "hair" | "dashed" | "double" | "hazard";
+  label?: string;
+  class?: string;
+}
+
+const { variant = "hair", label, class: className } = Astro.props;
+---
+
+{
+  label ? (
+    <div class:list={["micro-rule-labelled", className]}>
+      <span class="micro-label">{label}</span>
+      <hr class="micro-rule" data-micro="rule" data-variant={variant} />
+    </div>
+  ) : (
+    <hr
+      class:list={["micro-rule", className]}
+      data-micro="rule"
+      data-variant={variant}
+      aria-hidden={variant === "hazard" ? "true" : undefined}
+    />
+  )
+}

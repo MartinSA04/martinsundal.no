@@ -1,0 +1,195 @@
+---
+/**
+ * Development aid, not a placeholder. Renders the whole micrographics kit in
+ * every theme and under a world override, so a change to kernel.css can be
+ * eyeballed in one place. Excluded from the sitemap and noindexed.
+ */
+import "../styles/kernel.css";
+import Rule from "../components/micro/Rule.astro";
+import Index from "../components/micro/Index.astro";
+import SpecBlock from "../components/micro/SpecBlock.astro";
+import Crosshair from "../components/micro/Crosshair.astro";
+import Marginalia from "../components/micro/Marginalia.astro";
+import Barcode from "../components/micro/Barcode.astro";
+import Icon from "../components/micro/Icon.astro";
+import Tag from "../components/micro/Tag.astro";
+import Stripe from "../components/micro/Stripe.astro";
+import Readout from "../components/micro/Readout.astro";
+import Numeral from "../components/micro/Numeral.astro";
+import Dial from "../components/micro/Dial.astro";
+import Trace from "../components/micro/Trace.astro";
+import Fan from "../components/micro/Fan.astro";
+import Ruler from "../components/micro/Ruler.astro";
+import Node from "../components/micro/Node.astro";
+import Plate from "../components/micro/Plate.astro";
+import Mark from "../components/micro/Mark.astro";
+import Figure from "../components/micro/Figure.astro";
+
+const figures = [
+  "starburst",
+  "quadrant",
+  "halfdisc",
+  "spoke",
+  "capsule",
+  "concentric",
+  "tangent",
+  "target",
+  "eclipse",
+  "lozenges",
+  "wedge",
+  "grid",
+] as const;
+
+const themes = ["light", "dark"] as const;
+
+/* A shape with a visible rise and fall, so the trace is checkable at a
+   glance rather than being a plausible-looking squiggle. */
+const traceSeries = [
+  12, 18, 31, 44, 39, 52, 68, 74, 61, 55, 48, 44, 41, 40, 40, 40,
+];
+
+const specRows = [
+  { label: "Stack", value: "Astro · TypeScript" },
+  { label: "Deps", value: "0 runtime" },
+  { label: "Output", value: "Static" },
+];
+---
+
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Kitchen sink / micrographics kit</title>
+  </head>
+  <body>
+    <main class="wrap" style="padding-block: var(--space-5)">
+      <h1 style="font-size: var(--step-3)">Micrographics kit</h1>
+
+      {
+        themes.map((theme) => (
+          <section
+            data-theme={theme}
+            style="background: var(--sub); color: var(--ink); padding: var(--space-4); margin-block: var(--space-4); border: 1px solid var(--hair)"
+          >
+            <Rule label={`Theme / ${theme}`} />
+
+            <div style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; margin-block: var(--space-3)">
+              <Index n={1} label="Study Companion" />
+              <Index n={12} />
+              <Crosshair />
+              <Crosshair size={22} />
+              <Barcode seed="alpha" />
+              <Barcode seed="bravo" />
+              <Icon name="arrow-right" />
+              <Icon name="arrow-up" />
+              <Icon name="caret-down" />
+              <Icon name="theme-light" />
+              <Icon name="theme-dark" />
+              <Icon name="arrow-right" size={24} />
+            </div>
+
+            <Rule variant="dashed" />
+            <div style="height: var(--space-2)" />
+            <Rule variant="double" />
+            <div style="height: var(--space-2)" />
+            <Rule variant="hazard" />
+
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); margin-block: var(--space-3)">
+              <SpecBlock rows={specRows} />
+              <Marginalia text={`Asset_id 2026_MSA_${theme}`} />
+            </div>
+
+            <p class="micro-label">Micro label · tabular 0123456789</p>
+            <p style="max-width: var(--measure)">
+              Body copy in Archivo, sitting on the same baseline grid in every
+              world. The ornament decorates a document rather than becoming the
+              document.
+            </p>
+
+            <Mark n={9} label="Figures" note="12 marks" />
+
+            <div style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; margin-block: var(--space-3)">
+              {figures.map((f) => (
+                <Figure name={f} size={64} />
+              ))}
+              <Figure name="starburst" size={40} signal />
+              <Figure name="eclipse" size={96} />
+            </div>
+
+            <Mark n={10} label="Composite mark" note="12 primitives" />
+
+            <div style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; margin-block: var(--space-3)">
+              <Tag>Activated</Tag>
+              <Tag variant="round">Analog</Tag>
+              <Tag variant="angle">16:9</Tag>
+              <Tag signal>Settled</Tag>
+              <Node label="Node B43" />
+              <Node label="Active" active glyph="4" leader />
+              <Numeral n={79} pad={4} />
+              <Numeral n={7} pad={3} variant="outline" />
+              <Numeral n={26} ring />
+            </div>
+
+            <div style="display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap; margin-block: var(--space-3)">
+              <Dial value={276} max={276} label="Gen" />
+              <Dial value={104} max={276} label="Gen" size={80} />
+              <Trace points={traceSeries} label="Pop" value="412" />
+              <Fan rays={13} spread={110} accentEvery={6} />
+              <Fan rays={7} spread={44} size={64} />
+            </div>
+
+            <div style="margin-block: var(--space-3)">
+              <Ruler from={0} to={356} majors={5} />
+            </div>
+
+            <Stripe />
+            <div style="height: var(--space-2)" />
+            <Stripe lines={3} variant="taper" />
+
+            <div style="margin-block: var(--space-3)">
+              <Readout
+                pairs={[
+                  { label: "Rule", value: "B3/S23" },
+                  { label: "Board", value: "356×192" },
+                  { label: "State", value: "Settled", signal: true },
+                ]}
+              />
+            </div>
+
+            <Plate
+              id="Plate 01"
+              title="Framed plate"
+              edgeLeft="Asset_id 2026_MSA"
+              edgeRight="Registered"
+              foot="Corner registration · edge labels"
+            >
+              <p style="max-width: var(--measure)">
+                Plate bodies bound their content and register it at the corners,
+                which is what makes a section read as an instrument panel rather
+                than as a stacked band.
+              </p>
+            </Plate>
+          </section>
+        ))
+      }
+
+      <section
+        data-world="demo"
+        style="--sub:#d8ecc0; --ink:#384058; --sig:#c8302a; background: var(--sub); color: var(--ink); padding: var(--space-4); border: 1px solid var(--hair)"
+      >
+        <Rule label="World override / four tokens only" />
+        <div
+          style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; margin-block: var(--space-3)"
+        >
+          <Index n={3} label="Cipherbound" />
+          <Crosshair />
+          <Barcode seed="alpha" />
+          <Icon name="arrow-right" />
+        </div>
+        <SpecBlock rows={specRows} />
+      </section>
+    </main>
+  </body>
+</html>

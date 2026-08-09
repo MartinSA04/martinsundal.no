@@ -1,0 +1,55 @@
+---
+/**
+ * The invariants every project page shares, and nothing else: head metadata,
+ * the world's tokens, the breadcrumb trail, and the JSON-LD graph.
+ *
+ * It deliberately does NOT lay the page out. An earlier version owned the
+ * whole document order (rule, title, lede, centerpiece, prose beside a sticky
+ * sidebar), which meant all five worlds were the same page in five palettes.
+ * Layout is the page's job now; compose it from ProjectHead, SpecBlock and
+ * ProjectLinks, or hand-roll it.
+ *
+ * Worlds are separate page files rather than one [slug] route so that each
+ * page bundles only its own CSS and JS.
+ */
+import type { CollectionEntry } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import Breadcrumbs from "../seo/Breadcrumbs.astro";
+import { projectGraph, projectTrail, SITE } from "../../lib/jsonld.ts";
+
+interface Props {
+  entry: CollectionEntry<"projects">;
+  /** Extra classes on the article, for worlds that need a layout hook. */
+  class?: string;
+}
+
+const { entry, class: extraClass } = Astro.props;
+const p = entry.data;
+const trail = projectTrail(p, entry.id);
+const idx = String(p.index).padStart(2, "0");
+---
+
+<Base
+  title={`${p.name} | Martin Sundal Aspås`}
+  description={p.tagline}
+  canonicalPath={`/projects/${entry.id}/`}
+  ogImage={`${SITE}/og/${entry.id}.png`}
+  graph={projectGraph(p, entry.id)}
+  {/* A themed world carries a light and a dark palette instead of one fixed
+     substrate, so the four tokens must NOT be pinned onto <body> — inline
+     custom properties would freeze it in whichever theme they were written
+     for, and the toggle it keeps would have nothing to change. Its own
+     stylesheet defines them instead, and the frontmatter copy goes on serving
+     the OG card. */}
+  world={p.themed ? undefined : p.world}
+  themeToggle={p.themed}
+  chromeTag={`Prj_${idx}`}
+>
+  {/* Tokens live on <body> so the chrome matches; this keeps the hook only. */}
+  <article data-world={entry.id} class={extraClass}>
+    <div class="wrap crumb-bar">
+      <Breadcrumbs trail={trail} />
+    </div>
+    <slot />
+  </article>
+</Base>

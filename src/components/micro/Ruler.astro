@@ -1,0 +1,194 @@
+---
+/**
+ * Tick scale with labelled majors. The hero uses it to print the Game of
+ * Life board's real coordinate frame along the edges of the canvas, which is
+ * what turns the band from a picture into a plotted figure.
+ *
+ * No library: this is a loop emitting <line>, and the labels have to line up
+ * with the ticks, which any generic axis component would fight.
+ */
+interface Props {
+  from: number;
+  to: number;
+  /** Labelled ticks, including both ends. */
+  majors: number;
+  /** Unlabelled ticks drawn between each pair of majors. */
+  minors?: number;
+  axis?: "x" | "y";
+  class?: string;
+}
+
+const {
+  from,
+  to,
+  majors,
+  minors = 3,
+  axis = "x",
+  class: className,
+} = Astro.props;
+
+const span = to - from;
+const ticks = Array.from({ length: majors }, (_, i) => {
+  const t = majors === 1 ? 0 : i / (majors - 1);
+  return { pct: t * 100, value: Math.round(from + t * span) };
+});
+---
+
+<div
+  class:list={["micro-ruler", className]}
+  data-micro="ruler"
+  data-axis={axis}
+  aria-hidden="true"
+>
+  <div class="micro-ruler-track">
+    {
+      ticks.map((tick, i) => (
+        <>
+          <span class="micro-ruler-major" style={`--at:${tick.pct}%`} />
+          {i < ticks.length - 1 &&
+            Array.from({ length: minors }, (_, m) => (
+              <span
+                class="micro-ruler-minor"
+                style={`--at:${tick.pct + ((m + 1) / (minors + 1)) * (100 / (majors - 1))}%`}
+              />
+            ))}
+        </>
+      ))
+    }
+  </div>
+
+  <div class="micro-ruler-labels">
+    {
+      ticks.map((tick) => (
+        <span class="micro-ruler-label" style={`--at:${tick.pct}%`}>
+          {tick.value}
+        </span>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .micro-ruler {
+    --tick-major: 6px;
+    --tick-minor: 3px;
+    position: relative;
+    inline-size: 100%;
+  }
+
+  .micro-ruler-track {
+    position: relative;
+    block-size: var(--tick-major);
+    border-top: var(--rule) solid var(--hair);
+  }
+
+  .micro-ruler-major,
+  .micro-ruler-minor {
+    position: absolute;
+    top: 0;
+    left: var(--at);
+    inline-size: var(--rule);
+    background: var(--hair);
+  }
+
+  .micro-ruler-major {
+    block-size: var(--tick-major);
+  }
+
+  .micro-ruler-minor {
+    block-size: var(--tick-minor);
+  }
+
+  /* --- vertical ----------------------------------------------------------
+     The same tick positions rotated onto the block axis: the track becomes a
+     column with a left edge, ticks grow rightward, and labels stack down it.
+     Kept as its own block rather than a transform so the type stays upright,
+     which is the difference between an axis and a rotated caption. */
+  .micro-ruler[data-axis="y"] {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+    inline-size: auto;
+    block-size: 100%;
+  }
+
+  .micro-ruler[data-axis="y"] .micro-ruler-track {
+    block-size: 100%;
+    inline-size: var(--tick-major);
+    border-top: 0;
+    border-right: var(--rule) solid var(--hair);
+    order: 2;
+  }
+
+  .micro-ruler[data-axis="y"] .micro-ruler-major,
+  .micro-ruler[data-axis="y"] .micro-ruler-minor {
+    top: var(--at);
+    left: auto;
+    right: 0;
+    inline-size: var(--tick-minor);
+    block-size: var(--rule);
+  }
+
+  .micro-ruler[data-axis="y"] .micro-ruler-major {
+    inline-size: var(--tick-major);
+  }
+
+  .micro-ruler[data-axis="y"] .micro-ruler-labels {
+    position: relative;
+    block-size: 100%;
+    inline-size: 2.6em;
+    margin-top: 0;
+    order: 1;
+  }
+
+  .micro-ruler[data-axis="y"] .micro-ruler-label {
+    left: auto;
+    right: 0;
+    top: var(--at);
+    translate: 0 -50%;
+  }
+
+  .micro-ruler[data-axis="y"] .micro-ruler-label:first-child {
+    translate: 0 0;
+  }
+
+  .micro-ruler[data-axis="y"] .micro-ruler-label:last-child {
+    translate: 0 -100%;
+  }
+
+  .micro-ruler-labels {
+    position: relative;
+    block-size: 1.1em;
+    margin-top: 2px;
+  }
+
+  .micro-ruler-label {
+    position: absolute;
+    left: var(--at);
+    translate: -50% 0;
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  /* The end labels would otherwise hang off both edges of the figure they
+     are measuring. */
+  .micro-ruler-label:first-child {
+    translate: 0 0;
+  }
+
+  .micro-ruler-label:last-child {
+    translate: -100% 0;
+  }
+
+  /* At narrow widths the intermediate labels collide, so only the ends stay.
+     The ticks themselves remain, so the scale is still legible. */
+  @media (max-width: 46rem) {
+    .micro-ruler-label:not(:first-child):not(:last-child) {
+      display: none;
+    }
+  }
+</style>

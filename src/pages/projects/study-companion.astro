@@ -1,0 +1,137 @@
+---
+/**
+ * Shape: a page of the thing it describes.
+ *
+ * The other four worlds are invented here — a palette and a set of looks
+ * written in this repo to evoke a project. This one is not. package.json pins
+ * `study-companion` at the same git tag a course pins, and the page imports
+ * the framework's real stylesheets and its real components. The body is an
+ * .mdx entry rendered through the framework's own component map, so the prose
+ * below is authored exactly the way a course section is authored, widgets and
+ * all.
+ *
+ * The excerpt is the load-bearing part. It is rendered from
+ * _study-companion-demo.mdx, and the source printed above it is that same file
+ * read back with `?raw`. One set of bytes, listed and executed, so the two
+ * cannot disagree — an earlier version of this page hand-wrote a "rendered by
+ * the framework" panel that the framework would never have produced, out of
+ * YAML keys the schema does not have.
+ */
+import { getEntry, render } from "astro:content";
+import ProjectShell from "../../components/project/ProjectShell.astro";
+import CodeBlock from "study-companion/components/CodeBlock.astro";
+import Icon from "study-companion/components/Icon.astro";
+import mdxComponents from "study-companion/mdx-components";
+import { Content as CourseExcerpt } from "./_study-companion-demo.mdx";
+import excerptSource from "./_study-companion-demo.mdx?raw";
+import "../../worlds/study-companion.css";
+
+const entry = await getEntry("projects", "study-companion");
+if (!entry) throw new Error("missing content: projects/study-companion");
+const { Content } = await render(entry);
+const p = entry.data;
+const idx = String(p.index).padStart(2, "0");
+
+const source = excerptSource.trim();
+const sourceLines = source.split("\n").length;
+---
+
+<ProjectShell entry={entry}>
+  <div class="layout layout--solo">
+    <div class="content">
+      <header class="mod-head">
+        <div class="mod-index">{idx}</div>
+        <div class="meta">
+          <h1>{p.name}</h1>
+          <div class="mod-meta-row">
+            {p.tags.map((t) => <span class="sc-kicker">{t}</span>)}
+          </div>
+        </div>
+      </header>
+
+      <div class="prose">
+        <p>{p.tagline}</p>
+
+        <div class="sc-links">
+          {
+            p.links.map((l) => (
+              <a
+                class="sc-pill sc-press"
+                href={l.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {l.label}
+                <Icon name="external" size={13} />
+              </a>
+            ))
+          }
+        </div>
+
+        <table>
+          <tbody>
+            {
+              p.spec.map((row) => (
+                <tr>
+                  <th scope="row">{row.label}</th>
+                  <td>{row.value}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+
+        <h2 id="the-excerpt">{sourceLines} lines of a real course</h2>
+
+        <p>
+          An excerpt of <code>content/sections/02-eksempler.mdx</code> from the framework's
+          demo course, copied out of the repository unchanged, and under it what those
+          {sourceLines} lines are worth. Not a screenshot and not a reconstruction:
+          the same file, put through the pipeline the integration configures for every
+          course. Open the solution.
+        </p>
+
+        <CodeBlock
+          code={source}
+          lang="mdx"
+          title="content/sections/02-eksempler.mdx"
+        />
+
+        <p class="sc-kicker excerpt-out">Built by the framework</p>
+
+        <CourseExcerpt components={mdxComponents} />
+
+        <Content components={mdxComponents} />
+      </div>
+    </div>
+  </div>
+</ProjectShell>
+
+<style>
+  /* `.sc-kicker` and `.sc-pill` are type and state recipes only — both say in
+     so many words that size, padding and tone stay the caller's. Setting them
+     here is using the primitives as intended, not inventing a look. */
+  .mod-meta-row .sc-kicker,
+  .excerpt-out {
+    font-size: var(--text-xs);
+    color: var(--muted);
+  }
+
+  .sc-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap-2);
+    margin-block: var(--space-3);
+  }
+
+  .sc-links .sc-pill {
+    gap: var(--gap-1);
+    padding: var(--gap-2) var(--gap-3);
+    text-decoration: none;
+  }
+
+  /* The one label the framework has no element for: the excerpt's output side. */
+  .excerpt-out {
+    margin-block: var(--space-5) var(--space-2);
+  }
+</style>

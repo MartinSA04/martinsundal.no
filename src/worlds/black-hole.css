@@ -1,0 +1,216 @@
+/* World 04 — the void. Thin display serif, technical annotation over dark. */
+@import "../styles/project.css";
+
+[data-world="black-hole"] {
+  padding-block: var(--space-4) var(--space-8);
+}
+
+[data-world="black-hole"] :is(h1, h2, h3) {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+}
+
+[data-world="black-hole"] .head h1 {
+  font-size: var(--step-5);
+  line-height: 1;
+  max-width: 15ch;
+}
+
+[data-world="black-hole"] .lede {
+  font-family: var(--font-serif);
+  font-size: var(--step-2);
+  font-weight: 300;
+  line-height: 1.4;
+  color: color-mix(in oklab, var(--ink) 78%, var(--sub));
+}
+
+[data-world="black-hole"] .prose p {
+  font-family: var(--font-serif);
+  font-size: var(--step-1);
+  line-height: 1.65;
+}
+
+/* --- shape: the plate leads, the document follows ------------------------ */
+
+/* Full-bleed. The render is the thing the page exists to argue for, so it is
+   not a figure inside a text column; the text is an annotation under it. */
+.bh-plate {
+  margin-bottom: var(--space-5);
+}
+
+.bh-head {
+  margin-bottom: var(--space-6);
+}
+
+/* Two narrow columns, the way the papers this imitates actually set. The
+   column rule is the same hairline every other ornament uses. */
+.bh-cols {
+  margin-top: var(--space-6);
+  columns: 2;
+  column-gap: var(--space-6);
+  column-rule: var(--rule) solid var(--hair);
+}
+
+[data-world="black-hole"] .bh-cols p {
+  max-width: none;
+}
+
+/* Headings must not straddle a column break, and a section should not start
+   one line before the bottom of a column. */
+[data-world="black-hole"] .bh-cols > :is(h2, h3) {
+  break-after: avoid;
+  break-inside: avoid;
+  margin-top: var(--space-4);
+}
+
+[data-world="black-hole"] .bh-cols > :is(p, ul, pre, table, figure) {
+  break-inside: avoid;
+}
+
+/* --- Eq. 1 --------------------------------------------------------------- */
+
+/* A display equation is apparatus, so it is numbered and ruled like one — the
+   same treatment the figures get, at the width of one prose column. The number
+   is set in the mono micro-label the rest of the page annotates with, which
+   leaves the equation itself as the only serif thing in the block. */
+.bh-eq {
+  margin: var(--space-3) 0;
+  padding-block: var(--space-2);
+  border-block: var(--rule) solid var(--hair);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.bh-eq math {
+  font-family: var(--font-serif);
+  font-size: var(--step-1);
+  /* Flush left, not centred. The column is narrow and the equation reads as a
+     continuation of the sentence that introduces it. */
+  justify-self: start;
+}
+
+.bh-eq figcaption {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--ink) 70%, var(--sub));
+}
+
+.bh-apparatus {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: var(--rule) solid var(--hair);
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (max-width: 52rem) {
+  .bh-cols {
+    columns: 1;
+  }
+  .bh-apparatus {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+}
+
+/* --- the render: the actual artifact, leading --------------------------- */
+
+.bh-render {
+  position: relative;
+  border-block: var(--rule) solid var(--hair);
+  background: #000;
+}
+
+.bh-render img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.bh-caption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem var(--space-3);
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--ink) 70%, var(--sub));
+}
+
+/* --- the diagram: how the rays get there --------------------------------- */
+
+.bh-diagram {
+  margin-top: var(--space-6);
+  border-top: var(--rule) solid var(--hair);
+  padding-top: var(--space-3);
+}
+
+.bh-diagram-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: baseline;
+  margin-bottom: var(--space-2);
+}
+
+.bh-diagram figure {
+  margin: 0;
+}
+
+.bh-canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 1;
+  display: block;
+  background: color-mix(in oklab, var(--ink) 4%, var(--sub));
+  border: var(--rule) solid var(--hair);
+}
+
+.bh-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--ink) 72%, var(--sub));
+}
+
+.bh-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bh-key::before {
+  content: "";
+  width: 18px;
+  height: 2px;
+  background: currentColor;
+}
+
+.bh-key[data-key="escaped"] {
+  color: var(--sig);
+}
+
+.bh-key[data-key="captured"] {
+  color: color-mix(in oklab, var(--ink) 45%, var(--sub));
+}
+
+.bh-key[data-key="photon"]::before {
+  background: none;
+  border-top: 2px dashed currentColor;
+  height: 0;
+}

@@ -1,0 +1,146 @@
+---
+/**
+ * An articulated arm, drawn as an object.
+ *
+ * Deliberately generic: a base, three driven joints and a torch. It is not a
+ * diagram of anything Aker runs and it illustrates no process — the page's
+ * confidentiality constraint rules that out, and abstraction would not fix it.
+ * What it is here for is to put moving hardware on the floor of the sheet.
+ *
+ * Solid fills rather than line work, because this world is machine placards
+ * and cell-fence pictograms, not the plotter sheet the home page is drawn on.
+ *
+ * Motion is three nested rotations about the joints they belong to, so the arm
+ * bends where an arm bends. Each joint runs on its own period and none of the
+ * three divides another, so the pose never repeats on a short cycle and a row
+ * of arms never falls into step. `alternate` means the arm eases at both ends
+ * of every swing, which is what keeps it from reading as a spinner.
+ *
+ * kernel.css collapses every duration for a visitor who asked for less motion,
+ * which leaves the arm resting in its authored pose. That pose is a legitimate
+ * drawing on its own, so nothing here needs a reduced-motion branch.
+ */
+interface Props {
+  /** Rendered width in px. The row is deliberately not uniform. */
+  width: number;
+  /** Which of the three cycles this arm runs. */
+  index: 0 | 1 | 2;
+}
+
+const { width, index } = Astro.props;
+
+/* Seconds per joint, per arm. Chosen so no two arms share a period and no
+   period is a multiple of another. */
+const CYCLES = [
+  { t: [7, 5.2, 3.4], lag: [0, 0, 0] },
+  { t: [8.4, 6.1, 4.2], lag: [2.1, 1.3, 0.7] },
+  { t: [6.2, 4.4, 2.9], lag: [4.4, 2.9, 1.8] },
+] as const;
+
+const c = CYCLES[index]!;
+const vars = [
+  `--t1:${c.t[0]}s`,
+  `--t2:${c.t[1]}s`,
+  `--t3:${c.t[2]}s`,
+  `--l1:-${c.lag[0]}s`,
+  `--l2:-${c.lag[1]}s`,
+  `--l3:-${c.lag[2]}s`,
+].join(";");
+---
+
+<svg
+  class="arm"
+  viewBox="0 0 210 184"
+  width={width}
+  style={vars}
+  aria-hidden="true"
+>
+  <path class="ar-base" d="M62 180 L138 180 L128 156 L72 156 Z"></path>
+  <rect class="ar-base" x="76" y="139" width="48" height="19" rx="3"></rect>
+
+  <g class="j1">
+    <rect class="ar-link" x="86" y="84" width="28" height="74" rx="6"></rect>
+    <circle class="ar-joint" cx="100" cy="158" r="11"></circle>
+
+    <g class="j2">
+      <rect class="ar-link" x="100" y="78" width="76" height="24" rx="8"></rect>
+      <circle class="ar-joint" cx="100" cy="90" r="10"></circle>
+
+      <g class="j3">
+        <circle class="ar-joint" cx="176" cy="90" r="8"></circle>
+        <path class="ar-torch" d="M176 92 L187 85 L201 109 L191 115 Z"></path>
+        <circle class="ar-tip" cx="196" cy="112" r="3.5"></circle>
+      </g>
+    </g>
+  </g>
+</svg>
+
+<style>
+  .arm {
+    display: block;
+    /* The torch swings past the right edge of the viewBox at the top of its
+       arc; clipping it there would saw the tool off mid-stroke. */
+    overflow: visible;
+    height: auto;
+  }
+
+  .ar-base,
+  .ar-link {
+    fill: var(--sig);
+  }
+  .ar-joint {
+    fill: var(--sub);
+    stroke: var(--sig);
+    stroke-width: 3;
+  }
+  .ar-torch {
+    fill: var(--ink);
+  }
+  .ar-tip {
+    fill: #d8402a;
+  }
+
+  /* Each group turns about its own joint, in viewBox units. */
+  .j1,
+  .j2,
+  .j3 {
+    transform-box: view-box;
+  }
+  .j1 {
+    transform-origin: 100px 158px;
+    animation: j1 var(--t1) ease-in-out var(--l1) infinite alternate;
+  }
+  .j2 {
+    transform-origin: 100px 90px;
+    animation: j2 var(--t2) ease-in-out var(--l2) infinite alternate;
+  }
+  .j3 {
+    transform-origin: 170px 90px;
+    animation: j3 var(--t3) ease-in-out var(--l3) infinite alternate;
+  }
+
+  @keyframes j1 {
+    from {
+      transform: rotate(-13deg);
+    }
+    to {
+      transform: rotate(9deg);
+    }
+  }
+  @keyframes j2 {
+    from {
+      transform: rotate(16deg);
+    }
+    to {
+      transform: rotate(-24deg);
+    }
+  }
+  @keyframes j3 {
+    from {
+      transform: rotate(-18deg);
+    }
+    to {
+      transform: rotate(26deg);
+    }
+  }
+</style>

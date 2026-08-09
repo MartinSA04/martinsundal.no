@@ -1,0 +1,97 @@
+---
+/**
+ * The paired LABEL: VALUE telemetry line. The densest device in the
+ * references — every panel carries two or three of these, and they are what
+ * make a block read as instrumentation rather than as a caption.
+ *
+ * Values can be driven at runtime: each is wrapped in a span carrying
+ * data-readout="<key>", so a script updates one number without touching the
+ * label or re-rendering the row.
+ */
+interface Pair {
+  label: string;
+  value: string;
+  /** Sets data-readout on the value, making it addressable by script. */
+  key?: string;
+  signal?: boolean;
+}
+
+interface Props {
+  pairs: Pair[];
+  /** `stack` puts one pair per line; `inline` runs them along one line. */
+  layout?: "inline" | "stack";
+  class?: string;
+}
+
+const { pairs, layout = "inline", class: className } = Astro.props;
+---
+
+<p
+  class:list={["micro-readout", className]}
+  data-micro="readout"
+  data-layout={layout}
+>
+  {
+    pairs.map((pair) => (
+      <span class="micro-readout-pair">
+        <span class="micro-readout-label">{pair.label}</span>
+        <span
+          class="micro-readout-value"
+          data-readout={pair.key}
+          data-signal={pair.signal ? "" : undefined}
+        >
+          {pair.value}
+        </span>
+      </span>
+    ))
+  }
+</p>
+
+<style>
+  .micro-readout {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.7;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-2);
+  }
+
+  .micro-readout[data-layout="stack"] {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* The separator is a middle dot between pairs, not after the last one, so
+     the line ends on data rather than on punctuation. */
+  .micro-readout[data-layout="inline"]
+    .micro-readout-pair
+    + .micro-readout-pair::before {
+    content: "·";
+    color: var(--hair);
+    padding-inline-end: var(--space-2);
+  }
+
+  .micro-readout-label {
+    color: var(--muted);
+    padding-inline-end: 0.6em;
+  }
+
+  .micro-readout-value {
+    color: var(--ink);
+  }
+
+  .micro-readout-value[data-signal] {
+    color: var(--sig);
+  }
+
+  /* Stacked rows are a table in disguise: the label column is fixed so the
+     values align down the left edge instead of ragging with label length. */
+  .micro-readout[data-layout="stack"] .micro-readout-pair {
+    display: grid;
+    grid-template-columns: minmax(5.5rem, max-content) 1fr;
+  }
+</style>

@@ -1,0 +1,391 @@
+---
+import "../styles/kernel.css";
+import Seo from "../components/seo/Seo.astro";
+import JsonLd from "../components/seo/JsonLd.astro";
+import Icon from "../components/micro/Icon.astro";
+import { STORAGE_KEY, THEMES } from "../scripts/theme.ts";
+
+interface Props {
+  title: string;
+  description: string;
+  canonicalPath: string;
+  ogImage: string;
+  graph: unknown;
+  ogType?: "website" | "profile" | "article";
+  noindex?: boolean;
+  bodyClass?: string;
+  /**
+   * A world's four tokens, applied to <body> rather than to the article that
+   * uses them. The header and footer are siblings of that article, so without
+   * this they keep the root theme and a bone bar brackets every dark world.
+   */
+  world?: { sub: string; ink: string; hair: string; sig: string };
+  /** Replaces the theme toggle on world pages, which are theme-invariant. */
+  chromeTag?: string;
+  /**
+   * Puts the toggle back alongside the chrome tag. For a world that carries a
+   * real light/dark palette rather than one fixed substrate — study-companion
+   * wears the framework's own tokens, and those answer to `data-theme`.
+   */
+  themeToggle?: boolean;
+  /**
+   * Set by a page that draws its own ending, which suppresses the site footer.
+   *
+   * The plate's Fig. 06 carries a terminus — datum, coordinates, colophon, all
+   * on one rule. Printing the site footer under it said the same three facts a
+   * second time, eleven lines and a dead gap later.
+   */
+  terminus?: boolean;
+}
+
+const {
+  title,
+  description,
+  canonicalPath,
+  ogImage,
+  graph,
+  ogType,
+  noindex,
+  bodyClass,
+  world,
+  chromeTag,
+  themeToggle,
+  terminus,
+} = Astro.props;
+
+const year = new Date().getFullYear();
+const themeList = JSON.stringify(THEMES);
+
+/* --muted is re-derived here for the same reason project.css re-derives it:
+   custom properties are substituted where they are *declared*, so the :root
+   --muted would resolve against the root theme's ink and substrate and then
+   inherit down as an already-computed colour. */
+const worldStyle = world
+  ? [
+      `--sub:${world.sub}`,
+      `--ink:${world.ink}`,
+      `--hair:${world.hair}`,
+      `--sig:${world.sig}`,
+      `--muted:color-mix(in oklab, ${world.ink} 72%, ${world.sub})`,
+    ].join(";")
+  : undefined;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    {/* Must run before any paint, or the page flashes the wrong theme. */}
+    <script is:inline define:vars={{ key: STORAGE_KEY, themeList }}>
+      (function () {
+        var valid = JSON.parse(themeList);
+        var stored = null;
+        try {
+          stored = localStorage.getItem(key);
+        } catch (e) {
+          /* blocked storage; fall through to the system preference */
+        }
+        var theme =
+          valid.indexOf(stored) !== -1
+            ? stored
+            : window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+
+    <meta
+      name="theme-color"
+      content="#f4f1ea"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#0b0b0c"
+      media="(prefers-color-scheme: dark)"
+    />
+
+    <link
+      rel="preload"
+      href="/fonts/archivo-var.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/plexmono-400.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <!-- The 2011 convention: robots.txt is for machines, this one is for
+         people. It is only findable if it is declared. -->
+    <link rel="author" type="text/plain" href="/humans.txt" />
+
+    <Seo
+      title={title}
+      description={description}
+      canonicalPath={canonicalPath}
+      ogImage={ogImage}
+      ogType={ogType}
+      noindex={noindex}
+    />
+    <JsonLd graph={graph} />
+
+    <script
+      data-goatcounter="https://martinsundal.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"></script>
+  </head>
+
+  <body class={bodyClass} style={worldStyle}>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="mark" href="/" aria-label="Martin Sundal Aspås — home">
+          <span aria-hidden="true">MSA</span>
+        </a>
+
+        <nav class="site-nav" aria-label="Primary">
+          <a href="/work/">Work</a>
+          <a href="/#projects">Projects</a>
+          <a href="/#contact">Contact</a>
+        </nav>
+
+        {
+          /* A world usually fixes its own substrate, so the toggle would be a
+            control that does nothing and the page's index takes its place. A
+            world that opts in has two real themes and gets both. */
+          chromeTag && (
+            <span
+              class:list={[
+                "chrome-tag micro-label",
+                { "chrome-tag-yields": themeToggle },
+              ]}
+            >
+              {chromeTag}
+            </span>
+          )
+        }
+        {
+          (!chromeTag || themeToggle) && (
+            <button id="theme-toggle" type="button" aria-label="Toggle theme">
+              <Icon name="theme-light" size={15} />
+              <Icon name="theme-dark" size={15} />
+            </button>
+          )
+        }
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    {
+      /* A page that draws its own ending does not get a second one. The
+         barcode that used to sit in the middle of this row is gone with it:
+         it was seeded on the year and encoded nothing, on a site where every
+         other mark is computed from something true. */
+      !terminus && (
+        <footer class="site-footer">
+          <div class="wrap footer-inner">
+            <span class="micro-label">© {year} Martin Sundal Aspås</span>
+            <hr class="micro-rule foot-rule" />
+            <span class="micro-label">Trondheim · NO</span>
+          </div>
+        </footer>
+      )
+    }
+
+    <script>
+      import { initTheme } from "../scripts/theme.ts";
+      initTheme();
+    </script>
+
+    <style>
+      .skip {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        z-index: 100;
+        padding: 0.7rem 1rem;
+        background: var(--ink);
+        color: var(--sub);
+        font-family: var(--font-mono);
+        font-size: var(--step--1);
+        text-decoration: none;
+      }
+
+      .skip:focus {
+        left: 0;
+      }
+
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: color-mix(in srgb, var(--sub) 88%, transparent);
+        backdrop-filter: blur(10px);
+        border-bottom: var(--rule) solid var(--hair);
+      }
+
+      .header-inner {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        min-height: 3.5rem;
+        /* The mark, three nav items and the index add up to 344px, which is
+           wider than a 360px phone once the gutters are taken off. Below that
+           the gaps close up first, and the index drops to its own line only on
+           the narrowest screens left. */
+        flex-wrap: wrap;
+        row-gap: var(--space-2);
+      }
+
+      @media (max-width: 30rem) {
+        .header-inner,
+        .site-nav {
+          gap: var(--space-2);
+        }
+
+        /* A themed world carries the index AND the toggle, which is one item
+           more than the row was measured for: on a small phone the pair wraps
+           to a second line and the bar grows. The index is a label and the
+           toggle is a control, so the label is what gives way. */
+        .chrome-tag-yields {
+          display: none;
+        }
+      }
+
+      .mark {
+        font-family: var(--font-mono);
+        font-weight: 600;
+        letter-spacing: 0.22em;
+        font-size: var(--step--1);
+        text-decoration: none;
+        padding-inline-end: var(--space-2);
+        border-inline-end: var(--rule) solid var(--hair);
+      }
+
+      .site-nav {
+        display: flex;
+        gap: var(--space-3);
+        margin-inline-end: auto;
+        font-family: var(--font-mono);
+        font-size: var(--step--1);
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+      }
+
+      .site-nav a {
+        color: var(--muted);
+        text-decoration: none;
+        padding-block: 0.35rem;
+        border-bottom: var(--rule) solid transparent;
+        transition:
+          color 0.15s ease,
+          border-color 0.15s ease;
+      }
+
+      .site-nav a:hover {
+        color: var(--ink);
+        border-bottom-color: var(--sig);
+      }
+
+      #theme-toggle {
+        background: none;
+        border: 0;
+        color: var(--muted);
+        width: 2rem;
+        height: 2rem;
+        line-height: 1;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        transition:
+          color 0.15s ease,
+          border-color 0.15s ease;
+      }
+
+      #theme-toggle:hover {
+        color: var(--ink);
+        border-color: var(--ink);
+      }
+
+      /* Both marks ship in the markup and CSS paints one. The blocking
+         script in <head> sets data-theme before first paint, so the mark is
+         right on the first frame without waiting for theme.ts to load.
+
+         :global() on both ends is required: Astro scopes these styles by
+         hashing elements declared in *this* file, and neither <html> nor the
+         <svg> inside Icon.astro is one of them. */
+      #theme-toggle :global(.micro-icon) {
+        display: none;
+      }
+
+      :global([data-theme="light"])
+        #theme-toggle
+        :global([data-icon="theme-light"]),
+      :global([data-theme="dark"])
+        #theme-toggle
+        :global([data-icon="theme-dark"]) {
+        display: block;
+      }
+
+      /* Fenced, not boxed: the brackets are the container. */
+      .chrome-tag {
+        line-height: 1;
+        color: var(--sig);
+        /* The nav's own auto margin does this while they share a line; this
+           keeps it at the right edge once the row wraps and the nav is gone. */
+        margin-inline-start: auto;
+      }
+      .chrome-tag::before {
+        content: "[";
+        padding-inline-end: 0.4em;
+        opacity: 0.7;
+      }
+      .chrome-tag::after {
+        content: "]";
+        padding-inline-start: 0.3em;
+        opacity: 0.7;
+      }
+
+      .site-footer {
+        border-top: var(--rule) solid var(--hair);
+      }
+
+      .footer-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+        flex-wrap: wrap;
+        padding-block: var(--space-4);
+      }
+
+      .foot-rule {
+        flex: 1 1 60px;
+        min-width: 40px;
+        width: auto;
+      }
+
+      @media (max-width: 34rem) {
+        .site-nav {
+          gap: var(--space-2);
+        }
+        .mark {
+          border-inline-end: 0;
+          padding-inline-end: 0;
+        }
+      }
+    </style>
+  </body>
+</html>

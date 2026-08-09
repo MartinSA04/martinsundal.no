@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://martinsundal.no/sitemap.xml

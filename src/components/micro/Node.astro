@@ -1,0 +1,86 @@
+---
+/**
+ * A labelled circle, optionally with a leader line running out of it. The
+ * references use these to annotate: a ring sits on the thing being named and
+ * a hairline carries the name away from it.
+ */
+interface Props {
+  label: string;
+  /** Draws a leader line from the ring toward the label. */
+  leader?: boolean;
+  /** Fills the ring in --sig, marking it as the active node. */
+  active?: boolean;
+  /** Optional single character or numeral inside the ring. */
+  glyph?: string;
+  size?: number;
+  class?: string;
+}
+
+const {
+  label,
+  leader = false,
+  active = false,
+  glyph,
+  size = 14,
+  class: className,
+} = Astro.props;
+---
+
+<span
+  class:list={["micro-node", className]}
+  data-micro="node"
+  data-active={active ? "" : undefined}
+  style={`--node-size:${size}px`}
+>
+  <span class="micro-node-ring" aria-hidden="true">{glyph}</span>
+  {leader && <span class="micro-node-leader" aria-hidden="true" />}
+  <span class="micro-node-label">{label}</span>
+</span>
+
+<style>
+  .micro-node {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+
+  .micro-node-ring {
+    inline-size: var(--node-size);
+    block-size: var(--node-size);
+    flex: none;
+    border: var(--rule) solid var(--hair);
+    border-radius: 50%;
+    display: inline-grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-size: calc(var(--node-size) * 0.55);
+    line-height: 1;
+    color: var(--muted);
+  }
+
+  .micro-node[data-active] .micro-node-ring {
+    border-color: var(--sig);
+    background: var(--sig);
+    color: var(--sub);
+  }
+
+  .micro-node-leader {
+    inline-size: var(--space-2);
+    block-size: var(--rule);
+    background: var(--hair);
+    flex: none;
+  }
+
+  .micro-node-label {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .micro-node[data-active] .micro-node-label {
+    color: var(--ink);
+  }
+</style>

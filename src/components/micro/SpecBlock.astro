@@ -1,0 +1,19 @@
+---
+interface Props {
+  rows: { label: string; value: string }[];
+  class?: string;
+}
+
+const { rows, class: className } = Astro.props;
+---
+
+<dl class:list={["micro-spec", className]} data-micro="spec">
+  {
+    rows.map((row) => (
+      <>
+        <dt>{row.label}</dt>
+        <dd>{row.value}</dd>
+      </>
+    ))
+  }
+</dl>

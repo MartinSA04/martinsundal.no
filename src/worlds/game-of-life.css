@@ -1,0 +1,283 @@
+/* World 05 — graph paper. Plotter lines, monospace, a visible grid. */
+@import "../styles/project.css";
+
+[data-world="game-of-life"] {
+  --grid: color-mix(in oklab, var(--hair) 45%, var(--sub));
+
+  /* Live cells are this world's ink, not the root theme's. The page pins a
+     light palette in both themes, so a board reading the root's --life-cell
+     painted #f4f1ea cells on #fbfbf8 paper for every visitor in dark mode. */
+  --life-cell: var(--ink);
+  background-image:
+    repeating-linear-gradient(to right, var(--grid) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(to bottom, var(--grid) 0 1px, transparent 1px 24px);
+}
+
+[data-world="game-of-life"] .head h1 {
+  font-size: var(--step-3);
+  max-width: 16ch;
+}
+
+[data-world="game-of-life"] :is(.lede, .prose p, .prose li) {
+  font-family: var(--font-mono);
+}
+
+[data-world="game-of-life"] .lede {
+  font-size: var(--step-0);
+  line-height: 1.7;
+}
+
+[data-world="game-of-life"] .prose p,
+[data-world="game-of-life"] .prose li {
+  font-size: var(--step--1);
+  line-height: 1.85;
+}
+
+/* Prose sits on paper so the grid does not fight the text. */
+[data-world="game-of-life"] .prose,
+[data-world="game-of-life"] .head,
+[data-world="game-of-life"] .gol-cell-spec {
+  background: var(--sub);
+}
+
+/* --- shape: plotted on the grid ------------------------------------------ */
+
+/* Twelve columns on the same 24px module the background rules are drawn on,
+   so every block starts on a visible line instead of on a text measure. */
+.gol-field {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--space-3) 24px;
+  align-items: start;
+}
+
+/* Rows are explicit so the spec plots beside the prose rather than being swept
+   into a row of its own by auto-placement. */
+.gol-cell-head {
+  grid-column: 1 / 10;
+  grid-row: 1;
+  padding: var(--space-2) var(--space-3) var(--space-3) 0;
+}
+
+.gol-cell-board {
+  grid-column: 1 / 13;
+  grid-row: 2;
+  margin-block: var(--space-3);
+}
+
+.gol-cell-prose {
+  grid-column: 1 / 9;
+  grid-row: 3;
+  padding: var(--space-3) var(--space-3) var(--space-3) 0;
+}
+
+.gol-cell-spec {
+  grid-column: 9 / 13;
+  grid-row: 3;
+  padding: var(--space-2) var(--space-3);
+  border: var(--rule) solid var(--hair);
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+@media (max-width: 60rem) {
+  .gol-field {
+    grid-template-columns: 1fr;
+  }
+  .gol-cell-head,
+  .gol-cell-spec,
+  .gol-cell-board,
+  .gol-cell-prose {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+}
+
+/* --- the board ------------------------------------------------------------ */
+
+.gol {
+  border: var(--rule) solid var(--ink);
+  background: var(--sub);
+}
+
+.gol-view {
+  position: relative;
+  overflow: hidden;
+}
+
+.gol-board {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 656 / 256;
+  image-rendering: pixelated;
+  background: var(--sub);
+}
+
+.gol-crop-note {
+  display: none;
+}
+
+.gol-controls {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-top: var(--rule) solid var(--hair);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+}
+
+/* Three readings of one board, so they sit on a line rather than stacking:
+   where the run is, how much of it is alive, and whether it is finished. */
+.gol-read {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.gol-gen {
+  color: var(--sig);
+  min-width: 13ch;
+}
+
+.gol-pop {
+  color: var(--muted);
+  min-width: 9ch;
+}
+
+.gol-state {
+  font-size: var(--step--2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  min-width: 11ch;
+}
+
+.gol-state[data-settled] {
+  color: var(--ink);
+}
+
+.gol-state[data-settled]::before {
+  content: "";
+  display: inline-block;
+  width: 0.45em;
+  height: 0.45em;
+  margin-right: 0.5em;
+  background: var(--sig);
+  vertical-align: 0.08em;
+}
+
+/* A stock range control arrives as a fat blue capsule, which on a page drawn
+   in hairlines is the loudest thing in the frame. Rebuilt as a plotter would
+   have it: a ruled track and a carriage sitting on it. */
+.gol-controls input[type="range"] {
+  width: 100%;
+  appearance: none;
+  background: none;
+  height: 1.1rem;
+  cursor: ew-resize;
+}
+
+.gol-controls input[type="range"]::-webkit-slider-runnable-track {
+  height: var(--rule);
+  background: var(--hair);
+}
+
+.gol-controls input[type="range"]::-moz-range-track {
+  height: var(--rule);
+  background: var(--hair);
+}
+
+.gol-controls input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 0.5rem;
+  height: 0.85rem;
+  /* Half the thumb's height, less half the track's, to sit it on the line. */
+  margin-top: calc(var(--rule) / 2 - 0.425rem);
+  border: 0;
+  border-radius: 0;
+  background: var(--sig);
+}
+
+.gol-controls input[type="range"]::-moz-range-thumb {
+  width: 0.5rem;
+  height: 0.85rem;
+  border: 0;
+  border-radius: 0;
+  background: var(--sig);
+}
+
+.gol-play {
+  background: none;
+  border: var(--rule) solid var(--hair);
+  color: var(--ink);
+  font: inherit;
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+  min-width: 5.5rem;
+}
+
+.gol-play:hover {
+  border-color: var(--sig);
+  color: var(--sig);
+}
+
+.gol-note {
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: color-mix(in oklab, var(--ink) 72%, var(--sub));
+}
+
+/* Below about 48rem the whole 656-cell field works out at under one pixel per
+   cell, and a two-cell letter stroke stops being a mark at all. The board goes
+   on running in full; the viewport crops to the window the text settles in —
+   cells 105–550 by 97–158 — so a letter is drawn at a legible size and the
+   gliders arrive from off-view instead. The percentages are that window
+   expressed against the canvas, and they hold the 656:256 aspect. */
+@media (max-width: 48rem) {
+  .gol-view {
+    aspect-ratio: 446 / 62;
+  }
+
+  .gol-board {
+    position: absolute;
+    aspect-ratio: auto;
+    /* The reset holds every canvas to max-width:100%, which is exactly what a
+       board being deliberately overscaled past its window must not obey. */
+    max-width: none;
+    width: 147.085%;
+    height: 412.903%;
+    left: -23.543%;
+    top: -156.452%;
+  }
+
+  .gol-crop-note {
+    display: block;
+    padding: var(--space-2) var(--space-2) 0;
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    color: var(--muted);
+  }
+}
+
+@media (max-width: 40rem) {
+  /* The transport stays on one line and the three readings drop below it.
+     Stacked, a full-width Play button becomes the largest element on the
+     page, which is not what it is. */
+  .gol-controls {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .gol-read {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+  }
+  [data-world="game-of-life"] {
+    background-image: none;
+  }
+}

@@ -1,0 +1,46 @@
+---
+/**
+ * The stacked hairline rule from the Lumon manual: five 1px lines 2px apart,
+ * read as one band. A single hairline is a divider; a stack of them is a
+ * mark, which is the difference between the two documents.
+ *
+ * Drawn with repeating-linear-gradient so the whole band is one box and the
+ * line count is a number rather than five elements.
+ */
+interface Props {
+  lines?: number;
+  /** `taper` fades the band out to the right, as the references do. */
+  variant?: "flat" | "taper";
+  class?: string;
+}
+
+const { lines = 5, variant = "flat", class: className } = Astro.props;
+
+/* 1px line + 2px gap. Height is derived so the band ends on a line, not on a
+   trailing gap that would read as slack under the last rule. */
+const height = lines * 3 - 2;
+---
+
+<span
+  class:list={["micro-stripe", className]}
+  data-micro="stripe"
+  data-variant={variant}
+  style={`--stripe-h:${height}px`}
+  aria-hidden="true"></span>
+
+<style>
+  .micro-stripe {
+    display: block;
+    width: 100%;
+    height: var(--stripe-h);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      var(--hair) 0 var(--rule),
+      transparent var(--rule) 3px
+    );
+  }
+
+  .micro-stripe[data-variant="taper"] {
+    mask-image: linear-gradient(to right, #000 0%, #000 55%, transparent 100%);
+  }
+</style>

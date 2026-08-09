@@ -1,0 +1,152 @@
+---
+/**
+ * The section composition — built the way the reference sheets build the
+ * CONFIG cluster, not as a bullet in a header slot.
+ *
+ * The figure does not sit beside the heading. It straddles an axis rule that
+ * runs the full measure and continues out both sides of it, terminating in
+ * end caps. The numeral sits directly beneath the figure on the same vertical
+ * centre line, the label runs off it, and the note closes the far end. Figure,
+ * rule and type are one interlocked unit: move any part and the rest is
+ * visibly wrong, which is what makes the graphic structural rather than
+ * decorative.
+ */
+import Figure from "./Figure.astro";
+
+interface Props {
+  n: number;
+  label: string;
+  /** Straddles the axis. Each section should own a distinct one. */
+  figure:
+    | "starburst"
+    | "quadrant"
+    | "halfdisc"
+    | "spoke"
+    | "capsule"
+    | "concentric"
+    | "tangent"
+    | "target"
+    | "eclipse"
+    | "lozenges"
+    | "wedge"
+    | "grid";
+  /** Closes the far end of the axis, e.g. a count or a status. */
+  note?: string;
+  /** px. The numeral below is centred on this. */
+  size?: number;
+  class?: string;
+}
+
+const { n, label, figure, note, size = 72, class: className } = Astro.props;
+---
+
+<div
+  class:list={["micro-mark", className]}
+  data-micro="mark"
+  style={`--fig:${size}px`}
+>
+  <div class="micro-mark-axis" aria-hidden="true">
+    <span class="micro-mark-cap" data-at="start"></span>
+    <span class="micro-mark-rule"></span>
+    <span class="micro-mark-cap" data-at="end"></span>
+    <span class="micro-mark-fig"><Figure name={figure} size={size} /></span>
+  </div>
+
+  <span class="micro-mark-n">{String(n).padStart(2, "0")}</span>
+  <span class="micro-mark-label">{label}</span>
+  {note && <span class="micro-mark-note micro-label">{note}</span>}
+</div>
+
+<style>
+  .micro-mark {
+    display: grid;
+    grid-template-columns: var(--fig) minmax(0, 1fr) auto;
+    grid-template-areas:
+      "axis  axis  axis"
+      "n     label note";
+    column-gap: var(--space-2);
+    row-gap: 0.55rem;
+    align-items: baseline;
+    margin-block-end: var(--space-4);
+  }
+
+  /* The axis is a real row with the figure's own height, so the rule sits on
+     the figure's centre line rather than being nudged there. */
+  .micro-mark-axis {
+    grid-area: axis;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    block-size: var(--fig);
+  }
+
+  .micro-mark-rule {
+    flex: 1;
+    block-size: var(--rule);
+    background: var(--hair);
+  }
+
+  /* End caps, as the references close a run of axis: a small open circle at
+     each end rather than a line that simply stops. */
+  .micro-mark-cap {
+    inline-size: 5px;
+    block-size: 5px;
+    border: var(--rule) solid var(--hair);
+    border-radius: 50%;
+    flex: none;
+  }
+
+  .micro-mark-cap[data-at="end"] {
+    background: var(--hair);
+  }
+
+  /* Overlaid, not inlined: the rule runs behind the figure and reappears the
+     other side, so the two read as one axis passing through a hub. */
+  .micro-mark-fig {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    translate: 0 -50%;
+    display: block;
+    color: var(--ink);
+  }
+
+  /* Centred under the figure. The shared centre line is the whole point of
+     the composition. */
+  .micro-mark-n {
+    grid-area: n;
+    justify-self: center;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--step-2);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+
+  .micro-mark-label {
+    grid-area: label;
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .micro-mark-note {
+    grid-area: note;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 46rem) {
+    .micro-mark {
+      --fig: 52px;
+    }
+    .micro-mark-note {
+      display: none;
+    }
+  }
+</style>

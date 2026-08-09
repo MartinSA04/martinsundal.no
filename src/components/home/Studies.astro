@@ -1,0 +1,458 @@
+---
+/**
+ * FIG. 05 — Studies.
+ *
+ * Three columns: the wavefunction surface, the readout, the Bloch sphere. Both
+ * figures are computed in src/lib/quantum.ts rather than drawn, and the maths
+ * for each is documented there.
+ *
+ * The τ = 0 frame is rendered here, on the server. src/scripts/surface.ts then
+ * takes over the same elements and advances them — so the figures are correct
+ * with JavaScript off, and correct but still under prefers-reduced-motion,
+ * which is the contract the masthead's node map keeps too.
+ *
+ * Every fact in the readout is from the NTNU catalogue: programme MTFYMA,
+ * cohort 2024, specialization MTFYMAKVANTE24. So is the lead's count of four
+ * specializations — biophysics and medical technology, industrial mathematics,
+ * quantum technology, technical physics — which is the choice year 03 opens,
+ * and the first choice the programme offers at all. The year-03 course list and
+ * the rest of the source material are in docs/source-material.md.
+ */
+import {
+  AXES,
+  BLOCH_GEOMETRY,
+  BLOCH_PANEL,
+  BLOCH_PERIOD,
+  PANEL,
+  TURN,
+  blochFrame,
+  meshPoints,
+} from "../../lib/quantum.ts";
+
+const mesh = meshPoints(0);
+const bloch = blochFrame(0);
+const { cx, cy, r, axes, poleTop, poleBottom, axisBottom, ket0, ket1 } =
+  BLOCH_GEOMETRY;
+---
+
+<section
+  class="zone studies"
+  aria-labelledby="stu-h"
+  data-surface
+  data-turn={TURN}
+  data-bloch-period={BLOCH_PERIOD}
+>
+  <div class="sec-head">
+    <h2 id="stu-h" class="p-u p-u--lg p-u--ink zh">Fig. 05 — Studies</h2>
+    <span class="p-u p-tag">Year 03 / 05</span>
+    <span class="p-scale" aria-hidden="true"></span>
+  </div>
+
+  <div class="band">
+    <!-- 05a — the surface. -->
+    <figure class="fig surf-fig">
+      <div class="surf ins" aria-hidden="true">
+        <svg viewBox={`0 0 ${PANEL} ${PANEL}`}>
+          <!-- Reference axes, overrunning the field on all four sides. -->
+          <path
+            class="h ax"
+            d={`M${AXES.h.x1} ${AXES.h.y}H${AXES.h.x2}M${AXES.v.x} ${AXES.v.y1}V${AXES.v.y2}`}
+          ></path>
+
+          <!-- Spokes then rings, in the order src/lib/quantum.ts emits them.
+               The wall of the well is not among them: psi is pinned to zero
+               there, so anything drawn on it is a node and would sit still
+               while the rest of the figure moved. -->
+          <g class="mesh">
+            {mesh.map((points) => <polyline points={points} />)}
+          </g>
+
+          <!-- Markers sit on the axes, not at the panel corners — the way the
+               reference sheet ends each of its axes. -->
+          <g class="handles">
+            {
+              AXES.marks.map((m) => (
+                <rect
+                  class={m.filled ? "f" : "i"}
+                  x={m.x - 3.5}
+                  y={m.y - 3.5}
+                  width="7"
+                  height="7"
+                />
+              ))
+            }
+          </g>
+        </svg>
+      </div>
+      <figcaption class="p-u cap">
+        Fig. 05a · Quantum corral<br />
+        <span class="sym">
+          {
+            /* Hand-set MathML. The subscripts are real subscripts, so j_m1 reads
+             as the first zero of J_m and not as three letters in a row. */
+          }
+          <math display="inline">
+            <mi>Re</mi><mspace width="0.17em"></mspace><mi>ψ</mi>
+            <mo>=</mo>
+            <munder><mo>&#x2211;</mo><mi>m</mi></munder>
+            <msub><mi>c</mi><mi>m</mi></msub>
+            <msub><mi>J</mi><mi>m</mi></msub>
+            <mo stretchy="false">(</mo>
+            <msub><mi>j</mi><mrow><mi>m</mi><mn>1</mn></mrow></msub>
+            <mi>r</mi>
+            <mo stretchy="false">)</mo>
+            <mi>cos</mi><mo>&#x2061;</mo>
+            <mo stretchy="false">(</mo>
+            <mi>m</mi><mi>θ</mi><mo>&#xB1;</mo><msub><mi>ω</mi><mi>m</mi></msub
+            ><mi>t</mi>
+            <mo stretchy="false">)</mo>
+          </math>
+        </span><br />
+        <span class="sym">m = 0, 2, 3 · turn {TURN}s</span>
+      </figcaption>
+    </figure>
+
+    <!-- The readout. -->
+    <div class="read">
+      <div class="p-stack">
+        <p class="p-u p-u--hair">Institution</p>
+        <p class="p-u p-u--ink">NTNU · Trondheim</p>
+      </div>
+
+      <p class="prog">Applied Physics and Mathematics</p>
+      <p class="p-u p-u--n prog-en">
+        Fysikk og matematikk · integrated MSc · 5 years
+      </p>
+
+      <div class="p-rule" style="margin-top:16px"></div>
+
+      <div class="spec">
+        <p class="p-u">Specialization · from year 03</p>
+        <p class="spec-name">Quantum Technology</p>
+        <p class="p-u">Kvanteteknologi · MTFYMAKVANTE24</p>
+      </div>
+
+      <p class="lead">
+        Quantum computing is what I want to work on. It is physics and computing
+        at the same time, and nobody knows yet what it turns into. Year 03 is the
+        first year with a choice in it; there were four specializations, and I
+        took that one.
+      </p>
+
+      <div class="p-chain" style="margin-top:20px" aria-hidden="true">
+        <span class="p-u p-pill">2024</span>
+        <span class="p-u p-pill">2029</span>
+      </div>
+    </div>
+
+    <!-- 05b — the sphere. -->
+    <figure class="fig bloch-fig">
+      <div class="bloch ins" aria-hidden="true">
+        <svg viewBox={`0 0 ${BLOCH_PANEL} ${BLOCH_PANEL}`}>
+          <!-- Silhouette, unfilled — everything on the plate is drawn, nothing
+               is shaded. -->
+          <circle class="h" cx={cx} cy={cy} r={r}></circle>
+
+          <!-- The equator, split at the silhouette: solid where it passes in
+               front of the sphere, dashed where it runs behind. -->
+          <polyline class="d" points={BLOCH_GEOMETRY.equatorBack}></polyline>
+          <polyline class="h" points={BLOCH_GEOMETRY.equatorFront}></polyline>
+
+          <!-- Three axes, arrowed on the positive directions only. The z axis
+               carries on below the origin unarrowed, to the |1> pole. -->
+          <line class="h" x1={cx} y1={cy} x2={axisBottom[0]} y2={axisBottom[1]}
+          ></line>
+          {
+            (["x", "y", "z"] as const).map((k) => (
+              <>
+                <line
+                  class="h"
+                  x1={cx}
+                  y1={cy}
+                  x2={axes[k].x2}
+                  y2={axes[k].y2}
+                />
+                <polyline class="f" points={axes[k].head} />
+                <text class="t-ink sym ax-l" x={axes[k].lx} y={axes[k].ly}>
+                  {k}
+                </text>
+              </>
+            ))
+          }
+
+          <!-- The two angles. Both arcs swing with the state, so they are
+               rewritten each frame along with the vector. -->
+          <polyline class="h arc" data-theta-arc points={bloch.thetaArc}
+          ></polyline>
+          <polyline class="h arc" data-phi-arc points={bloch.phiArc}></polyline>
+          <text
+            class="t-ink sym"
+            data-theta-label
+            x={bloch.thetaLabel[0]}
+            y={bloch.thetaLabel[1]}>θ</text
+          >
+          <text
+            class="t-ink sym"
+            data-phi-label
+            x={bloch.phiLabel[0]}
+            y={bloch.phiLabel[1]}>φ</text
+          >
+
+          <!-- The state's drop onto the equatorial plane, and the radius out
+               to where it lands — the pair that fixes phi. -->
+          <line
+            class="d"
+            data-drop
+            x1={bloch.tip[0]}
+            y1={bloch.tip[1]}
+            x2={bloch.foot[0]}
+            y2={bloch.foot[1]}></line>
+          <line
+            class="d"
+            data-radius
+            x1={cx}
+            y1={cy}
+            x2={bloch.foot[0]}
+            y2={bloch.foot[1]}></line>
+
+          <!-- The state vector itself. -->
+          <line
+            class="i vec"
+            data-vec
+            x1={cx}
+            y1={cy}
+            x2={bloch.tip[0]}
+            y2={bloch.tip[1]}></line>
+          <polyline class="f tip" data-head points={bloch.head}></polyline>
+          <circle class="f" cx={cx} cy={cy} r="1.8"></circle>
+          <circle
+            class="f tip"
+            data-tip
+            cx={bloch.tip[0]}
+            cy={bloch.tip[1]}
+            r="2.6"></circle>
+          <text
+            class="t-ink sym"
+            data-state-label
+            x={bloch.stateLabel[0]}
+            y={bloch.stateLabel[1]}>|ψ&#x27E9;</text
+          >
+
+          <!-- The poles, dotted on the sphere; their kets hang off the ends of
+               the z axis, out where the state can never reach them. -->
+          <circle class="f" cx={poleTop[0]} cy={poleTop[1]} r="2.2"></circle>
+          <circle class="f" cx={poleBottom[0]} cy={poleBottom[1]} r="2.2"
+          ></circle>
+          <text class="t-ink sym" x={ket0[0]} y={ket0[1]}>|0&#x27E9;</text>
+          <text class="t-ink sym" x={ket1[0]} y={ket1[1]}>|1&#x27E9;</text>
+        </svg>
+      </div>
+      <figcaption class="p-u cap">
+        Fig. 05b · Bloch sphere<br />
+        <span class="sym">
+          Driven qubit · tilted precession · T {BLOCH_PERIOD}s
+        </span>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<script>
+  import "../../scripts/surface.ts";
+</script>
+
+<style>
+  .studies {
+    margin-bottom: var(--loose);
+  }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .sec-head .p-scale {
+    flex: 1 1 60px;
+    min-width: 40px;
+    align-self: center;
+    position: relative;
+    top: -2px;
+  }
+
+  /* Surface · readout · sphere. The readout takes the slack, so both figures
+     hold the size they were drawn for instead of stretching with the page. */
+  .band {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: clamp(24px, 3.4vw, 58px);
+    align-items: start;
+    margin-top: 26px;
+  }
+
+  .fig {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .cap {
+    line-height: 1.55;
+  }
+
+  /* The captions carry ψ and θ, and .p-u uppercases — which turns θ into Θ and
+     reads as a zero. Anything with a symbol in it opts out. */
+  .sym {
+    text-transform: none;
+    /* A shade larger than the label above it, because 9.5px mono renders θ
+       close enough to a zero to be misread. */
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+  }
+
+  /* The caption's tracking is there to open up a run of mono glyphs. Inside the
+     formula it only pushes subscripts away from what they belong to. */
+  .sym math {
+    letter-spacing: normal;
+  }
+
+  .surf {
+    width: clamp(230px, 25vw, 336px);
+    aspect-ratio: 1;
+  }
+
+  /* Larger than the first pass: it now carries three axis labels, two angle
+     labels and three kets, and none of them survive being shrunk. */
+  .bloch {
+    width: clamp(200px, 21vw, 292px);
+    aspect-ratio: 1;
+  }
+
+  /* The caption is wider than the sphere, so without this the column sizes to
+     the text and pushes the figure into the plate's right margin. */
+  .bloch-fig {
+    max-width: clamp(200px, 21vw, 292px);
+  }
+
+  .surf svg,
+  .bloch svg {
+    width: 100%;
+    height: auto;
+  }
+
+  /* The axes locate the figure, they are not part of it — same weighting the
+     node map gives its own. */
+  .surf .ax {
+    opacity: 0.5;
+  }
+
+  /* No hidden-line removal: the reference mesh is transparent too. What keeps
+     it from reading as a grey wash is that the stroke stays a true hairline at
+     every size, so the density comes from the line count rather than the ink. */
+  .mesh polyline {
+    fill: none;
+    stroke: var(--hair);
+    stroke-width: 1;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .handles rect {
+    stroke-width: 1;
+  }
+
+  .arc {
+    fill: none;
+    opacity: 0.85;
+  }
+
+  /* The vector holds one weight all the way round. It used to drop to the
+     hairline behind the sphere as a depth cue, which read as the state fading
+     rather than as it passing behind — and the equator already carries the
+     depth, solid in front and dashed behind. */
+  .vec {
+    stroke-width: 1.4;
+  }
+
+  .bloch text {
+    font-size: 10px;
+  }
+
+  .bloch .sym {
+    text-transform: none;
+  }
+
+  /* Axis names are set the way a maths figure sets them, not the way the plate
+     sets a label. */
+  .bloch .ax-l {
+    font-style: italic;
+    font-size: 11px;
+  }
+
+  /* --- the readout -------------------------------------------------------- */
+
+  .prog {
+    font-weight: 500;
+    font-size: clamp(22px, 2.2vw, 31px);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    margin-top: 14px;
+  }
+
+  .prog-en {
+    margin-top: 8px;
+  }
+
+  .spec {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .spec-name {
+    font-weight: 500;
+    font-size: clamp(17px, 1.5vw, 21px);
+    letter-spacing: -0.015em;
+    line-height: 1.1;
+  }
+
+  .lead {
+    font-size: clamp(15px, 1.15vw, 17px);
+    line-height: 1.52;
+    max-width: 42em;
+    margin-top: 20px;
+    letter-spacing: -0.004em;
+    color: var(--muted);
+  }
+
+  @media (max-width: 67rem) {
+    .band {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 34px;
+      justify-items: start;
+    }
+    .surf {
+      width: min(320px, 78vw);
+    }
+    .bloch {
+      width: min(292px, 72vw);
+    }
+  }
+
+  /* The sphere carries three axis labels, two angles and three kets at 10px in
+     viewBox units. On a phone it is the one figure on the sheet that cannot be
+     read at the size the column gives it, so it goes rather than shrinks — the
+     same call the field map makes. The surface stays, centred in the column. */
+  @media (max-width: 46rem) {
+    .bloch-fig {
+      display: none;
+    }
+
+    .surf {
+      margin-inline: auto;
+    }
+  }
+</style>

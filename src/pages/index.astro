@@ -1,0 +1,43 @@
+---
+import "../styles/plate.css";
+import Base from "../layouts/Base.astro";
+import Masthead from "../components/home/Masthead.astro";
+import Board from "../components/home/Board.astro";
+import WorkField from "../components/home/WorkField.astro";
+import About from "../components/home/About.astro";
+import Studies from "../components/home/Studies.astro";
+import Contact from "../components/home/Contact.astro";
+import { orderedProjects } from "../lib/content.ts";
+import { homeGraph, SITE } from "../lib/jsonld.ts";
+
+const projects = await orderedProjects();
+const graph = homeGraph(projects.map((e) => ({ id: e.id, data: e.data })));
+
+const title = "Martin Sundal Aspås | Software Engineer, Robotics & Simulation";
+/* Kept under the 160 chars a search result will show — adding the
+   specialization to the old sentence put it at 190, so the day-job clause
+   loses "industrial software" rather than the studies losing the point. */
+const description =
+  "Software engineer in Trondheim. Robotics and simulation at Aker Solutions; Applied Physics and Mathematics at NTNU, specializing in quantum technology.";
+---
+
+<Base
+  title={title}
+  description={description}
+  canonicalPath="/"
+  ogImage={`${SITE}/og/home.png`}
+  ogType="profile"
+  graph={graph}
+  bodyClass="plate-page"
+  terminus
+>
+  <div class="plate">
+    <div class="plate-spine" aria-hidden="true"></div>
+    <Masthead />
+    <Board />
+    <WorkField projects={projects} />
+    <About />
+    <Studies />
+    <Contact />
+  </div>
+</Base>

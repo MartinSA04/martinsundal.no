@@ -1,0 +1,94 @@
+---
+/**
+ * Radial ray fan. Appears three times in symbols.webp and has no equivalent
+ * in any charting or icon library — d3-shape has arc, line, area and pie, but
+ * nothing that emits a bundle of rays from a point, and it is a loop over
+ * cos/sin either way.
+ *
+ * Rays are drawn from an origin at the top centre by default, which is how
+ * the reference sheets use it: a spray hanging below a node.
+ */
+interface Props {
+  /** Number of rays. */
+  rays?: number;
+  /** Total angle covered, in degrees. */
+  spread?: number;
+  /** Degrees clockwise from straight down. */
+  rotate?: number;
+  /** Every nth ray is drawn in --sig. 0 disables. */
+  accentEvery?: number;
+  size?: number;
+  class?: string;
+}
+
+const {
+  rays = 13,
+  spread = 90,
+  rotate = 0,
+  accentEvery = 0,
+  size = 96,
+  class: className,
+} = Astro.props;
+
+const CX = 50;
+const CY = 4;
+const LEN = 92;
+
+/* Rays are evenly spaced across the spread, inclusive of both edges, so a fan
+   reads as symmetrical about its centre line. */
+const lines = Array.from({ length: rays }, (_, i) => {
+  const t = rays === 1 ? 0.5 : i / (rays - 1);
+  const deg = rotate - spread / 2 + t * spread;
+  const rad = ((deg + 90) * Math.PI) / 180;
+  return {
+    x2: (CX + Math.cos(rad) * LEN).toFixed(2),
+    y2: (CY + Math.sin(rad) * LEN).toFixed(2),
+    accent: accentEvery > 0 && i % accentEvery === 0,
+  };
+});
+---
+
+<svg
+  class:list={["micro-fan", className]}
+  data-micro="fan"
+  viewBox="0 0 100 100"
+  width={size}
+  height={size}
+  aria-hidden="true"
+  focusable="false"
+>
+  {
+    lines.map((l) => (
+      <line
+        x1={CX}
+        y1={CY}
+        x2={l.x2}
+        y2={l.y2}
+        data-accent={l.accent ? "" : undefined}
+      />
+    ))
+  }
+  <circle cx={CX} cy={CY} r="2" class="micro-fan-hub"></circle>
+</svg>
+
+<style>
+  .micro-fan {
+    display: block;
+    flex: none;
+  }
+
+  .micro-fan line {
+    stroke: var(--hair);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .micro-fan line[data-accent] {
+    stroke: var(--sig);
+  }
+
+  .micro-fan-hub {
+    fill: var(--ink);
+    stroke: none;
+  }
+</style>

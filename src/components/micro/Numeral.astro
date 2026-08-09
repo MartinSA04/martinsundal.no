@@ -1,0 +1,66 @@
+---
+/**
+ * A display numeral drawn as an object rather than typed as a list marker.
+ * The references treat 0079, 007 and 009 as graphics — heavy, tabular, often
+ * ringed or fenced — and that is what separates an index from an ornament.
+ */
+interface Props {
+  n: number;
+  /** Zero-padded width. 2 gives 01, 4 gives 0001. */
+  pad?: number;
+  /** `outline` is hollow; `solid` is filled weight. */
+  variant?: "solid" | "outline";
+  /** Draws a circle around the numeral, as modu-graph's M26 does. */
+  ring?: boolean;
+  class?: string;
+}
+
+const {
+  n,
+  pad = 2,
+  variant = "solid",
+  ring = false,
+  class: className,
+} = Astro.props;
+
+const text = String(n).padStart(pad, "0");
+---
+
+<span
+  class:list={["micro-numeral", className]}
+  data-micro="numeral"
+  data-variant={variant}
+  data-ring={ring ? "" : undefined}>{text}</span
+>
+
+<style>
+  .micro-numeral {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--step-3);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    display: inline-block;
+  }
+
+  /* An outline numeral at hairline weight would disappear, so it is stroked
+     against the substrate rather than left at 1px. */
+  .micro-numeral[data-variant="outline"] {
+    color: transparent;
+    -webkit-text-stroke: 1.25px var(--hair);
+  }
+
+  .micro-numeral[data-ring] {
+    font-size: var(--step-0);
+    font-weight: 400;
+    display: inline-grid;
+    place-items: center;
+    inline-size: 2.1em;
+    aspect-ratio: 1;
+    border: var(--rule) solid var(--hair);
+    border-radius: 50%;
+    letter-spacing: 0;
+  }
+</style>

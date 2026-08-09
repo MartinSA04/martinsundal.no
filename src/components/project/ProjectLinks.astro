@@ -1,0 +1,32 @@
+---
+/**
+ * The project's outbound links. Every world styles `.links` itself; this only
+ * fixes the markup so the primary link is marked consistently.
+ */
+import type { CollectionEntry } from "astro:content";
+import Icon from "../micro/Icon.astro";
+
+interface Props {
+  entry: CollectionEntry<"projects">;
+  class?: string;
+}
+
+const { entry, class: extraClass } = Astro.props;
+---
+
+<ul class:list={["links", extraClass]}>
+  {
+    entry.data.links.map((l) => (
+      <li>
+        <a
+          href={l.href}
+          rel="noopener"
+          data-primary={l.primary ? "" : undefined}
+        >
+          <span>{l.label}</span>
+          <Icon name="arrow-right" />
+        </a>
+      </li>
+    ))
+  }
+</ul>

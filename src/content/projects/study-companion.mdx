@@ -1,0 +1,89 @@
+---
+index: 1
+name: Study Companion
+tagline: An Astro framework where a university course is authored as data, not as a website.
+summary: A versioned Astro integration and component library. Courses ship a course.yaml and some MDX, pin a framework version, and get a whole study site.
+# Flexoki paper, read off the framework's own tokens.css (--bg, --fg, --border,
+# --accent) at the pinned version. The page itself takes these live through
+# var(); this copy exists because the OG card is one flat image and has to pick
+# a theme. test/world-tokens.test.ts fails if the two ever disagree.
+world:
+  sub: "#fffcf0"
+  ink: "#100f0f"
+  hair: "#dad8ce"
+  sig: "#205ea6"
+themed: true
+spec:
+  - label: Stack
+    value: Astro 6 · MDX · KaTeX · TypeScript
+  - label: A course is
+    value: 3 files + a content/ folder
+  - label: Components
+    value: 39, in scope by name
+  - label: Pinned at
+    value: v4.2.0, one of 12 tags
+  - label: Search
+    value: Pagefind, built into dist/
+tags:
+  - Astro
+  - MDX
+  - KaTeX
+  - TypeScript
+  - Component library
+links:
+  - label: Browse the courses
+    href: https://kurs.martinsundal.no
+    primary: true
+  - label: StudyCompanion on GitHub
+    href: https://github.com/MartinSA04/StudyCompanion
+repo: https://github.com/MartinSA04/StudyCompanion
+live: https://kurs.martinsundal.no
+languages:
+  - TypeScript
+  - Astro
+  - MDX
+datePublished: "2025-09-01"
+dateModified: "2026-08-09"
+---
+
+Six courses, one design. The framework owns everything a guide looks like; a
+course owns its material and a version number.
+
+<Compare>
+  <CompareCol title="The framework">
+    Design, schema and page wiring. 39 components, in scope by name. Six
+    injected routes, the MDX and KaTeX pipeline, and a Pagefind index built
+    into `dist/`.
+  </CompareCol>
+  <CompareCol title="A course">
+    `package.json`, `astro.config.mjs`, and a one-line `content.config.ts`.
+    Then `course.yaml` and `content/sections/NN-slug.mdx`. No pages, no CSS.
+  </CompareCol>
+</Compare>
+
+## Two decisions
+
+<Statement kind="principle" name="A dead cross-reference fails the build">
+  `<Term>` and `<FormulaRef>` slug through the same function as the anchors they
+  point at, and `xref.ts` walks every section before a page is generated. A
+  reference with nothing to land on stops the build and names the file it is in.
+</Statement>
+
+<Callout type="note" title="Every date is read back in UTC">
+  `z.coerce.date` parses `2026-12-04` as midnight UTC, which prints as the third
+  anywhere west of Greenwich. One helper with `timeZone: "UTC"` formats every
+  date the schema carries, and an exam's start time stays the string `"09:00"`
+  rather than becoming a `Date` at all.
+</Callout>
+
+## Pinned, not tracked
+
+A course depends on `github:MartinSA04/StudyCompanion#v4.2.0`, never a branch,
+so a guide that built in September still builds in June. `course.yaml` declares
+a `schemaVersion` the loader checks, which makes old content meeting a new
+framework an error with two numbers in it. Four breaking releases so far,
+across twelve tags.
+
+This page pins that same tag and imports the framework the way a course does.
+The type, the colour, the panels and the code block above all come out of the
+package.

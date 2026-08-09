@@ -1,0 +1,185 @@
+---
+import Base from "../layouts/Base.astro";
+import Breadcrumbs from "../components/seo/Breadcrumbs.astro";
+import Icon from "../components/micro/Icon.astro";
+import VideoFacade from "../components/work/VideoFacade.astro";
+import Pendant from "../components/work/Pendant.astro";
+import Cable from "../components/work/Cable.astro";
+import Arm from "../components/work/Arm.astro";
+import { workGraph, workTrail, SITE } from "../lib/jsonld.ts";
+import "../worlds/work.css";
+
+/**
+ * CONFIDENTIALITY: the video is the only thing on this page that came out of
+ * the job, and it is here because Aker Solutions published it themselves.
+ * Nothing else is sourced from the work — not internal repositories, not scan
+ * data, not tooling, and not a redrawn abstraction of any of it. A clean figure
+ * of what the planner does would still be a figure of what the planner does.
+ *
+ * What is left is Martin's own account of his role, which is his to write, and
+ * hardware drawn as generic objects. The "10x faster" and "opened 2024" claims
+ * that show up in search results are deliberately absent: neither appears on
+ * Aker's own page, and e2e/work.spec.ts asserts they never will.
+ *
+ * The page that stood here before was assembled from Aker's published facts —
+ * a stations-and-flow schematic, a capacity figure, a list of what the line
+ * automates — which made Aker the subject of nearly every sentence on a page
+ * about Martin. That is why it read as an advert, and why none of it survived.
+ */
+const AKER_PAGE =
+  "https://www.akersolutions.com/what-we-do/renewable-energy-solutions/aquaculture/verdal-production-site/";
+
+const video = {
+  name: "Verdal Production Line highlights",
+  description:
+    "Aker Solutions' published highlights from the Verdal Production Line: robotic welding, sandblasting, painting, and assembly of steel structures.",
+  thumbnailUrl: `${SITE}/vpl/poster.avif`,
+  // From the last-modified header on Aker's own CDN copy.
+  uploadDate: "2025-08-18",
+  duration: "PT1M9S",
+  contentUrl: `${SITE}/vpl/highlights.mp4`,
+};
+
+/* Applied to <body> by Base so the chrome sits on the same graphite; work.css
+   inherits these rather than declaring its own. */
+const WORLD = {
+  sub: "#16181b",
+  ink: "#eceef0",
+  hair: "#3c4046",
+  sig: "#f2c200",
+};
+
+const year = new Date().getFullYear();
+
+const title = "Work | Martin Sundal Aspås";
+/* Kept under 160 characters; e2e/seo.spec.ts holds every page to that. */
+const description =
+  "I work on the welding planner for a robotised production line at Aker Solutions in Verdal, with the small team that owns the line's software.";
+---
+
+<Base
+  title={title}
+  description={description}
+  canonicalPath="/work/"
+  ogImage={`${SITE}/og/work.png`}
+  graph={workGraph(video)}
+  world={WORLD}
+  chromeTag="Idx_01"
+  terminus
+>
+  <article data-world="work">
+    <div class="wrap sheet" data-cable-page>
+      <Cable />
+
+      <Breadcrumbs trail={workTrail()} />
+      <div class="band" aria-hidden="true"></div>
+
+      <section class="bay bay--head" data-bay aria-labelledby="work-h">
+        <p class="eyebrow">
+          <span class="idx" aria-hidden="true">01</span>
+          <span>Aker Solutions · Verdal</span>
+        </p>
+        <h1 id="work-h">I work on the welding planner</h1>
+        <p class="lede">
+          A small tech team owns the software for a robotised production line in
+          Verdal, and I am one of them. Most of my week goes into the welding
+          planner. What the team covers reaches a fair way past the line itself.
+        </p>
+
+        {
+          /* The pendant is the page's picture, the way the console is on the
+             Cipherbound page. .rig takes it out of the reading column and out
+             of the sheet; the credit under it stays in the column. */
+        }
+        <div class="kit">
+          <div class="rig">
+            <Pendant
+              alt="A robot teach pendant, drawn front-on: a grey slab with a red emergency stop at one corner and a joystick and hard keys down the other side, with the Verdal Production Line highlights video playing on its screen"
+            >
+              <VideoFacade
+                poster="/vpl/poster.avif"
+                webm="/vpl/highlights.webm"
+                mp4="/vpl/highlights.mp4"
+                width={1280}
+                height={720}
+                duration="1:09"
+                label="Play the Verdal Production Line highlights video"
+                posterAlt="A robot arm working on a steel structure inside the Verdal Production Line hall"
+                fill
+                fit="contain"
+              />
+            </Pendant>
+          </div>
+
+          <p class="credit">
+            <span class="micro-label">Video © Aker Solutions</span>
+            <a href={AKER_PAGE} rel="noopener"
+              >Verdal production site <Icon name="arrow-right" /></a
+            >
+          </p>
+        </div>
+      </section>
+
+      <section class="bay bay--r" data-bay aria-labelledby="doing-h">
+        <h2 id="doing-h">The work</h2>
+        <p>
+          Most of it comes down to planning paths and building the tooling
+          around them. Some weeks that is the planner itself. Other weeks it is
+          the interfaces and the plumbing that let everyone else see what the
+          line did.
+        </p>
+        <p>
+          Aker's other projects pull the team in as well, down to data
+          collection frameworks feeding machine learning.
+        </p>
+
+        <dl class="rows">
+          <div class="row">
+            <dt>Field</dt>
+            <dd>Robotics and industrial software</dd>
+          </div>
+          <div class="row">
+            <dt>Team</dt>
+            <dd>Small, and the line is ours</dd>
+          </div>
+          <div class="row">
+            <dt>Place</dt>
+            <dd>Verdal, Norway</dd>
+          </div>
+        </dl>
+      </section>
+
+      {
+        /* Closing band, and the last bracket the cable turns before it plugs
+           in. No heading and no caption: a visitor has no reason to care which
+           of these drawings is generic, and saying so out loud was a note to
+           myself printed on the page. */
+      }
+      <div class="bay bay--l bay--floor" data-bay aria-hidden="true">
+        <div class="floor">
+          <div class="arms">
+            <Arm width={132} index={0} />
+            <Arm width={108} index={1} />
+            <Arm width={150} index={2} />
+          </div>
+        </div>
+      </div>
+
+      <div class="terminus">
+        <span class="micro-label"
+          >© {year} Martin Sundal Aspås · Trondheim · NO</span
+        >
+        <hr class="micro-rule term-rule" />
+        <span class="port" data-cable-end aria-hidden="true">
+          <svg viewBox="0 0 52 34">
+            <rect class="pg-pin" x="10" y="0" width="4" height="10"></rect>
+            <rect class="pg-pin" x="24" y="0" width="4" height="10"></rect>
+            <rect class="pg-pin" x="38" y="0" width="4" height="10"></rect>
+            <rect class="pg-body" x="1" y="8" width="50" height="25" rx="3"
+            ></rect>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </article>
+</Base>

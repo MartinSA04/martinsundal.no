@@ -1,0 +1,229 @@
+---
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { getEntry, render } from "astro:content";
+import ProjectShell from "../../components/project/ProjectShell.astro";
+import ProjectHead from "../../components/project/ProjectHead.astro";
+import ProjectLinks from "../../components/project/ProjectLinks.astro";
+import SpecBlock from "../../components/micro/SpecBlock.astro";
+import { parsePlan, step, countLive } from "../../lib/life.ts";
+import "../../worlds/game-of-life.css";
+
+const entry = await getEntry("projects", "game-of-life");
+if (!entry) throw new Error("missing content: projects/game-of-life");
+const { Content } = await render(entry);
+
+/* The board's own figures, stepped here at build time from the plan the
+   browser is about to run. The page used to carry a hand-written ceiling of
+   540 generations; the board is a still life from 436 onwards, so the last
+   hundred were a scrubber promising boards that do not exist. Nothing on the
+   page is now a number someone typed. ~400ms. */
+const planPath = fileURLToPath(
+  new URL("../../../public/game_of_life_plan.txt", import.meta.url),
+);
+const plan = parsePlan(readFileSync(planPath, "utf8"));
+
+let cells = plan.cells;
+let settledGen = 0;
+
+for (let g = 1; g <= 1000; g++) {
+  const next = step(cells, plan.width, plan.height);
+  let same = true;
+  for (let i = 0; i < next.length; i++) {
+    if (next[i] !== cells[i]) {
+      same = false;
+      break;
+    }
+  }
+  if (same) {
+    settledGen = g - 1;
+    break;
+  }
+  cells = next;
+}
+
+const seedPop = countLive(plan.cells);
+const settledPop = countLive(cells);
+/* Five cells to a glider, four to a block, two gliders to each block. The
+   three counts agree or the plan is not what the page says it is. */
+const gliders = seedPop / 5;
+---
+
+{
+  /* Shape: plotted on the grid the world already draws. The page is a 12
+    column field on the same 24px module as the background, and every block
+    is placed by column span rather than flowing down a text measure. */
+}
+<ProjectShell entry={entry}>
+  <div class="wrap gol-field">
+    <ProjectHead entry={entry} class="gol-cell-head" />
+
+    <div class="gol-cell-board">
+      <div class="gol">
+        {
+          /* The viewport is a window onto the board, not the board itself.
+            At full width one cell is under two pixels; on a phone it is under
+            half of one, which is no picture at all. Narrow screens crop to
+            the settled text instead of shrinking the whole field. */
+        }
+        <div class="gol-view">
+          <canvas
+            class="gol-board"
+            data-life
+            width={plan.width}
+            height={plan.height}
+            role="img"
+            aria-label={`Conway's Game of Life on a ${plan.width} by ${plan.height} cell board: ${gliders} gliders collide over ${settledGen} generations and stop as a still life spelling GAME OF LIFE.`}
+          ></canvas>
+        </div>
+
+        <p class="gol-crop-note">
+          Cropped to the text. The board is {plan.width} × {plan.height}.
+        </p>
+
+        <div class="gol-controls">
+          <button
+            class="gol-play"
+            type="button"
+            data-life-play
+            aria-pressed="true"
+          >
+            Pause
+          </button>
+          <input
+            type="range"
+            min="0"
+            max={settledGen}
+            value="0"
+            step="1"
+            data-life-scrubber
+            aria-label="Generation"
+          />
+          <span class="gol-read">
+            <span class="gol-gen" data-life-gen aria-live="off"
+              >gen 0 / {settledGen}</span
+            >
+            <span class="gol-pop" data-life-pop>pop {seedPop}</span>
+            <span class="gol-state" data-life-state>Seed</span>
+          </span>
+        </div>
+      </div>
+      <p class="gol-note">
+        {plan.width} × {plan.height} cells, seeded once and left alone. Drag the scrubber
+        and the generation is recomputed from the seed, so the same number always
+        gives the same board.
+      </p>
+    </div>
+
+    <div class="prose gol-cell-prose">
+      <Content />
+    </div>
+
+    {
+      /* Plotted beside the prose, not stacked under the title, so the right
+        four columns carry something for the length of the text. */
+    }
+    <div class="gol-cell-spec">
+      <SpecBlock rows={entry.data.spec} />
+      <ProjectLinks entry={entry} />
+    </div>
+  </div>
+</ProjectShell>
+
+<script>
+  /**
+   * The same scene the hero runs, on this page's plan. It used to be a second
+   * implementation here, and a worse one: it replayed the board from the seed
+   * on every frame, so a generation cost time proportional to its own number
+   * and playback ground to a halt long before the text assembled.
+   *
+   * The colour is read from the world element rather than the document root.
+   * This world pins a light palette to <body> in both themes, while the root
+   * keeps following the theme, so a board reading the root drew near-white
+   * cells on near-white paper for anyone in dark mode.
+   */
+  import { createLifeScene } from "../../lib/life.ts";
+
+  const canvas = document.querySelector<HTMLCanvasElement>("[data-life]");
+  const scrubber = document.querySelector<HTMLInputElement>(
+    "[data-life-scrubber]",
+  );
+  const genLabel = document.querySelector<HTMLElement>("[data-life-gen]");
+  const popLabel = document.querySelector<HTMLElement>("[data-life-pop]");
+  const stateLabel = document.querySelector<HTMLElement>("[data-life-state]");
+  const play = document.querySelector<HTMLButtonElement>("[data-life-play]");
+  const world = document.querySelector<HTMLElement>("[data-world]");
+
+  if (canvas && scrubber && genLabel && popLabel && stateLabel && play) {
+    const MAX = Number(scrubber.max);
+    /* Seeded from the markup rather than from false. The button ships saying
+       Pause because the usual case is a board that starts running, and a flag
+       that disagrees with the label it controls makes the first honest update
+       look redundant and get skipped — which left the reduced-motion board
+       offering to pause a still life. */
+    let running = play.getAttribute("aria-pressed") === "true";
+
+    function report(generation: number, settled: boolean, pop: number) {
+      genLabel!.textContent = `gen ${generation} / ${MAX}`;
+      popLabel!.textContent = `pop ${pop}`;
+      stateLabel!.textContent = settled
+        ? "Still life"
+        : generation === 0
+          ? "Seed"
+          : "Resolving";
+      stateLabel!.toggleAttribute("data-settled", settled);
+      if (scrubber!.valueAsNumber !== generation) {
+        scrubber!.value = String(generation);
+      }
+      // The board stops changing at MAX, so the scene stops stepping there and
+      // the button has nothing left to pause.
+      if (settled) setRunning(false);
+    }
+
+    const scene = createLifeScene({
+      canvas,
+      planSrc: "/game_of_life_plan.txt",
+      // MAX generations at 24/s is about eighteen seconds, matching the pace
+      // the hero board runs at.
+      speed: 24,
+      colorEl: world ?? undefined,
+      restGeneration: MAX,
+      pauseWhenOffscreen: true,
+      onGeneration: report,
+    });
+
+    function setRunning(next: boolean) {
+      if (next === running) return;
+      running = next;
+      play!.textContent = next ? "Pause" : "Play";
+      play!.setAttribute("aria-pressed", String(next));
+    }
+
+    scrubber.addEventListener("input", () => {
+      scene?.stop();
+      setRunning(false);
+      const n = scrubber.valueAsNumber;
+      scene?.renderGeneration(n);
+      report(n, n >= MAX, scene?.population ?? 0);
+    });
+
+    play.addEventListener("click", () => {
+      if (running) {
+        scene?.stop();
+        setRunning(false);
+      } else {
+        // A settled board has only one thing left to offer: the run again.
+        if (scene && scene.generation >= MAX) {
+          scene.renderGeneration(0);
+          report(0, false, scene.population);
+        }
+        setRunning(true);
+        scene?.play();
+      }
+    });
+
+    void scene?.start().then(() => {
+      setRunning(scene.generation < MAX);
+    });
+  }
+</script>

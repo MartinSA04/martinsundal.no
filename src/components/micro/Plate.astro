@@ -1,0 +1,214 @@
+---
+/**
+ * The frame primitive, and the reason the page reads as a technical sheet
+ * rather than as stacked sections: content is bounded, registered at its
+ * corners, and labelled along its edges.
+ *
+ * Corner marks are drawn with four absolutely positioned boxes carrying two
+ * borders each, rather than as an SVG: they must sit exactly on the frame's
+ * own hairline at any size, and a stroked SVG rectangle rounds differently
+ * from a CSS border at fractional device pixel ratios.
+ */
+import Marginalia from "./Marginalia.astro";
+import Figure from "./Figure.astro";
+
+interface Props {
+  /** Printed at the top right, e.g. "PLATE 01". */
+  id?: string;
+  /** Printed at the top left. */
+  title?: string;
+  /**
+   * Anchor figure for the plate head, matching the one `Mark` gives every
+   * other section — so all five sections carry a figure at the same position
+   * and the page reads as one column of marks.
+   */
+  figure?:
+    | "starburst"
+    | "quadrant"
+    | "halfdisc"
+    | "spoke"
+    | "capsule"
+    | "concentric"
+    | "tangent"
+    | "target"
+    | "eclipse"
+    | "lozenges"
+    | "wedge"
+    | "grid";
+  /** px. */
+  figureSize?: number;
+  /** Rotated label running up the left edge. */
+  edgeLeft?: string;
+  /** Rotated label running down the right edge. */
+  edgeRight?: string;
+  /** Printed at the bottom right. */
+  foot?: string;
+  /** Draws only the corner marks, without the connecting hairline. */
+  variant?: "framed" | "corners";
+  as?: string;
+  class?: string;
+}
+
+const {
+  id,
+  title,
+  figure,
+  figureSize = 44,
+  edgeLeft,
+  edgeRight,
+  foot,
+  variant = "framed",
+  as: Tag = "div",
+  class: className,
+} = Astro.props;
+
+const hasHead = Boolean(id || title || figure);
+---
+
+<Tag
+  class:list={["micro-plate", className]}
+  data-micro="plate"
+  data-variant={variant}
+>
+  {
+    hasHead && (
+      <div class="micro-plate-head">
+        <span class="micro-plate-title">
+          {figure && <Figure name={figure} size={figureSize} />}
+          {title && <span class="micro-label">{title}</span>}
+        </span>
+        {id && <span class="micro-plate-id micro-label">{id}</span>}
+      </div>
+    )
+  }
+
+  <div class="micro-plate-body">
+    <span class="micro-plate-corner" data-at="tl" aria-hidden="true"></span>
+    <span class="micro-plate-corner" data-at="tr" aria-hidden="true"></span>
+    <span class="micro-plate-corner" data-at="bl" aria-hidden="true"></span>
+    <span class="micro-plate-corner" data-at="br" aria-hidden="true"></span>
+
+    {
+      edgeLeft && (
+        <span class="micro-plate-edge" data-side="left">
+          <Marginalia text={edgeLeft} side="left" />
+        </span>
+      )
+    }
+    {
+      edgeRight && (
+        <span class="micro-plate-edge" data-side="right">
+          <Marginalia text={edgeRight} side="right" />
+        </span>
+      )
+    }
+
+    <slot />
+  </div>
+
+  {
+    foot && (
+      <div class="micro-plate-foot">
+        <span class="micro-label">{foot}</span>
+      </div>
+    )
+  }
+</Tag>
+
+<style>
+  .micro-plate {
+    --corner: 9px;
+    --plate-pad: var(--space-3);
+  }
+
+  .micro-plate-head,
+  .micro-plate-foot {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding-block: 0.4rem;
+  }
+
+  .micro-plate-head {
+    align-items: center;
+  }
+
+  .micro-plate-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .micro-plate-id {
+    color: var(--sig);
+  }
+
+  .micro-plate-body {
+    position: relative;
+    padding: var(--plate-pad);
+  }
+
+  /* No framed variant any more. A rectangle drawn round content is a box,
+     not a mark — the corner registration alone says "this is a plate", which
+     is what the reference sheets actually do. */
+
+  /* Corner marks overhang the frame by a pixel so they read as registration
+     crosses sitting on the boundary, not as a thicker corner of the box. */
+  .micro-plate-corner {
+    position: absolute;
+    inline-size: var(--corner);
+    block-size: var(--corner);
+    border: 0 solid var(--ink);
+  }
+
+  .micro-plate-corner[data-at="tl"] {
+    top: -1px;
+    left: -1px;
+    border-top-width: var(--rule);
+    border-left-width: var(--rule);
+  }
+  .micro-plate-corner[data-at="tr"] {
+    top: -1px;
+    right: -1px;
+    border-top-width: var(--rule);
+    border-right-width: var(--rule);
+  }
+  .micro-plate-corner[data-at="bl"] {
+    bottom: -1px;
+    left: -1px;
+    border-bottom-width: var(--rule);
+    border-left-width: var(--rule);
+  }
+  .micro-plate-corner[data-at="br"] {
+    bottom: -1px;
+    right: -1px;
+    border-bottom-width: var(--rule);
+    border-right-width: var(--rule);
+  }
+
+  .micro-plate-edge {
+    position: absolute;
+    top: var(--space-3);
+    bottom: var(--space-3);
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+  }
+
+  .micro-plate-edge[data-side="left"] {
+    left: calc(var(--plate-pad) * -1 + 2px);
+  }
+
+  .micro-plate-edge[data-side="right"] {
+    right: calc(var(--plate-pad) * -1 + 2px);
+  }
+
+  /* The edge labels sit in the plate's own padding, which does not exist at
+     narrow widths — keeping them would overlap the content. */
+  @media (max-width: 60rem) {
+    .micro-plate-edge {
+      display: none;
+    }
+  }
+</style>

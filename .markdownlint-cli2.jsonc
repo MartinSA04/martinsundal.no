@@ -1,0 +1,20 @@
+{
+  "config": {
+    // Line length is managed by the editor, not enforced.
+    "MD013": false,
+    // Plans and specs use bold run-in labels ("**Files:**") directly above
+    // their lists; a blank line between them reads worse.
+    "MD032": false
+  },
+  "globs": ["docs/**/*.md"],
+  "overrides": [
+    {
+      "globs": ["src/content/**/*.md"],
+      "config": {
+        // Content bodies start at h2 on purpose: the h1 is the project name,
+        // rendered by the page layout from frontmatter.
+        "MD041": false
+      }
+    }
+  ]
+}

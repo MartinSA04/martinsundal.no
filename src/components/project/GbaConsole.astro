@@ -1,0 +1,121 @@
+---
+/**
+ * A Game Boy Advance with something playing on its screen.
+ *
+ * The artwork is a front elevation of the Indigo AGB-001 by blueamnesiac
+ * ("Nintendo Game Boy Advance (Indigo)"), supplied for this page. It arrived
+ * with the surround already transparent and a screenshot of somebody else's
+ * game drawn on the screen; the shipped copy has that screen painted flat
+ * black, so nothing of that game survives and the black the video does not
+ * cover is the console's own.
+ *
+ * An earlier version of this page used a three-quarter photograph, which meant
+ * the screen was a quadrilateral and the video had to be projected onto it
+ * with a homography. A front elevation makes the screen an axis-aligned
+ * rectangle, so the slot is just a box at measured coordinates and the video
+ * is never skewed. That is the whole reason to prefer this artwork.
+ *
+ * The screen was measured on the supplied 1181x677 file by taking the black
+ * window as a connected component: 522x353 at (330,127). That is a ratio of
+ * 1.479 against the real panel's 1.5, so the drawing is honest about its
+ * proportions and the video needs no correction to sit in it.
+ *
+ * Everything lives in a fixed 1181x677 stage, where all of it is exact, and
+ * the stage is scaled to the page by one uniform factor.
+ */
+interface Props {
+  /** Described to screen readers as the console itself, not its contents. */
+  alt: string;
+  class?: string;
+}
+
+const { alt, class: extraClass } = Astro.props;
+---
+
+<div class:list={["gba", extraClass]}>
+  <div class="stage">
+    <picture>
+      <source type="image/avif" srcset="/cipherbound/gba.avif" />
+      <img
+        src="/cipherbound/gba.webp"
+        alt={alt}
+        width={1181}
+        height={677}
+        decoding="async"
+        fetchpriority="high"
+      />
+    </picture>
+
+    <div class="screen">
+      <slot />
+    </div>
+  </div>
+</div>
+
+<style>
+  /* cqi drives the scale, so the console needs no script to be responsive.
+     overflow:hidden is insurance: if the scale ever fails to compute, the
+     stage clips instead of pushing a 1181px box through the page. */
+  .gba {
+    container-type: inline-size;
+    width: 100%;
+    aspect-ratio: 1181 / 677;
+    overflow: hidden;
+  }
+
+  .stage {
+    /* The one number the whole composite hangs off: how much smaller the page
+       is drawing the 1181px stage. Everything inside is authored in stage
+       pixels and divided by this where it needs to survive the scaling. */
+    --k: calc(100cqi / 1181px);
+
+    position: relative;
+    width: 1181px;
+    height: 677px;
+    transform-origin: 0 0;
+    transform: scale(var(--k));
+  }
+
+  .stage img {
+    display: block;
+    width: 1181px;
+    height: 677px;
+  }
+
+  /* The measured black window. The artwork's screen is painted flat black
+     underneath, so any edge this does not reach reads as screen, not as a
+     seam. */
+  .screen {
+    position: absolute;
+    left: 330px;
+    top: 127px;
+    width: 522px;
+    height: 353px;
+    overflow: hidden;
+    background: #000;
+  }
+
+  /* The play control is the one thing in the screen that must not scale with
+     it. Drawn at stage size it is a few pixels across on a phone, where the
+     console is a fraction of its authored width — legible on a desktop and
+     invisible on the device most likely to see it. Dividing by --k holds it at
+     a fixed apparent size instead, so it grows relative to the screen as the
+     console shrinks, the way a game's own UI does.
+
+     Centred, not in the corner the facade defaults to: that corner is where
+     the game draws its text box, and the two sat on top of each other. */
+  .screen :global(.play) {
+    left: 50%;
+    bottom: 50%;
+    transform: translate(-50%, 50%);
+    font-size: calc(15px / var(--k));
+    gap: 0.5em;
+    padding: 0.5em 0.8em;
+    border-width: calc(1px / var(--k));
+  }
+
+  .screen :global(.play svg) {
+    width: 1.2em;
+    height: 1.2em;
+  }
+</style>

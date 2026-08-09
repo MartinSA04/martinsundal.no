@@ -1,0 +1,42 @@
+{
+  "name": "martinsundal-no",
+  "type": "module",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "node --test --disable-warning=ExperimentalWarning 'test/**/*.test.ts'",
+    "test:e2e": "playwright test",
+    "typecheck": "astro sync && tsc --noEmit",
+    "lint": "prettier --check \"{src,test,e2e,scripts}/**/*.{ts,astro,mjs}\" \"*.{ts,mjs,json,md}\"",
+    "lint:fix": "prettier --write \"{src,test,e2e,scripts}/**/*.{ts,astro,mjs}\" \"*.{ts,mjs,json,md}\"",
+    "lint:md": "markdownlint-cli2 \"docs/**/*.md\""
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^5.0.6",
+    "@astrojs/sitemap": "^3.7.3",
+    "astro": "^6.3.7",
+    "katex": "^0.17.0",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "study-companion": "github:MartinSA04/StudyCompanion#v4.2.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@resvg/resvg-js": "^2.6.2",
+    "@types/node": "^22.10.0",
+    "markdownlint-cli2": "^0.22.1",
+    "prettier": "^3.8.3",
+    "prettier-plugin-astro": "^0.14.1",
+    "typescript": "^6.0.3"
+  }
+}

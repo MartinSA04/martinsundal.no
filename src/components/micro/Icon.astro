@@ -1,0 +1,79 @@
+---
+/**
+ * The kit's only pictorial primitive. Everything else here is a rule, a box or
+ * a strip; these are the four marks that genuinely need a path.
+ *
+ * Authored on a 24-unit grid at stroke-width 1.5, so at the default 16px a
+ * stroke lands on 1px and matches --rule. Painted in currentColor only: an
+ * icon inherits whatever world and whatever text colour it sits in, which is
+ * the same contract every other primitive keeps with the four tokens.
+ */
+interface Props {
+  name:
+    "arrow-right" | "arrow-up" | "caret-down" | "theme-light" | "theme-dark";
+  /** px, applied to both axes. */
+  size?: number;
+  class?: string;
+}
+
+const { name, size = 16, class: className } = Astro.props;
+---
+
+<svg
+  class:list={["micro-icon", className]}
+  data-micro="icon"
+  data-icon={name}
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.5"
+  stroke-linecap="square"
+  stroke-linejoin="miter"
+  aria-hidden="true"
+  focusable="false"
+>
+  {
+    name === "arrow-right" && (
+      <>
+        <path d="M3 12h17" />
+        <path d="M13.5 5.5 20 12l-6.5 6.5" />
+      </>
+    )
+  }
+  {
+    /* The same arrow turned a quarter, drawn rather than rotated so the strokes
+      still land on the 24-unit grid. */
+    name === "arrow-up" && (
+      <>
+        <path d="M12 21V4" />
+        <path d="M5.5 10.5 12 4l6.5 6.5" />
+      </>
+    )
+  }
+  {name === "caret-down" && <path d="M5 9l7 7 7-7" />}
+  {
+    name === "theme-light" && (
+      <>
+        <circle cx="12" cy="12" r="4.5" />
+        <path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M19.4 4.6l-2.1 2.1M6.7 17.3l-2.1 2.1" />
+      </>
+    )
+  }
+  {
+    /* One closed path rather than a masked disc: a mask needs two shapes to
+      agree at 16px and they do not. */
+    name === "theme-dark" && (
+      <path d="M20 14.5A9 9 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" />
+    )
+  }
+</svg>
+
+<style>
+  .micro-icon {
+    display: inline-block;
+    flex: none;
+    vertical-align: middle;
+  }
+</style>

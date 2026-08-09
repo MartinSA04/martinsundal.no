@@ -1,0 +1,308 @@
+---
+/**
+ * The mark set — the geometric figures the references are actually built
+ * from, as opposed to the hairline frames that hold them.
+ *
+ * Three things separate these from `Icon`, and they are the whole point:
+ *
+ *   Size.   Authored on a 48-unit grid and rendered at 40-96px, not 16px.
+ *           These are objects on the page, not glyphs in a line of text.
+ *   Weight. Stroke 1.75 of 48, which scales with the figure — so a 72px mark
+ *           carries a ~2.6px stroke and reads as drawn, not as a hairline.
+ *           The contrast against the 1px frames is deliberate.
+ *   Fill.   Several are solid. A page of outlines has no weight anywhere,
+ *           which is exactly what the first pass got wrong.
+ *
+ * Painted in currentColor, so a figure inherits whatever world and whatever
+ * text colour it sits in — the same contract every other primitive keeps.
+ * Hollows are punched with --sub rather than by masking, so a figure sitting
+ * on any substrate keeps its counters.
+ */
+interface Props {
+  name:
+    | "starburst"
+    | "quadrant"
+    | "halfdisc"
+    | "spoke"
+    | "capsule"
+    | "concentric"
+    | "tangent"
+    | "target"
+    | "eclipse"
+    | "lozenges"
+    | "wedge"
+    | "grid";
+  /** px, applied to both axes. */
+  size?: number;
+  /** Paints the figure in --sig instead of inheriting the text colour. */
+  signal?: boolean;
+  /**
+   * Converts the solid masses to strokes. A fill that reads as weight at
+   * 48px reads as a grey blob at 200px, and the references draw their large
+   * marks hollow for exactly that reason — so a figure can be solid where it
+   * is small and open where it is structural.
+   */
+  outline?: boolean;
+  class?: string;
+}
+
+const {
+  name,
+  size = 56,
+  signal = false,
+  outline = false,
+  class: className,
+} = Astro.props;
+
+const C = 24; /* centre of the 48-unit grid */
+
+/* --- generated geometry ---------------------------------------------------
+   Computed here rather than typed out as path data: the angles have to be
+   exact for a starburst to look machined instead of hand-placed, and a
+   six-node spoke is not something to work out by hand twice. */
+
+const polar = (deg: number, r: number) => {
+  const rad = (deg * Math.PI) / 180;
+  return [C + Math.cos(rad) * r, C + Math.sin(rad) * r] as const;
+};
+
+/* Four lines through the centre rather than eight from it: a single stroke
+   across the full diameter has no seam where the two halves meet. */
+const burst = [0, 45, 90, 135].map((deg) => {
+  const [x1, y1] = polar(deg, 16);
+  const [x2, y2] = polar(deg + 180, 16);
+  return { x1, y1, x2, y2 };
+});
+
+const spokes = [-90, -30, 30, 90, 150, 210].map((deg) => {
+  const [nx, ny] = polar(deg, 16.5);
+  const [lx, ly] = polar(deg, 5.5);
+  return { nx, ny, lx, ly };
+});
+
+const lozenges = [
+  { x: 4, w: 3.2, fill: true },
+  { x: 10, w: 5, fill: false },
+  { x: 18, w: 3.2, fill: true },
+  { x: 24, w: 5, fill: false },
+  { x: 32, w: 3.2, fill: false },
+  { x: 38, w: 6, fill: true },
+];
+
+const gridDots = [0, 1, 2, 3].flatMap((row) =>
+  [0, 1, 2, 3].map((col) => ({
+    cx: 9 + col * 10,
+    cy: 9 + row * 10,
+    /* A glider, so the mark carries the same figure the hero computes. */
+    on: [1, 6, 8, 9, 10].includes(row * 4 + col),
+  })),
+);
+---
+
+<svg
+  class:list={["micro-figure", className]}
+  data-micro="figure"
+  data-figure={name}
+  data-signal={signal ? "" : undefined}
+  data-outline={outline ? "" : undefined}
+  width={size}
+  height={size}
+  viewBox="0 0 48 48"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.75"
+  stroke-linecap="butt"
+  aria-hidden="true"
+  focusable="false"
+>
+  {
+    name === "starburst" && (
+      <>
+        <circle cx={C} cy={C} r="21" />
+        {burst.map((l) => (
+          <line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} />
+        ))}
+      </>
+    )
+  }
+
+  {
+    /* One filled quadrant against three empty ones — the simplest mark in the
+      set that still has real weight. */
+    name === "quadrant" && (
+      <>
+        <path
+          d="M24 4 A20 20 0 0 1 44 24 L24 24 Z"
+          fill="currentColor"
+          stroke="none"
+        />
+        <circle cx={C} cy={C} r="20" />
+        <line x1="4" y1="24" x2="44" y2="24" />
+        <line x1="24" y1="4" x2="24" y2="44" />
+      </>
+    )
+  }
+
+  {
+    name === "halfdisc" && (
+      <>
+        <path
+          d="M24 3 A21 21 0 0 1 24 45 Z"
+          fill="currentColor"
+          stroke="none"
+        />
+        <path d="M24 3 A21 21 0 0 0 24 45" />
+      </>
+    )
+  }
+
+  {
+    name === "spoke" && (
+      <>
+        {spokes.map((s) => (
+          <line x1={s.lx} y1={s.ly} x2={s.nx} y2={s.ny} />
+        ))}
+        {spokes.map((s) => (
+          <circle cx={s.nx} cy={s.ny} r="3.6" fill="var(--sub)" />
+        ))}
+        <circle cx={C} cy={C} r="5" fill="currentColor" stroke="none" />
+      </>
+    )
+  }
+
+  {
+    /* The EPOCH bar: a solid capsule with a hole punched near one end. */
+    name === "capsule" && (
+      <>
+        <rect
+          x="2"
+          y="15"
+          width="44"
+          height="18"
+          rx="9"
+          fill="currentColor"
+          stroke="none"
+        />
+        <circle cx="36" cy="24" r="4.4" fill="var(--sub)" stroke="none" />
+        {burst.map((l) => (
+          <line
+            x1={(l.x1 - C) * 0.42 + 15}
+            y1={(l.y1 - C) * 0.42 + 24}
+            x2={(l.x2 - C) * 0.42 + 15}
+            y2={(l.y2 - C) * 0.42 + 24}
+            stroke="var(--sub)"
+          />
+        ))}
+      </>
+    )
+  }
+
+  {
+    name === "concentric" && (
+      <>
+        <circle cx={C} cy={C} r="21" />
+        <circle cx={C} cy={C} r="13.5" />
+        <circle cx={C} cy={C} r="6" fill="currentColor" stroke="none" />
+      </>
+    )
+  }
+
+  {
+    name === "tangent" && (
+      <>
+        <circle cx="13.5" cy={C} r="11.5" />
+        <circle cx="34.5" cy={C} r="11.5" />
+      </>
+    )
+  }
+
+  {
+    /* Crosshair running past the ring, the way a registration target does. */
+    name === "target" && (
+      <>
+        <circle cx={C} cy={C} r="13" />
+        <circle cx={C} cy={C} r="4" fill="currentColor" stroke="none" />
+        <line x1="24" y1="1" x2="24" y2="47" />
+        <line x1="1" y1="24" x2="47" y2="24" />
+      </>
+    )
+  }
+
+  {
+    /* A disc inside a wide ring: the accretion figure, and the one mark on
+      the sheet that is unmistakably one project. */
+    name === "eclipse" && (
+      <>
+        <ellipse cx={C} cy={C} rx="21" ry="7" />
+        <circle cx={C} cy={C} r="9" fill="currentColor" stroke="none" />
+      </>
+    )
+  }
+
+  {
+    name === "lozenges" && (
+      <>
+        {lozenges.map((l) => (
+          <rect
+            x={l.x}
+            y="12"
+            width={l.w}
+            height="24"
+            rx={l.w / 2}
+            fill={l.fill ? "currentColor" : "none"}
+            stroke-width={l.fill ? 0 : 1.75}
+          />
+        ))}
+      </>
+    )
+  }
+
+  {
+    name === "wedge" && (
+      <>
+        <circle cx={C} cy={C} r="21" />
+        <path
+          d="M24 24 L24 3 A21 21 0 0 1 42.2 34.5 Z"
+          fill="currentColor"
+          stroke="none"
+        />
+      </>
+    )
+  }
+
+  {
+    name === "grid" && (
+      <>
+        {gridDots.map((d) => (
+          <circle
+            cx={d.cx}
+            cy={d.cy}
+            r={d.on ? 3.4 : 2.4}
+            fill={d.on ? "currentColor" : "none"}
+            stroke-width={d.on ? 0 : 1.4}
+          />
+        ))}
+      </>
+    )
+  }
+</svg>
+
+<style>
+  .micro-figure {
+    display: block;
+    flex: none;
+  }
+
+  .micro-figure[data-signal] {
+    color: var(--sig);
+  }
+
+  /* Targets only the solid masses. A presentation attribute loses to any CSS
+     rule, so this converts fill="currentColor" to a stroke without touching
+     the fill="var(--sub)" punches that keep a figure's counters open. */
+  .micro-figure[data-outline] [fill="currentColor"] {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+  }
+</style>

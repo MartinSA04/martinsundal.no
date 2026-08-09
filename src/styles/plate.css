@@ -1,0 +1,393 @@
+/* ---------------------------------------------------------------------------
+   plate.css — the home page's drawing language.
+
+   The home page is one technical plate: a graduated spine down the left,
+   lettered figures hanging off it, and instruments large enough to hold a
+   region rather than mark a row. This file carries only what more than one
+   plate component needs; layout stays in each component's scoped style.
+
+   Imported by src/pages/index.astro only, so project pages and /work are
+   untouched by any of it.
+
+   Everything here draws in the four world tokens from kernel.css. The accent
+   is spent exactly twice on the whole page — the board's settle tick and the
+   black hole's photon ring — which is where the reference sheets get their
+   authority from.
+   --------------------------------------------------------------------------- */
+
+.plate-page {
+  --faint: color-mix(in oklab, var(--ink) 13%, var(--sub));
+  --whisper: color-mix(in oklab, var(--ink) 6%, var(--sub));
+  --gut: clamp(14px, 2.2vw, 30px);
+  --loose: clamp(58px, 8vw, 124px);
+}
+
+.plate {
+  position: relative;
+  z-index: 1;
+  max-width: 1420px;
+  margin-inline: auto;
+  padding-block: clamp(30px, 4vw, 56px) 0;
+  padding-inline: clamp(16px, 3.2vw, 54px) clamp(16px, 3.2vw, 54px);
+}
+
+/* The spine: a graduated ruler every figure hangs off. */
+.plate-spine {
+  position: absolute;
+  left: clamp(2px, 1vw, 18px);
+  top: 0;
+  bottom: 0;
+  width: 13px;
+  border-left: var(--rule) solid var(--hair);
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      var(--hair) 0 1px,
+      transparent 1px 96px
+    ),
+    linear-gradient(to right, var(--faint) 0 6px, transparent 6px);
+  background-repeat: repeat, no-repeat;
+  pointer-events: none;
+}
+
+@media (min-width: 57rem) {
+  .plate {
+    padding-inline: clamp(70px, 7vw, 112px) clamp(16px, 3.2vw, 54px);
+  }
+  .plate-spine {
+    left: clamp(30px, 3.6vw, 64px);
+  }
+}
+
+.zone {
+  position: relative;
+}
+
+/* The leader tying a figure's label back to the spine. It is ::after, not
+   ::before: .p-tag already owns ::before for its opening bracket, and the two
+   on one element means the leader silently eats the bracket. */
+.zh {
+  position: relative;
+}
+
+.zh::after {
+  content: "";
+  position: absolute;
+  left: -38px;
+  top: 0.55em;
+  width: 32px;
+  height: 1px;
+  background: var(--hair);
+}
+
+@media (max-width: 57rem) {
+  .zh::after {
+    left: -30px;
+    width: 24px;
+  }
+}
+
+/* --- micro register ------------------------------------------------------- */
+
+.p-u {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  line-height: 1.3;
+  letter-spacing: 0.185em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.p-u--ink {
+  color: var(--ink);
+}
+
+.p-u--hair {
+  color: var(--hair);
+}
+
+.p-u--lg {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+}
+
+.p-u--n {
+  text-transform: none;
+  letter-spacing: 0.09em;
+  font-size: 11px;
+}
+
+.p-tag::before {
+  content: "[";
+}
+
+.p-tag::after {
+  content: "]";
+}
+
+.p-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.p-stack .p-u {
+  line-height: 1.15;
+}
+
+.p-pill {
+  display: inline-block;
+  border: var(--rule) solid var(--hair);
+  border-radius: 99px;
+  padding: 3px 10px;
+}
+
+.p-chain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* --- rules and frames ----------------------------------------------------- */
+
+/* The filler rule in every section head, which used to be the one piece of
+   pure decoration on the plate: an even comb of ticks that measured nothing.
+
+   It is now an intensity ramp, graduated on the alphabet Big Ear's printout
+   used — 1-9 then A-Z for signal strength, so a bar's length is a value in a
+   real 35-step scale. Every head carries the linear wedge, 1 5 9 D H L P T X,
+   which is what a calibration bar is and what a calibration bar looks like.
+
+   Exactly one carries a reading instead. See .p-scale--wow.
+
+   Drawn as a mask rather than a background image, so the bars take --hair and
+   follow the theme; a data URI cannot read a custom property. The rule the
+   bars hang off is the first rect in the mask rather than a border, because a
+   mask clips an element's border along with everything else it paints. */
+.p-scale {
+  --scale-bars: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='81' height='11' fill='%23000'%3E%3Crect width='81' height='1'/%3E%3Crect x='0' width='1' height='2'/%3E%3Crect x='9' width='1' height='3'/%3E%3Crect x='18' width='1' height='4'/%3E%3Crect x='27' width='1' height='5'/%3E%3Crect x='36' width='1' height='6'/%3E%3Crect x='45' width='1' height='7'/%3E%3Crect x='54' width='1' height='8'/%3E%3Crect x='63' width='1' height='9'/%3E%3Crect x='72' width='1' height='10'/%3E%3C/svg%3E");
+  --scale-w: 81px;
+  height: 11px;
+  background: var(--hair);
+  -webkit-mask: var(--scale-bars) repeat-x 0 0 / var(--scale-w) 11px;
+  mask: var(--scale-bars) repeat-x 0 0 / var(--scale-w) 11px;
+}
+
+/* Big Ear, 15 August 1977, 72 seconds near the 1420 MHz hydrogen line: the
+   signal rose to U and fell away again, and was never heard a second time.
+   6 E Q U J 5 is that rise and fall, read off the same alphabet the wedge
+   above is graduated on — so this rule is a reading where the others are a
+   scale. It is on one head only; four of them would be a wallpaper. */
+.p-scale--wow {
+  --scale-bars: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='54' height='11' fill='%23000'%3E%3Crect width='54' height='1'/%3E%3Crect x='0' width='1' height='3'/%3E%3Crect x='9' width='1' height='5'/%3E%3Crect x='18' width='1' height='8'/%3E%3Crect x='27' width='1' height='9'/%3E%3Crect x='36' width='1' height='6'/%3E%3Crect x='45' width='1' height='3'/%3E%3C/svg%3E");
+  --scale-w: 54px;
+}
+
+.p-rule {
+  height: var(--rule);
+  background: var(--hair);
+}
+
+/* Corner brackets, never a box. */
+.p-brk {
+  position: relative;
+}
+
+.p-brk::before,
+.p-brk::after,
+.p-brk > .p-brk-i::before,
+.p-brk > .p-brk-i::after {
+  content: "";
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border: var(--rule) solid var(--hair);
+  pointer-events: none;
+}
+
+.p-brk::before {
+  top: 0;
+  left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.p-brk::after {
+  bottom: 0;
+  right: 0;
+  border-left: 0;
+  border-top: 0;
+}
+
+.p-brk > .p-brk-i {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.p-brk > .p-brk-i::before {
+  top: 0;
+  right: 0;
+  border-left: 0;
+  border-bottom: 0;
+}
+
+.p-brk > .p-brk-i::after {
+  bottom: 0;
+  left: 0;
+  border-right: 0;
+  border-top: 0;
+}
+
+/* Knockout bar: cells of letterspaced mono reversed out of the ink. */
+.p-knock {
+  background: var(--ink);
+  color: var(--sub);
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.p-knock .cell {
+  padding: 9px 14px;
+  border-right: var(--rule) solid
+    color-mix(in oklab, var(--sub) 34%, var(--ink));
+  color: color-mix(in oklab, var(--sub) 82%, var(--ink));
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.p-knock .cell:last-child {
+  border-right: 0;
+}
+
+.p-knock a {
+  text-decoration: none;
+  color: var(--sub);
+  border-bottom: var(--rule) solid transparent;
+}
+
+.p-knock a:hover,
+.p-knock a:focus-visible {
+  border-bottom-color: var(--sub);
+}
+
+.p-knock a:focus-visible {
+  outline-color: var(--sub);
+}
+
+@media (max-width: 35rem) {
+  .p-knock {
+    flex-direction: column;
+  }
+  .p-knock .cell {
+    border-right: 0;
+    border-bottom: var(--rule) solid
+      color-mix(in oklab, var(--sub) 34%, var(--ink));
+  }
+  .p-knock .cell:last-child {
+    border-bottom: 0;
+  }
+}
+
+/* --- instruments ---------------------------------------------------------- */
+
+.ins {
+  color: var(--ink);
+}
+
+.ins .h {
+  fill: none;
+  stroke: var(--hair);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.ins .i {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.ins .d {
+  fill: none;
+  stroke: var(--hair);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.ins .f {
+  fill: var(--ink);
+  stroke: none;
+}
+
+/* Plate lettering is authored in viewBox units, so it scales with the drawing.
+   A plate drawn much larger than the rest would letter much larger than the
+   rest, and the sheet reads as one sheet only while every label is about the
+   same size. `--ins-type` lets a plate that is drawn big author its type down
+   to compensate; the sheet keeps its labels in a 10-13px band. */
+.ins text {
+  font-family: var(--font-mono);
+  font-size: var(--ins-type, 8px);
+  letter-spacing: 0.16em;
+  fill: var(--muted);
+  text-transform: uppercase;
+}
+
+.ins .t-ink {
+  fill: var(--ink);
+}
+
+/* A label that has to sit over stipple gets the ground knocked out behind it,
+   which is what a draughtsman does rather than moving the label somewhere it
+   means less. */
+.ins .halo {
+  paint-order: stroke;
+  stroke: var(--sub);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+/* The Game of Life plate's dot matrix. Deliberately not .node: that one lights
+   up on hover, and a whole board of it would flood the figure. */
+.ins .mat {
+  fill: var(--hair);
+}
+
+/* Filled at hairline weight — arrowheads on a lead line are part of the line,
+   not an emphasis, so they must not out-weigh the object they point at. */
+.ins .fh {
+  fill: var(--hair);
+  stroke: none;
+}
+
+/* Patent reference numerals. The one place on a figure where type is inked
+   rather than muted: on a patent sheet the numerals are the only thing drawn
+   heavier than the line work, and they have to read before the drawing does. */
+.ins .num {
+  font-size: calc(var(--ins-type, 8px) * 1.125);
+  letter-spacing: 0.04em;
+  fill: var(--ink);
+}
+
+.ins .node {
+  fill: var(--hair);
+  transition: fill 0.25s ease;
+}
+
+/* The two accents on the page. */
+.acc-tick {
+  stroke: var(--sig);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.acc-ring {
+  fill: none;
+  stroke: var(--sig);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
