@@ -1,26 +1,60 @@
-/* World 03 — GBA era. Pixel type, CRT scanlines, framed panels. */
+/* ---------------------------------------------------------------------------
+   World 03 — Cipherbound.
+
+   The page is built out of the interface parts of a GBA-era Pokémon game
+   rather than dressed to resemble one: an overworld field to stand on, and
+   white text boxes with a blue bevel sitting on top of it. The trailer plays
+   in the screen of an actual Game Boy Advance (see GbaConsole.astro).
+
+   The old palette was #88c070 on #101820 — the original Game Boy's green,
+   two hardware generations too early for the game this page is about. The
+   tokens now come from Ruby/Sapphire/Emerald, and live in the content file.
+
+   There are no scanlines any more. They belonged to a CRT, an LCD has none,
+   and the page now contains a photograph of the actual screen.
+   --------------------------------------------------------------------------- */
 @import "../styles/project.css";
 
 [data-world="cipherbound"] {
   position: relative;
-  --frame: 3px;
+
+  /* Tufts on the ground. An inline tile rather than a file: it is nine
+     triangles, and a page that is mostly ground needs them sparse and barely
+     there — this sits behind the reading column, so it recedes or it fights.
+     Two clusters and a stray on a 120px tile, at a tenth opacity. */
+  background-color: var(--sub);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cg fill='%232f6b22' fill-opacity='0.13'%3E%3Cpath d='M12 34l5-12 5 12zM20 34l5-15 5 15zM28 34l5-12 5 12z'/%3E%3Cpath d='M66 92l5-12 5 12zM74 92l5-15 5 15zM82 92l5-12 5 12z'/%3E%3C/g%3E%3Cg fill='%232f6b22' fill-opacity='0.08'%3E%3Cpath d='M95 44l4-10 4 10zM24 100l4-10 4 10z'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
 }
 
-/* Scanlines over the whole world, faint enough to read through. */
-[data-world="cipherbound"]::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0 2px,
-    color-mix(in oklab, #000 22%, transparent) 2px 3px
-  );
-  mix-blend-mode: multiply;
-  opacity: 0.5;
+/* --- the box ------------------------------------------------------------- */
+
+/* One box, used everywhere. White interior, blue bevel, dark outline, and a
+   flat drop so it reads as sitting on the field rather than cut into it. */
+.gb-box {
+  --box-fill: #fff;
+  position: relative;
+  background: var(--box-fill);
+  border: 6px solid var(--hair);
+  border-radius: 12px;
+  outline: 3px solid var(--ink);
+  padding: var(--space-3);
+  box-shadow:
+    inset 0 0 0 2px color-mix(in oklab, var(--hair) 22%, #fff),
+    0 6px 0 0 color-mix(in oklab, var(--ink) 22%, transparent);
 }
+
+/* Text sits on white here, not on the field, so the substrate-derived greys
+   project.css computes would carry a green cast. */
+[data-world="cipherbound"] .gb-box :is(p, li, dd, .prose p, .prose li) {
+  color: color-mix(in oklab, var(--ink) 88%, #fff);
+}
+
+[data-world="cipherbound"] .gb-box :is(h1, h2, h3, strong, dt) {
+  color: var(--ink);
+}
+
+/* --- type ---------------------------------------------------------------- */
 
 [data-world="cipherbound"] :is(h1, h2, h3),
 [data-world="cipherbound"] .micro-label,
@@ -35,89 +69,58 @@
 [data-world="cipherbound"] .head h1 {
   font-size: var(--step-3);
   line-height: 1.15;
-  text-shadow: 3px 3px 0 color-mix(in oklab, var(--sig) 55%, transparent);
   max-width: 14ch;
+  /* The games set their titles with a hard offset shadow, not a soft one. */
+  text-shadow: 4px 4px 0 color-mix(in oklab, var(--sig) 40%, transparent);
 }
 
 [data-world="cipherbound"] .lede {
   font-family: var(--font-pixel);
   font-size: var(--step-0);
   line-height: 1.7;
+  max-width: none;
 }
 
 [data-world="cipherbound"] .prose h2 {
   font-size: var(--step-1);
-  border-bottom: var(--frame) solid var(--hair);
+  border-bottom: 3px solid color-mix(in oklab, var(--hair) 40%, #fff);
   padding-bottom: 0.4rem;
 }
 
-[data-world="cipherbound"] .micro-spec,
-[data-world="cipherbound"] .links a {
-  border-color: var(--hair);
+[data-world="cipherbound"] .prose p,
+[data-world="cipherbound"] .cb-panel .prose p {
+  max-width: none;
 }
 
-/* Chunky GBA-style frame, drawn with a stepped border. */
-.cb-frame {
-  border: var(--frame) solid var(--ink);
-  box-shadow:
-    0 0 0 var(--frame) var(--sub),
-    0 0 0 calc(var(--frame) * 2) var(--hair);
-  background: color-mix(in oklab, var(--ink) 6%, var(--sub));
-}
+/* --- shape --------------------------------------------------------------- */
 
-.cb-video {
+/* The console runs wider than the reading column: it is the page's picture,
+   and at column width its screen stops being worth looking at. */
+.cb-hero {
+  width: min(100% - var(--gutter) * 2, 68rem);
+  margin-inline: auto;
   margin-bottom: var(--space-4);
 }
 
-/* --- shape: a stack of panels on a handheld screen ------------------------ */
-
-/* Narrow and centred. The other worlds run wide; this one deliberately does
-   not, because a GBA screen is small and everything on it is boxed. */
-.cb-screen {
+.cb-column {
   width: min(100% - var(--gutter) * 2, 54rem);
   margin-inline: auto;
   display: grid;
   gap: var(--space-4);
 }
 
-.cb-panel {
-  padding: var(--space-3);
-}
-
-[data-world="cipherbound"] .cb-panel .head h1 {
-  margin-block: var(--space-2) var(--space-2);
-}
-
-[data-world="cipherbound"] .cb-panel .lede {
-  max-width: none;
-}
-
-[data-world="cipherbound"] .cb-panel .prose p {
-  max-width: none;
-}
-
-/* Two-up status panels, the way a party screen splits stats from actions. */
+/* Two-up, the way a party screen splits stats from actions. Equal heights,
+   because a pair of ragged boxes reads as a layout accident and a party screen
+   is a matched pair. */
 .cb-status {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
-  align-items: start;
+  align-items: stretch;
 }
 
-.cb-status .cb-speaker {
-  display: block;
-  margin-bottom: var(--space-2);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
-[data-world="cipherbound"] .cb-status .award {
-  margin-top: var(--space-3);
-}
-
-/* The crumb bar and the page's own gutter fight on a screen this narrow. */
 [data-world="cipherbound"] .crumb-bar {
-  width: min(100% - var(--gutter) * 2, 54rem);
+  width: min(100% - var(--gutter) * 2, 68rem);
   margin-inline: auto;
 }
 
@@ -127,19 +130,61 @@
   }
 }
 
-/* --- dialogue box --------------------------------------------------------- */
+/* --- title block --------------------------------------------------------- */
+
+.cb-title .head {
+  margin: 0;
+}
+
+[data-world="cipherbound"] .cb-title .head h1 {
+  margin-block: var(--space-2);
+}
+
+/* Type badges. The language is the signature colour and the rest are the
+   bevel blue — the tags carry which is which, so the colour is not decoration
+   picked per label. */
+.cb-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+}
+
+.cb-types li {
+  font-family: var(--font-pixel);
+  font-size: var(--step--1);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: var(--hair);
+  border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+  border: 2px solid var(--ink);
+  box-shadow: 0 2px 0 0 color-mix(in oklab, var(--ink) 30%, transparent);
+}
+
+.cb-types li:first-child {
+  background: var(--sig);
+}
+
+/* --- dialogue box -------------------------------------------------------- */
 
 .cb-dialogue {
-  padding: var(--space-3);
   display: grid;
   gap: var(--space-2);
   font-family: var(--font-pixel);
   align-content: start;
+  padding-block: var(--space-3) var(--space-2);
 }
 
 .cb-speaker {
   color: var(--sig);
   font-size: var(--step--1);
+  font-family: var(--font-pixel);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
 
 .cb-text {
@@ -150,7 +195,7 @@
   min-height: 3lh;
 }
 
-/* The little blinking triangle that means "press A". */
+/* The blinking triangle that means "press A". */
 .cb-next {
   justify-self: end;
   display: flex;
@@ -193,14 +238,64 @@
 .cb-pip {
   width: 8px;
   height: 8px;
-  background: var(--hair);
+  border: 2px solid var(--ink);
+  background: #fff;
 }
 
 .cb-pip[data-on] {
   background: var(--sig);
 }
 
-/* --- the sprite that walks the margin ------------------------------------- */
+/* --- summary screen ------------------------------------------------------ */
+
+.cb-status .cb-speaker {
+  display: block;
+  margin-bottom: var(--space-2);
+}
+
+[data-world="cipherbound"] .cb-status .micro-spec {
+  border-top: 3px solid color-mix(in oklab, var(--hair) 40%, #fff);
+}
+
+[data-world="cipherbound"] .cb-status .micro-spec > dt,
+[data-world="cipherbound"] .cb-status .micro-spec > dd {
+  border-bottom: 3px solid color-mix(in oklab, var(--hair) 40%, #fff);
+}
+
+[data-world="cipherbound"] .cb-status .micro-spec > dd {
+  text-align: right;
+  font-family: var(--font-pixel);
+  /* "Hand-written game systems" otherwise breaks with one word on its own. */
+  text-wrap: balance;
+}
+
+/* --- links, as a menu ---------------------------------------------------- */
+
+[data-world="cipherbound"] .links a {
+  border-bottom: 3px solid color-mix(in oklab, var(--hair) 40%, #fff);
+  padding-inline-start: 1.6rem;
+  position: relative;
+}
+
+/* The cursor a Pokémon menu puts beside the row you are on. */
+[data-world="cipherbound"] .links a::before {
+  content: "▶";
+  position: absolute;
+  left: 0;
+  color: var(--sig);
+  opacity: 0;
+}
+
+[data-world="cipherbound"] .links a:is(:hover, :focus-visible)::before {
+  opacity: 1;
+}
+
+[data-world="cipherbound"] .award {
+  border: 3px solid color-mix(in oklab, var(--hair) 40%, #fff);
+  background: color-mix(in oklab, var(--sub) 45%, #fff);
+}
+
+/* --- the sprite that walks the margin ------------------------------------ */
 
 .cb-sprite {
   position: fixed;

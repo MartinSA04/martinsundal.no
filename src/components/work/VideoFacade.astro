@@ -14,18 +14,37 @@ interface Props {
   posterAlt: string;
   /** Runtime as m:ss. Shown on the play button, so it must match the file. */
   duration: string;
+  /**
+   * Fill the host box instead of imposing the video's own ratio and frame.
+   * Cipherbound seats the facade in the screen of a Game Boy Advance, where
+   * the aspect ratio and the border belong to the hardware, not to this.
+   */
+  fill?: boolean;
+  /** How the poster and the video sit in the box. */
+  fit?: "cover" | "contain";
 }
 
-const { poster, webm, mp4, width, height, label, posterAlt, duration } =
-  Astro.props;
+const {
+  poster,
+  webm,
+  mp4,
+  width,
+  height,
+  label,
+  posterAlt,
+  duration,
+  fill,
+  fit = "cover",
+} = Astro.props;
 ---
 
 <div
   class="facade"
   data-video-facade
+  data-fill={fill ? "" : undefined}
   data-webm={webm}
   data-mp4={mp4}
-  style={`--ratio:${width} / ${height}`}
+  style={`--ratio:${width} / ${height}; --fit:${fit}`}
 >
   <button type="button" aria-label={label}>
     <img
@@ -52,6 +71,16 @@ const { poster, webm, mp4, width, height, label, posterAlt, duration } =
     background: var(--sub);
   }
 
+  /* The host owns the box. Black rather than --sub because a filled facade is
+     letterboxed inside something, and the bars should read as the frame. */
+  .facade[data-fill] {
+    aspect-ratio: auto;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #000;
+  }
+
   button {
     all: unset;
     display: block;
@@ -65,7 +94,7 @@ const { poster, webm, mp4, width, height, label, posterAlt, duration } =
   :global([data-video-facade] video) {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: var(--fit, cover);
     display: block;
   }
 

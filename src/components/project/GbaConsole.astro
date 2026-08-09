@@ -1,0 +1,164 @@
+---
+/**
+ * A Game Boy Advance with something playing on its screen.
+ *
+ * The photograph is Evan-Amos's shot of the Indigo AGB-001, made for the
+ * Vanamo Online Game Museum and released into the public domain:
+ * https://commons.wikimedia.org/wiki/File:Nintendo-Game-Boy-Advance-Purple-FL.png
+ *
+ * It is a three-quarter view, so the screen is a quadrilateral rather than a
+ * rectangle and the slot has to be projected onto it. Every GBA photograph in
+ * that set uses the same pose and Commons has no straight-on purple one, so
+ * this is the only way to put a video in that screen, not a stylistic choice.
+ *
+ * Two measurements make it work, both taken on a 1280x884 render:
+ *
+ *   1. The screen's corners, found by isolating the LCD's grey as a connected
+ *      component: TL 505,215  TR 913,351  BR 786,599  BL 368,447. The edges
+ *      measure 430 x 279 = 1.54, which recovers the real 3:2 GBA panel — that
+ *      the number comes out right is the check that it found the screen and
+ *      not a reflection.
+ *
+ *   2. The homography from a 480x320 element onto that quad, below. It lands
+ *      all four corners to the pixel.
+ *
+ * Everything therefore lives in a fixed 1280x884 stage, where all of it is
+ * exact, and the whole stage is then scaled to the page by ONE uniform factor.
+ * Uniform scale composes cleanly with a perspective transform; scaling the
+ * axes separately would shear it.
+ */
+interface Props {
+  /** Described to screen readers as the console itself, not its contents. */
+  alt: string;
+  class?: string;
+}
+
+const { alt, class: extraClass } = Astro.props;
+---
+
+<div class:list={["gba", extraClass]}>
+  <div class="stage">
+    <picture>
+      <source
+        type="image/avif"
+        srcset="/cipherbound/gba-1280.avif 1280w, /cipherbound/gba-2560.avif 2560w"
+        sizes="(max-width: 72rem) 100vw, 68rem"
+      />
+      <img
+        src="/cipherbound/gba-1280.webp"
+        srcset="/cipherbound/gba-1280.webp 1280w, /cipherbound/gba-2560.webp 2560w"
+        sizes="(max-width: 72rem) 100vw, 68rem"
+        alt={alt}
+        width={1280}
+        height={884}
+        decoding="async"
+        fetchpriority="high"
+      />
+    </picture>
+
+    <div class="screen">
+      <slot />
+    </div>
+  </div>
+</div>
+
+<style>
+  /* cqi drives the scale, so the console needs no script to be responsive.
+     overflow:hidden is insurance: if the scale ever fails to compute, the
+     stage clips instead of pushing a 1280px box through the page. */
+  .gba {
+    container-type: inline-size;
+    width: 100%;
+    aspect-ratio: 1280 / 884;
+    overflow: hidden;
+  }
+
+  .stage {
+    /* The one number the whole composite hangs off: how much smaller the page
+       is drawing the 1280px stage. Everything inside is authored in stage
+       pixels and divided by this where it needs to survive the scaling. */
+    --k: calc(100cqi / 1280px);
+
+    position: relative;
+    width: 1280px;
+    height: 884px;
+    transform-origin: 0 0;
+    transform: scale(var(--k));
+  }
+
+  .stage img {
+    display: block;
+    width: 1280px;
+    height: 884px;
+  }
+
+  /* The slot, projected onto the LCD. The photograph's screen is an opaque
+     grey surface, so this sits over it rather than behind it. */
+  .screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 480px;
+    height: 320px;
+    overflow: hidden;
+    background: #000;
+    transform-origin: 0 0;
+    transform: matrix3d(
+      0.7700608,
+      0.2526009,
+      0,
+      -0.000087556,
+      -0.4703213,
+      0.6737452,
+      0,
+      -0.000114664,
+      0,
+      0,
+      1,
+      0,
+      505,
+      215,
+      0,
+      1
+    );
+  }
+
+  /* The glass the photograph had before the video covered it. Kept faint —
+     it sits over a play button that has to stay readable. */
+  .screen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      104deg,
+      rgb(255 255 255 / 14%) 0%,
+      rgb(255 255 255 / 4%) 26%,
+      transparent 46%
+    );
+  }
+
+  /* The play control is the one thing in the screen that must not scale with
+     it. Drawn at stage size it is ~17px across on a phone, where the console
+     is a quarter of its authored width — legible on a desktop and invisible
+     on the device most likely to see it. Dividing by --k holds it at a fixed
+     apparent size instead, so it grows relative to the screen as the console
+     shrinks, the way a game's own UI does.
+
+     Centred, not in the corner the facade defaults to: that corner is where
+     the game draws its text box, and the two sat on top of each other. */
+  .screen :global(.play) {
+    left: 50%;
+    bottom: 50%;
+    transform: translate(-50%, 50%);
+    font-size: calc(15px / var(--k));
+    gap: 0.5em;
+    padding: 0.5em 0.8em;
+    border-width: calc(1px / var(--k));
+  }
+
+  .screen :global(.play svg) {
+    width: 1.2em;
+    height: 1.2em;
+  }
+</style>

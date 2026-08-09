@@ -4,10 +4,10 @@ name: Cipherbound
 tagline: A Pokémon-like game written from scratch in C++, and the best project in its NTNU course.
 summary: A tile-based RPG built in C++ on hand-written game systems for map streaming, turn-based battles, dialogue, and save state. Won Best Project in TDT4102.
 world:
-  sub: "#101820"
-  ink: "#e0f8d0"
-  hair: "#3f5a48"
-  sig: "#88c070"
+  sub: "#d8ecc0"
+  ink: "#384058"
+  hair: "#4868a8"
+  sig: "#c8302a"
 spec:
   - label: Language
     value: C++

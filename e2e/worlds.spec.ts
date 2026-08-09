@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 const WORLDS = [
   { slug: "study-companion", sig: "#8a5a2b" },
   { slug: "ntnu-api", sig: "#ffb000" },
-  { slug: "cipherbound", sig: "#88c070" },
+  { slug: "cipherbound", sig: "#c8302a" },
   { slug: "black-hole", sig: "#ff8c42" },
   { slug: "game-of-life", sig: "#2563eb" },
 ];

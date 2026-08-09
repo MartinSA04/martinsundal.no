@@ -52,10 +52,15 @@ for (const [name, path] of PAGES) {
           await new Promise((r) => setTimeout(r, 60));
         }
         window.scrollTo(0, 0);
+        // Every image, not only the incomplete ones: `complete` means the
+        // bytes arrived, not that a frame is ready to paint. Cipherbound's
+        // Game Boy is a large AVIF and lost that race often enough to capture
+        // as an empty box.
         await Promise.all(
-          [...document.images]
-            .filter((i) => !i.complete)
-            .map((i) => i.decode().catch(() => {})),
+          [...document.images].map((i) => i.decode().catch(() => {})),
+        );
+        await new Promise((r) =>
+          requestAnimationFrame(() => requestAnimationFrame(r)),
         );
       });
       await page.waitForLoadState("networkidle");

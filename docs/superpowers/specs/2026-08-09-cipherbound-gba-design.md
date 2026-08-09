@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-09
 **Branch:** `redesign/micrographics`
-**Status:** specified
+**Status:** **built 2026-08-09**
 **Surface:** `/projects/cipherbound/` — `src/pages/projects/cipherbound.astro`,
 `src/worlds/cipherbound.css`, `src/worlds/cipherbound.ts`,
 `src/content/projects/cipherbound.md`, plus a new console component and
@@ -79,7 +79,7 @@ way to put a video in that screen.
 Measured on a 1280 × 884 render by isolating the LCD's grey as a connected
 component, the screen's corners are:
 
-```
+```text
 TL 505,215    TR 913,351    BR 786,599    BL 368,447
 ```
 
@@ -196,6 +196,26 @@ From `e2e/work.spec.ts`: the `0:33` label, and zero video bytes until click.
 
 `e2e/a11y.spec.ts`, `e2e/kernel.spec.ts` and `e2e/seo.spec.ts` also cover this
 route. `e2e/shots.spec.ts` regenerates `shots/{desktop,mobile}/cipherbound-*`.
+
+## Found while building
+
+**The capture harness was racing the decode.** `e2e/shots.spec.ts` only called
+`decode()` on images that were not yet `complete`, but `complete` means the
+bytes arrived, not that a frame is ready to paint. The console is a large AVIF
+and lost that race often enough to capture as an empty box — three consecutive
+runs, two of them broken. It now decodes every image and waits two animation
+frames. This was a pre-existing weakness in the harness, not something the
+console introduced; the console is just the first asset heavy enough to expose
+it.
+
+**The play control cannot scale with the console.** Drawn at stage size it is
+~17px across on a phone, where the console renders at roughly a quarter of its
+authored width: legible on a desktop and invisible on the device most likely
+to see it. It is divided by the stage's own scale factor so it holds a fixed
+apparent size, growing relative to the screen as the console shrinks — which is
+what a game's own UI does anyway. The facade also defaults to putting it in the
+bottom-left corner, which is exactly where the game draws its text box, so
+inside the console it is centred instead.
 
 ## Acceptance
 
