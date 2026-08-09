@@ -223,6 +223,19 @@ const worldStyle = world
         align-items: center;
         gap: var(--space-3);
         min-height: 3.5rem;
+        /* The mark, three nav items and the index add up to 344px, which is
+           wider than a 360px phone once the gutters are taken off. Below that
+           the gaps close up first, and the index drops to its own line only on
+           the narrowest screens left. */
+        flex-wrap: wrap;
+        row-gap: var(--space-2);
+      }
+
+      @media (max-width: 30rem) {
+        .header-inner,
+        .site-nav {
+          gap: var(--space-2);
+        }
       }
 
       .mark {
@@ -304,6 +317,9 @@ const worldStyle = world
       .chrome-tag {
         line-height: 1;
         color: var(--sig);
+        /* The nav's own auto margin does this while they share a line; this
+           keeps it at the right edge once the row wraps and the nav is gone. */
+        margin-inline-start: auto;
       }
       .chrome-tag::before {
         content: "[";

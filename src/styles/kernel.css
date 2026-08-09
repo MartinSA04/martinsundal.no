@@ -348,7 +348,11 @@ math :is(mi, mn, mo, ms, mtext) {
 /* Spec block: label/value readout rows. The core "dense, not prose" device. */
 .micro-spec {
   display: grid;
-  grid-template-columns: minmax(7rem, max-content) 1fr;
+  /* The value track is minmax(0, 1fr), not 1fr, because 1fr floors the track
+     at the value's min-content width. One unbreakable value — an endpoint, a
+     registry id — would otherwise widen the block past the viewport and take
+     the whole page's horizontal scroll with it. */
+  grid-template-columns: minmax(7rem, max-content) minmax(0, 1fr);
   gap: 0;
   border-top: var(--rule) solid var(--hair);
 }
@@ -371,6 +375,8 @@ math :is(mi, mn, mo, ms, mtext) {
 
 .micro-spec > dd {
   font-size: var(--step-0);
+  /* Values are URLs and identifiers as often as they are words. */
+  overflow-wrap: anywhere;
 }
 
 /* --- cross-document view transitions -------------------------------------- */

@@ -1,94 +1,158 @@
 ---
-import { getEntry, render } from "astro:content";
 import ProjectShell from "../../components/project/ProjectShell.astro";
 import ProjectHead from "../../components/project/ProjectHead.astro";
 import ProjectLinks from "../../components/project/ProjectLinks.astro";
 import SpecBlock from "../../components/micro/SpecBlock.astro";
+import { getEntry, render } from "astro:content";
+import Icon from "../../components/micro/Icon.astro";
+import { PROMPTS, defaults, sentence } from "../../lib/mcp-prompts.ts";
 import "../../worlds/ntnu-api.css";
 
 const entry = await getEntry("projects", "ntnu-api");
 if (!entry) throw new Error("missing content: projects/ntnu-api");
 const { Content } = await render(entry);
 
-const PRESETS = [
-  { id: "search", label: "search_courses" },
-  { id: "compare", label: "compare_courses" },
-  { id: "conflicts", label: "check_timetable_conflicts" },
-  { id: "grades", label: "get_grade_distribution" },
-];
+/* Rendered flat for the no-JS case; the script replaces it with the same
+   sentence, blanks and all. */
+const opening = sentence(PROMPTS[0], defaults(PROMPTS[0]));
+
+/* The server is public and unauthenticated, so connecting a client is one URL
+   in three shapes. Written out here rather than described in the prose,
+   because it is something to copy, not something to read. */
+const ENDPOINT = "https://ntnu-mcp.martinsundal.no/mcp";
+const CLI = `claude mcp add --transport http ntnu ${ENDPOINT}`;
+const CONFIG = `{
+  "mcpServers": {
+    "ntnu": { "type": "http", "url": "${ENDPOINT}" }
+  }
+}`;
 ---
 
 {
-  /* Shape: a terminal session, so it runs top to bottom in one column with no
-    rail beside it. The console leads and the title follows it, because the
-    argument of the page is "this thing is live, watch it" and prose about a
-    protocol client is worth less than the client running. */
+  /* Shape: a chat window, then a terminal session. The console leads and the
+    title follows it, because the argument of the page is "ask it something"
+    and prose about a protocol client is worth less than the client running.
+    The window is a chat window because that is the only place an MCP server
+    is ever used from, and it opens empty because that is how one opens. */
 }
 <ProjectShell entry={entry}>
-  <section class="wrap mcp" data-mcp aria-label="Live MCP console">
-    <div class="mcp-bar">
-      <span class="mcp-dot" data-mcp-dot aria-hidden="true"></span>
-      <span class="micro-label">ntnu-mcp.martinsundal.no/mcp</span>
-      <span class="micro-label" data-mcp-status>idle</span>
-      <span class="micro-label" style="margin-left:auto"
-        >streamable-http · 2025-06-18</span
-      >
-    </div>
+  <section class="wrap chat" data-mcp aria-label="Live MCP chat console">
+    <header class="chat-bar">
+      <span class="chat-dot" data-mcp-dot aria-hidden="true"></span>
+      <span class="chat-host">ntnu-mcp.martinsundal.no/mcp</span>
+      <span class="micro-label chat-proto">streamable-http · 2025-06-18</span>
+      <span class="micro-label chat-state" data-mcp-status>no script</span>
+    </header>
 
-    <div class="mcp-presets">
-      {
-        PRESETS.map((p) => (
-          <button type="button" data-mcp-preset={p.id} aria-pressed="false">
-            {p.label}
-          </button>
-        ))
-      }
-    </div>
-
-    <div class="mcp-panes">
-      <div class="mcp-pane">
-        <span class="micro-label">JSON-RPC over the wire</span>
-        <pre
-          data-mcp-wire>Pick a tool above. The request and response that
-cross the network appear here, unedited.</pre>
-      </div>
-      <div class="mcp-pane">
-        <span class="micro-label">Result</span>
-        <div data-mcp-result>
-          <p class="mcp-intro">
-            This console is a hand-written MCP client. It calls the real server
-            from your browser, and nothing here is recorded.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div class="mcp-fallback" data-mcp-fallback hidden></div>
-  </section>
-
-  <div class="wrap">
-    <div class="na-stream">
-      <ProjectHead entry={entry} />
-
-      <div class="prose">
-        <Content />
-      </div>
+    <div class="chat-log" data-mcp-log role="log" aria-live="polite">
+      <noscript>
+        <p class="turn turn-note">
+          Asking needs JavaScript, so it is switched off for you. The client is
+          80 lines of <code>fetch</code>, linked at the foot of the page.
+        </p>
+      </noscript>
     </div>
 
     {
-      /* The apparatus arrives as two more commands rather than as a rail, and
-        at the console's full width so the session ends where it started. */
+      /* One control, not two bands: the sentence, the questions it can be, and
+        the send. The picker sits inside the field the way a chat client's own
+        toolbar does, because choosing the question is part of writing it. On a
+        phone six chips are two rows of the composer, so it collapses to a
+        select. */
     }
-    <div class="na-tail">
-      <section class="na-readout" aria-label="Package details">
-        <span class="micro-label na-prompt">ntnu-api --info</span>
-        <SpecBlock rows={entry.data.spec} />
-      </section>
+    <form class="chat-composer" data-mcp-form>
+      <p class="chat-line" data-mcp-line>{opening}</p>
+      <div class="chat-controls">
+        <div class="chat-chips" role="group" aria-label="Choose a question">
+          {
+            PROMPTS.map((p, i) => (
+              <button
+                type="button"
+                data-mcp-chip={p.id}
+                aria-pressed={i === 0 ? "true" : "false"}
+              >
+                {p.label}
+              </button>
+            ))
+          }
+        </div>
 
-      <section class="na-readout" aria-label="Links">
-        <span class="micro-label na-prompt">ntnu-api --links</span>
-        <ProjectLinks entry={entry} />
-      </section>
+        <label class="chat-picker">
+          <span class="visually-hidden">Choose a question</span>
+          <select data-mcp-select>
+            {PROMPTS.map((p) => <option value={p.id}>{p.label}</option>)}
+          </select>
+        </label>
+
+        <button type="submit" class="chat-send" data-mcp-send disabled>
+          <Icon name="arrow-up" size={18} />
+          <span class="visually-hidden">Ask</span>
+        </button>
+      </div>
+    </form>
+  </section>
+
+  {
+    /* One hairline runs the length of the document with a node at each block,
+      the way a trace is drawn. The narrow column beside the prose carries the
+      three upstream systems, which are the fact the whole project turns on. */
+  }
+  <div class="wrap na-trace">
+    <div class="na-life" aria-hidden="true"></div>
+
+    <div class="na-col">
+      <ProjectHead entry={entry} />
+
+      <div class="na-doc">
+        <div class="prose">
+          <Content />
+        </div>
+
+        <aside class="na-sources" aria-label="Upstream systems">
+          <span class="micro-label na-sources-head">Upstream</span>
+          <dl>
+            <dt>Liferay</dt>
+            <dd>course pages, JSON</dd>
+            <dt>HK-dir</dt>
+            <dd>grade statistics</dd>
+            <dt>TP</dt>
+            <dd>term ids, teaching weeks</dd>
+          </dl>
+        </aside>
+      </div>
+
+      {
+        /* The apparatus arrives as two more commands rather than as a rail, so
+          the session ends the way it started. */
+      }
+      <div class="na-tail">
+        <section class="na-connect" aria-label="Connect a client">
+          <span class="micro-label na-prompt">ntnu-mcp --connect</span>
+          <dl class="micro-spec">
+            <dt>Endpoint</dt>
+            <dd><code>{ENDPOINT}</code></dd>
+            <dt>Claude</dt>
+            <dd>
+              Settings, then Connectors, then Add custom connector. Paste the
+              endpoint. There is no key to enter.
+            </dd>
+            <dt>Claude Code</dt>
+            <dd><pre class="na-code">{CLI}</pre></dd>
+            <dt>Anything else</dt>
+            <dd><pre class="na-code">{CONFIG}</pre></dd>
+          </dl>
+        </section>
+
+        <section class="na-readout" aria-label="Package details">
+          <span class="micro-label na-prompt">ntnu-api --info</span>
+          <SpecBlock rows={entry.data.spec} />
+        </section>
+
+        <section class="na-readout" aria-label="Links">
+          <span class="micro-label na-prompt">ntnu-api --links</span>
+          <ProjectLinks entry={entry} />
+        </section>
+      </div>
     </div>
   </div>
 </ProjectShell>

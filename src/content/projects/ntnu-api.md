@@ -1,13 +1,13 @@
 ---
 index: 2
 name: NTNU Course Data API & MCP Server
-tagline: One typed interface over NTNU's scattered public course data, plus an MCP server that puts it in front of an LLM.
+tagline: Built to be able to ask Claude when the exams are. A typed client over NTNU's three course-data systems, and an MCP server in front of it.
 summary: A zero-dependency TypeScript client wrapping three public NTNU data sources, and a remote MCP server on Cloudflare Workers exposing twelve read-only tools.
 world:
-  sub: "#0c0d0f"
-  ink: "#e8e6e1"
-  hair: "#3a3c40"
-  sig: "#ffb000"
+  sub: "#0d1014"
+  ink: "#dde3ea"
+  hair: "#262d36"
+  sig: "#5cd6b8"
 spec:
   - label: Package
     value: ntnu-api on npm
@@ -17,8 +17,6 @@ spec:
     value: Node 20+ · Workers · browsers
   - label: MCP tools
     value: 12, all read-only
-  - label: MCP endpoint
-    value: ntnu-mcp.martinsundal.no/mcp
   - label: Registry
     value: io.github.MartinSA04/ntnu-mcp
 tags:
@@ -39,22 +37,24 @@ live: https://www.npmjs.com/package/ntnu-api
 languages:
   - TypeScript
 datePublished: "2026-04-20"
-dateModified: "2026-07-28"
+dateModified: "2026-08-09"
 ---
 
-## The problem
+## Why it exists
 
-NTNU's course data is public, unauthenticated, and scattered across three
-systems that do not know about each other. Course pages serve JSON from
-Liferay, but exam logistics exist only as HTML. Grade statistics
-live at HK-dir. Term ids and teaching weeks come from the TP timetable
-system. Nothing shares an identifier scheme.
+To be able to ask Claude about the schedule. That is the whole reason.
+
+NTNU's course data is public but not in a state to be looked up: three systems
+that were never introduced to each other and agree on nothing, including how a
+course is identified. Exam logistics are not data in any of them — they are
+published on the course page as HTML. So `ntnu-api` turns the sources into one
+thing to query, and `ntnu-mcp` puts that where a model can reach it.
 
 ## The client
 
-`ntnu-api` puts all of it behind one typed interface, fetch-based, with zero
-runtime dependencies, so it runs unchanged in Node, in a browser, and in a
-Cloudflare Worker.
+TypeScript over `fetch` with nothing underneath it. One build has to run in
+Node, in a browser tab and inside Cloudflare's runtime, so it carries no
+dependencies at all.
 
 | Namespace | Data | Source |
 | --- | --- | --- |
@@ -64,24 +64,21 @@ Cloudflare Worker.
 | `programs` | ~400 study programs, per-cohort study plans | ntnu.no JSON |
 | `semesters` | term ids, teaching weeks, exam periods | TP |
 
-Exam information has no JSON upstream at all, so it is scraped from the course page and typed on the way
-out. Catalog search returns duplicate entries, so `searchAll` dedups them.
-Grade lookups need DBH-versioned codes like `TDT4100-1`, so
-`get_course_versions` exists to bridge the two naming schemes.
+The work is in the seams. Exam information is scraped and typed on the way out.
+Catalog search hands back the same course twice. Grade lookups want `TDT4100-1`
+where the rest of NTNU says `TDT4100`.
 
 ## The MCP server
 
-`ntnu-mcp` runs the client as a remote MCP server on a Cloudflare Worker.
-Twelve read-only tools, no installation, no authentication, because it only
-serves public data.
+Twelve read-only tools on a Cloudflare Worker, over Streamable HTTP, no key.
+Two of them do something the catalog will not: `compare_courses` puts
+candidates side by side, and `check_timetable_conflicts` finds clashing
+lectures and colliding exams, separating lecture against lecture — fatal — from
+a clash with an exercise group that usually has another slot going.
 
-Two of them are the reason it exists. `compare_courses` lines candidates up
-side by side with exam dates, weekly teaching hours and recent grade
-distributions. `check_timetable_conflicts` catches weekly clashes and exam
-collisions across a set of courses **before** you register, which no official
-tool does.
+## The console
 
-## Try it
-
-The console on this page is a real MCP client, written by hand, talking to
-that server right now. Not a recording.
+A real MCP client in eighty lines of `fetch`, with no model behind it. That is
+why it asks in fill-in-the-blank sentences: the sentence chooses the tool and
+the blanks are the arguments. Put your own codes in and the call is the one
+Claude would make.

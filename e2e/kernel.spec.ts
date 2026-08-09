@@ -80,6 +80,7 @@ test("every icon renders as an svg that inherits currentColor", async ({
   );
   for (const name of [
     "arrow-right",
+    "arrow-up",
     "caret-down",
     "theme-light",
     "theme-dark",
