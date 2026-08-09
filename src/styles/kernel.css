@@ -183,6 +183,25 @@ a {
   border-radius: 1px;
 }
 
+/* MathML. Every formula on the site is hand-set <math> — there is no KaTeX and
+   no math font, which drives both rules below.
+
+   A single-letter <mi> is italicised by the UA stylesheet, and MathML Core does
+   it by mapping the letter into the Mathematical Alphanumeric Symbols block:
+   "u" becomes U+1D462. None of the four faces here cover that block, so the
+   variables would silently drop to a fallback font or to tofu. Upright is also
+   simply the right call for this site — the formulas are annotation on a
+   technical drawing, not journal setting, and no face here has a true italic to
+   slant to anyway. */
+math {
+  font-family: inherit;
+}
+
+math :is(mi, mn, mo, ms, mtext) {
+  text-transform: none;
+  font-style: normal;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

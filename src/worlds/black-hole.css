@@ -64,8 +64,40 @@
   margin-top: var(--space-4);
 }
 
-[data-world="black-hole"] .bh-cols > :is(p, ul, pre, table) {
+[data-world="black-hole"] .bh-cols > :is(p, ul, pre, table, figure) {
   break-inside: avoid;
+}
+
+/* --- Eq. 1 --------------------------------------------------------------- */
+
+/* A display equation is apparatus, so it is numbered and ruled like one — the
+   same treatment the figures get, at the width of one prose column. The number
+   is set in the mono micro-label the rest of the page annotates with, which
+   leaves the equation itself as the only serif thing in the block. */
+.bh-eq {
+  margin: var(--space-3) 0;
+  padding-block: var(--space-2);
+  border-block: var(--rule) solid var(--hair);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.bh-eq math {
+  font-family: var(--font-serif);
+  font-size: var(--step-1);
+  /* Flush left, not centred. The column is narrow and the equation reads as a
+     continuation of the sentence that introduces it. */
+  justify-self: start;
+}
+
+.bh-eq figcaption {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--ink) 70%, var(--sub));
 }
 
 .bh-apparatus {

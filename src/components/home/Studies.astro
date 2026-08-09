@@ -12,9 +12,11 @@
  * which is the contract the masthead's node map keeps too.
  *
  * Every fact in the readout is from the NTNU catalogue: programme MTFYMA,
- * cohort 2024, specialization MTFYMAKVANTE24. So are the four subjects named
- * in the lead — they are the third-year courses that specialization actually
- * carries (FY2045, TFY4220, TFE4169, TFY4355), not a description of the field.
+ * cohort 2024, specialization MTFYMAKVANTE24. So is the lead's count of four
+ * specializations — biophysics and medical technology, industrial mathematics,
+ * quantum technology, technical physics — which is the choice year 03 opens,
+ * and the first choice the programme offers at all. The year-03 course list and
+ * the rest of the source material are in docs/source-material.md.
  */
 import {
   AXES,
@@ -85,8 +87,28 @@ const { cx, cy, r, axes, poleTop, poleBottom, axisBottom, ket0, ket1 } =
       <figcaption class="p-u cap">
         Fig. 05a · Quantum corral<br />
         <span class="sym">
-          Re ψ = Σ cₘ·J_m(j_m₁·r)·cos(mθ ± ω_m t) · m = 0, 2, 3 · turn {TURN}s
-        </span>
+          {
+            /* Hand-set MathML. The subscripts are real subscripts, so j_m1 reads
+             as the first zero of J_m and not as three letters in a row. */
+          }
+          <math display="inline">
+            <mi>Re</mi><mspace width="0.17em"></mspace><mi>ψ</mi>
+            <mo>=</mo>
+            <munder><mo>&#x2211;</mo><mi>m</mi></munder>
+            <msub><mi>c</mi><mi>m</mi></msub>
+            <msub><mi>J</mi><mi>m</mi></msub>
+            <mo stretchy="false">(</mo>
+            <msub><mi>j</mi><mrow><mi>m</mi><mn>1</mn></mrow></msub>
+            <mi>r</mi>
+            <mo stretchy="false">)</mo>
+            <mi>cos</mi><mo>&#x2061;</mo>
+            <mo stretchy="false">(</mo>
+            <mi>m</mi><mi>θ</mi><mo>&#xB1;</mo><msub><mi>ω</mi><mi>m</mi></msub
+            ><mi>t</mi>
+            <mo stretchy="false">)</mo>
+          </math>
+        </span><br />
+        <span class="sym">m = 0, 2, 3 · turn {TURN}s</span>
       </figcaption>
     </figure>
 
@@ -111,9 +133,10 @@ const { cx, cy, r, axes, poleTop, poleBottom, axisBottom, ket0, ket1 } =
       </div>
 
       <p class="lead">
-        The first two years are the physics and maths everyone on the programme
-        takes. From the third it is quantum mechanics and solid state physics,
-        then nanoelectronics and quantum information.
+        Quantum computing is what I want to work on. It is physics and computing
+        at the same time, and nobody knows yet what it turns into. Year 03 is the
+        first year with a choice in it; there were four specializations, and I
+        took that one.
       </p>
 
       <div class="p-chain" style="margin-top:20px" aria-hidden="true">
@@ -287,6 +310,12 @@ const { cx, cy, r, axes, poleTop, poleBottom, axisBottom, ket0, ket1 } =
        close enough to a zero to be misread. */
     font-size: 10.5px;
     letter-spacing: 0.06em;
+  }
+
+  /* The caption's tracking is there to open up a run of mono glyphs. Inside the
+     formula it only pushes subscripts away from what they belong to. */
+  .sym math {
+    letter-spacing: normal;
   }
 
   .surf {
