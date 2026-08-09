@@ -77,6 +77,7 @@ const gticks = Array.from({ length: GTICKS }, (_, n) => {
           id="life-canvas"
           width={plan.width}
           height={plan.height}
+          data-settle={settledGen}
           role="img"
           aria-label={`A Conway's Game of Life board, ${plan.width} by ${plan.height} cells, that settles at generation ${settledGen} into the word MARTIN and stays a still life.`}
         ></canvas>
@@ -299,8 +300,12 @@ const gticks = Array.from({ length: GTICKS }, (_, n) => {
       canvas,
       planSrc: "/martin_plan.txt",
       // 276 generations at 24/s lands in about eleven seconds, and the board
-      // is a still life from there on.
+      // is a still life from there on. The settle generation is computed in
+      // the frontmatter above and handed over on the canvas, so reduced
+      // motion can rest on the finished word without the engine carrying a
+      // constant that only describes this one plan.
       speed: 24,
+      restGeneration: Number(canvas.dataset.settle) || undefined,
       pauseWhenOffscreen: true,
       onGeneration: report,
     });

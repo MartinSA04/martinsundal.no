@@ -134,6 +134,19 @@ export interface LifeSceneOptions {
   /** CSS custom property the cell colour is read from. */
   colorVar?: string;
   /**
+   * Element the colour property is resolved against. Defaults to the document
+   * root, which is right for a page that follows the site theme. A project
+   * world pins its own palette to <body>, so its board must read from inside
+   * that world or it gets the root theme's cell colour on the world's paper —
+   * white on white in dark mode.
+   */
+  colorEl?: HTMLElement;
+  /**
+   * Generation to show when the visitor has asked for reduced motion, instead
+   * of running the board. Normally the generation it settles at.
+   */
+  restGeneration?: number;
+  /**
    * Called after every generation, and once more when the board settles.
    * `settled` is true from the first generation that reproduces itself.
    * `population` is the live cell count of the board currently on screen —
@@ -149,16 +162,18 @@ export interface LifeSceneOptions {
 
 export interface LifeScene {
   start(): Promise<void>;
+  /** Resume a stopped scene. Does nothing under reduced motion. */
+  play(): void;
   stop(): void;
-  /** Render generation n from the seed, synchronously. Used by the scrubber. */
+  /** Render generation n, synchronously. Used by the scrubber. */
   renderGeneration(n: number): void;
   readonly generation: number;
+  /** Live cells on the board currently painted. */
+  readonly population: number;
 }
 
-function readColor(varName: string): [number, number, number] {
-  const raw = getComputedStyle(document.documentElement)
-    .getPropertyValue(varName)
-    .trim();
+function readColor(varName: string, el: HTMLElement): [number, number, number] {
+  const raw = getComputedStyle(el).getPropertyValue(varName).trim();
   if (raw.startsWith("#")) {
     const hex = raw.slice(1);
     const full =
@@ -194,6 +209,8 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
     restartOnExtinction = false,
     pauseWhenOffscreen = false,
     colorVar = "--life-cell",
+    colorEl = document.documentElement,
+    restGeneration,
     onGeneration,
   } = opts;
 
@@ -208,6 +225,7 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
   let population = 0;
   let settled = false;
   let running = false;
+  let wanted = false;
   let visible = !pauseWhenOffscreen;
   let raf = 0;
   let last = 0;
@@ -221,7 +239,7 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
     if (!plan || !board || !image) return;
     const data = image.data;
     data.fill(0);
-    const [r, g, b] = readColor(colorVar);
+    const [r, g, b] = readColor(colorVar, colorEl);
     // Counted here rather than with countLive(): this loop already visits
     // every one of the 68,352 cells, so the population is free, and it is
     // guaranteed to describe exactly the board being painted.
@@ -240,12 +258,31 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
     ctx!.putImageData(image, 0, 0);
   }
 
+  /**
+   * The rule has no inverse, so a board can only be reached by stepping to it.
+   * Going forwards, the board already on screen is a legal starting point and
+   * the common one — dragging the scrubber rightwards, or playing. Only a jump
+   * backwards has to replay from the seed.
+   *
+   * Restarting from the seed every time is what makes a naive scrubber quietly
+   * quadratic: on the 656×256 board each step costs about 0.9ms, so replaying
+   * to generation 400 is a 350ms stall, once per frame if it is driving
+   * playback.
+   */
   function renderGeneration(n: number) {
     if (!plan) return;
     let cells = plan.cells;
-    for (let i = 0; i < n; i++) cells = step(cells, plan.width, plan.height);
+    let from = 0;
+    if (board && n >= generation) {
+      cells = board;
+      from = generation;
+    }
+    for (let i = from; i < n; i++) cells = step(cells, plan.width, plan.height);
     board = cells;
     generation = n;
+    // Rewinding un-settles the board. Without this, a scrubber that goes back
+    // to the seed and plays again reports a still life from generation one.
+    settled = false;
     draw();
   }
 
@@ -292,18 +329,34 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
     raf = requestAnimationFrame(frame);
   }
 
-  function play() {
-    if (running || !visible || reducedMotion) return;
+  /**
+   * `wanted` is the caller's intent, `running` is whether a frame is queued.
+   * They are separate because scrolling the board out of view suspends it: a
+   * board that was paused on purpose has to stay paused when it scrolls back,
+   * which a single flag cannot express.
+   */
+  function resume() {
+    if (running || !wanted || !visible) return;
     running = true;
     last = 0;
     acc = 0;
     raf = requestAnimationFrame(frame);
   }
 
-  function stop() {
+  function suspend() {
     running = false;
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
+  }
+
+  function play() {
+    wanted = true;
+    resume();
+  }
+
+  function stop() {
+    wanted = false;
+    suspend();
   }
 
   async function start() {
@@ -315,20 +368,22 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
     board = plan.cells;
 
     // Under reduced motion, show the settled word rather than an empty board.
+    // The observers below are still wired up and the scene stays playable —
+    // reduced motion suppresses animation that starts on its own, not a run
+    // the visitor asks for by pressing a button.
     if (reducedMotion) {
-      renderGeneration(loopAfter ?? 276);
+      renderGeneration(restGeneration ?? loopAfter ?? 0);
       settled = true;
       onGeneration?.(generation, true, population);
-      return;
+    } else {
+      draw();
     }
-
-    draw();
 
     if (pauseWhenOffscreen) {
       new IntersectionObserver((entries) => {
         visible = entries[0]?.isIntersecting ?? false;
-        if (visible) play();
-        else stop();
+        if (visible) resume();
+        else suspend();
       }).observe(canvas);
     }
 
@@ -338,15 +393,19 @@ export function createLifeScene(opts: LifeSceneOptions): LifeScene | null {
       attributeFilter: ["data-theme"],
     });
 
-    play();
+    if (!reducedMotion) play();
   }
 
   return {
     start,
+    play,
     stop,
     renderGeneration,
     get generation() {
       return generation;
+    },
+    get population() {
+      return population;
     },
   };
 }
