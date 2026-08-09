@@ -117,8 +117,18 @@
 
    43rem is not a bleed ratio, it is the width the console already has at the
    breakpoint: the rule takes over exactly where the fluid width leaves off, so
-   the console does not jump size as the viewport crosses it. */
+   the console does not jump size as the viewport crosses it.
+
+   The hero drops its gutters here too. Clipping at the reading column's edge
+   would put the crop 20px inside the screen and read as a framed picture with
+   its sides sliced off; clipping at the viewport makes the console run off the
+   device, which is the point. It clips rather than scrolls, so the wider box
+   never reaches the document. */
 @media (max-width: 48rem) {
+  .cb-hero {
+    width: 100%;
+  }
+
   .cb-bleed {
     width: 43rem;
     margin-inline: calc((100% - 43rem) / 2);

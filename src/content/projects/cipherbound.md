@@ -22,7 +22,7 @@ tags:
   - Game systems
   - Architecture
 links:
-  - label: Visit Cipherbound
+  - label: Try Cipherbound
     href: https://cipherbound.com
     primary: true
   - label: CipherBound on GitHub
@@ -70,5 +70,3 @@ TDT4102 is where most students meet C++ properly, and most projects stop at
 one working mechanic. This one is a set of systems with clean seams between
 them, each extendable without reaching into the others. It took **Best
 Project** in the course.
-
-The sprite wandering around this page is from it.
