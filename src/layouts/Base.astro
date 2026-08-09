@@ -23,6 +23,12 @@ interface Props {
   /** Replaces the theme toggle on world pages, which are theme-invariant. */
   chromeTag?: string;
   /**
+   * Puts the toggle back alongside the chrome tag. For a world that carries a
+   * real light/dark palette rather than one fixed substrate — study-companion
+   * wears the framework's own tokens, and those answer to `data-theme`.
+   */
+  themeToggle?: boolean;
+  /**
    * Set by a page that draws its own ending, which suppresses the site footer.
    *
    * The plate's Fig. 06 carries a terminus — datum, coordinates, colophon, all
@@ -43,6 +49,7 @@ const {
   bodyClass,
   world,
   chromeTag,
+  themeToggle,
   terminus,
 } = Astro.props;
 
@@ -152,11 +159,22 @@ const worldStyle = world
         </nav>
 
         {
-          /* A world fixes its own substrate, so the toggle would be a control
-            that does nothing here. The page's index takes its place. */
-          chromeTag ? (
-            <span class="chrome-tag micro-label">{chromeTag}</span>
-          ) : (
+          /* A world usually fixes its own substrate, so the toggle would be a
+            control that does nothing and the page's index takes its place. A
+            world that opts in has two real themes and gets both. */
+          chromeTag && (
+            <span
+              class:list={[
+                "chrome-tag micro-label",
+                { "chrome-tag-yields": themeToggle },
+              ]}
+            >
+              {chromeTag}
+            </span>
+          )
+        }
+        {
+          (!chromeTag || themeToggle) && (
             <button id="theme-toggle" type="button" aria-label="Toggle theme">
               <Icon name="theme-light" size={15} />
               <Icon name="theme-dark" size={15} />
@@ -235,6 +253,14 @@ const worldStyle = world
         .header-inner,
         .site-nav {
           gap: var(--space-2);
+        }
+
+        /* A themed world carries the index AND the toggle, which is one item
+           more than the row was measured for: on a small phone the pair wraps
+           to a second line and the bar grows. The index is a label and the
+           toggle is a control, so the label is what gives way. */
+        .chrome-tag-yields {
+          display: none;
         }
       }
 

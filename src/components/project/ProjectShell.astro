@@ -35,7 +35,14 @@ const idx = String(p.index).padStart(2, "0");
   canonicalPath={`/projects/${entry.id}/`}
   ogImage={`${SITE}/og/${entry.id}.png`}
   graph={projectGraph(p, entry.id)}
-  world={p.world}
+  {/* A themed world carries a light and a dark palette instead of one fixed
+     substrate, so the four tokens must NOT be pinned onto <body> — inline
+     custom properties would freeze it in whichever theme they were written
+     for, and the toggle it keeps would have nothing to change. Its own
+     stylesheet defines them instead, and the frontmatter copy goes on serving
+     the OG card. */}
+  world={p.themed ? undefined : p.world}
+  themeToggle={p.themed}
   chromeTag={`Prj_${idx}`}
 >
   {/* Tokens live on <body> so the chrome matches; this keeps the hook only. */}

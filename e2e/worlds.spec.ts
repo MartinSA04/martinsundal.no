@@ -1,7 +1,9 @@
 import { test, expect } from "@playwright/test";
 
 const WORLDS = [
-  { slug: "study-companion", sig: "#8a5a2b" },
+  // The framework's default accent, reached through var(--accent): this world
+  // takes its palette live from study-companion's tokens.css.
+  { slug: "study-companion", sig: "#205ea6" },
   { slug: "ntnu-api", sig: "#5cd6b8" },
   { slug: "cipherbound", sig: "#c8302a" },
   { slug: "black-hole", sig: "#ff8c42" },
@@ -81,9 +83,15 @@ for (const w of WORLDS) {
       expect(running).toBe(0);
     });
 
+    /* By behaviour rather than by class: four worlds render the shared
+       ProjectLinks list, and study-companion puts the same links in the
+       framework's own sidebar rail. What every world owes the reader is a way
+       out to the thing itself. */
     test("links out to the project itself", async ({ page }) => {
       await page.goto(`/projects/${w.slug}/`);
-      await expect(page.locator(".links a").first()).toBeVisible();
+      await expect(
+        page.locator('main a[rel*="noopener"][href^="https://"]').first(),
+      ).toBeVisible();
     });
   });
 }

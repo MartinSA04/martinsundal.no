@@ -22,6 +22,13 @@ export const projectSchema = z
     tagline: z.string().min(1).max(160),
     summary: z.string().min(1).max(300),
     world: worldSchema,
+    /**
+     * The world carries its own light AND dark palette, so the page keeps the
+     * theme toggle and the four tokens above are never pinned onto <body> —
+     * they would freeze one theme. `world` stays required regardless: the OG
+     * card is a single flat image and has to pick a side.
+     */
+    themed: z.boolean().optional(),
     spec: z.array(z.object({ label: z.string(), value: z.string() })).min(1),
     tags: z.array(z.string()).min(1),
     links: z

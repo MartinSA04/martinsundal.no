@@ -1,134 +1,137 @@
 ---
+/**
+ * Shape: a page of the thing it describes.
+ *
+ * The other four worlds are invented here — a palette and a set of looks
+ * written in this repo to evoke a project. This one is not. package.json pins
+ * `study-companion` at the same git tag a course pins, and the page imports
+ * the framework's real stylesheets and its real components. The body is an
+ * .mdx entry rendered through the framework's own component map, so the prose
+ * below is authored exactly the way a course section is authored, widgets and
+ * all.
+ *
+ * The excerpt is the load-bearing part. It is rendered from
+ * _study-companion-demo.mdx, and the source printed above it is that same file
+ * read back with `?raw`. One set of bytes, listed and executed, so the two
+ * cannot disagree — an earlier version of this page hand-wrote a "rendered by
+ * the framework" panel that the framework would never have produced, out of
+ * YAML keys the schema does not have.
+ */
 import { getEntry, render } from "astro:content";
 import ProjectShell from "../../components/project/ProjectShell.astro";
-import ProjectHead from "../../components/project/ProjectHead.astro";
-import ProjectLinks from "../../components/project/ProjectLinks.astro";
-import SpecBlock from "../../components/micro/SpecBlock.astro";
-import Marginalia from "../../components/micro/Marginalia.astro";
+import CodeBlock from "study-companion/components/CodeBlock.astro";
+import Icon from "study-companion/components/Icon.astro";
+import mdxComponents from "study-companion/mdx-components";
+import { Content as CourseExcerpt } from "./_study-companion-demo.mdx";
+import excerptSource from "./_study-companion-demo.mdx?raw";
 import "../../worlds/study-companion.css";
 
 const entry = await getEntry("projects", "study-companion");
 if (!entry) throw new Error("missing content: projects/study-companion");
 const { Content } = await render(entry);
+const p = entry.data;
+const idx = String(p.index).padStart(2, "0");
+
+const source = excerptSource.trim();
+const sourceLines = source.split("\n").length;
 ---
 
-{
-  /* Shape: a critical edition. Everything apparatus-like (spec, links, the
-    award) hangs in a true left margin running the length of the text, the way
-    a scholarly edition annotates a page, rather than sitting in a sticky rail
-    to the right of it. The text column stays wide and single. */
-}
 <ProjectShell entry={entry}>
-  <div class="wrap">
-    <ProjectHead entry={entry} />
-  </div>
+  <div class="layout layout--solo">
+    <div class="content">
+      <header class="mod-head">
+        <div class="mod-index">{idx}</div>
+        <div class="meta">
+          <h1>{p.name}</h1>
+          <div class="mod-meta-row">
+            {p.tags.map((t) => <span class="sc-kicker">{t}</span>)}
+          </div>
+        </div>
+      </header>
 
-  <section
-    class="wrap centerpiece sc-split"
-    data-sc-split
-    aria-label="A course.yaml and what it renders"
-  >
-    <div class="sc-pane">
-      <span class="micro-label">content/course.yaml</span>
-      <pre
-        class="sc-yaml"><code><span class="k">code</span>: <span class="s">TFY4104</span>
-<span class="k">title</span>: <span class="s">Fysikk</span>
-<span class="k">accent</span>: <span class="s">"#8a5a2b"</span>
+      <div class="prose">
+        <p>{p.tagline}</p>
 
-<mark data-sc-src="0"><span class="k">formulas</span>:
-  - <span class="k">id</span>: <span class="s">newton-2</span>
-    <span class="k">tex</span>: <span class="s">"\\vec F = m\\vec a"</span>
-    <span class="k">memorize</span>: <span class="s">true</span></mark>
+        <div class="sc-links">
+          {
+            p.links.map((l) => (
+              <a
+                class="sc-pill sc-press"
+                href={l.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {l.label}
+                <Icon name="external" size={13} />
+              </a>
+            ))
+          }
+        </div>
 
-<mark data-sc-src="1"><span class="k">goals</span>:
-  - <span class="s">Frilegemediagram</span>
-  - <span class="s">Bevegelsesmengde</span>
-  - <span class="s">Energibevaring</span></mark>
+        <table>
+          <tbody>
+            {
+              p.spec.map((row) => (
+                <tr>
+                  <th scope="row">{row.label}</th>
+                  <td>{row.value}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
 
-<mark data-sc-src="2"><span class="k">exam</span>:
-  <span class="k">date</span>: <span class="s">2026-12-04</span>
-  <span class="k">aids</span>: <span class="s">C</span></mark></code></pre>
-    </div>
+        <h2 id="the-excerpt">{sourceLines} lines of a real course</h2>
 
-    <div class="sc-pane">
-      <span class="micro-label">rendered by the framework</span>
-
-      <div class="sc-widget" data-sc-out="0">
-        <p class="sc-widget-title">
-          Newtons 2. lov <span class="sc-badge">må pugges</span>
+        <p>
+          An excerpt of <code>content/sections/02-eksempler.mdx</code> from the framework's
+          demo course, copied out of the repository unchanged, and under it what those
+          {sourceLines} lines are worth. Not a screenshot and not a reconstruction:
+          the same file, put through the pipeline the integration configures for every
+          course. Open the solution.
         </p>
-        {
-          /* Bold upright for vectors: the combining arrow U+20D7 is not in the
-            subset webfont and renders as tofu. */
-        }
-        <div class="sc-formula"><b>F</b> = m<b>a</b></div>
-      </div>
 
-      <div class="sc-widget" data-sc-out="1">
-        <p class="sc-widget-title">Læringsmål</p>
-        <ul class="sc-goals">
-          <li>Frilegemediagram</li>
-          <li>Bevegelsesmengde</li>
-          <li>Energibevaring</li>
-        </ul>
-      </div>
+        <CodeBlock
+          code={source}
+          lang="mdx"
+          title="content/sections/02-eksempler.mdx"
+        />
 
-      <div class="sc-widget" data-sc-out="2">
-        <p class="sc-widget-title">Eksamen</p>
-        <p style="margin:0">4. desember 2026 · hjelpemiddelkode C</p>
-      </div>
-    </div>
-  </section>
+        <p class="sc-kicker excerpt-out">Built by the framework</p>
 
-  <div class="wrap sc-body">
-    <aside class="sc-apparatus">
-      <Marginalia text="Apparatus" side="right" class="sc-spine" />
-      <div class="sc-apparatus-stack">
-        <SpecBlock rows={entry.data.spec} />
-        <ProjectLinks entry={entry} />
-        {entry.data.award ? <p class="award">{entry.data.award}</p> : null}
-      </div>
-    </aside>
+        <CourseExcerpt components={mdxComponents} />
 
-    <div class="prose">
-      <Content />
+        <Content components={mdxComponents} />
+      </div>
     </div>
   </div>
 </ProjectShell>
 
-<script>
-  /**
-   * Builds the rendered widgets in source order once the split comes into
-   * view, so the two panes read as cause and effect.
-   *
-   * Keyed to the container, not to each source block: source and output sit
-   * side by side at the same height, so observing the sources individually
-   * just fades things in — and on a short viewport the later ones sit below
-   * the fold and never fire at all.
-   *
-   * Purely additive. Every widget is in the DOM without JS, and reduced
-   * motion shows them all at once.
-   */
-  const split = document.querySelector("[data-sc-split]");
-  const outputs = [...document.querySelectorAll<HTMLElement>("[data-sc-out]")];
-  const showAll = () =>
-    outputs.forEach((el) => el.setAttribute("data-shown", ""));
-
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  if (reduced || !split || !("IntersectionObserver" in window)) {
-    showAll();
-  } else {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((e) => e.isIntersecting)) return;
-        observer.disconnect();
-        outputs.forEach((el, i) => {
-          window.setTimeout(() => el.setAttribute("data-shown", ""), i * 240);
-        });
-      },
-      { threshold: 0.15 },
-    );
-    observer.observe(split);
+<style>
+  /* `.sc-kicker` and `.sc-pill` are type and state recipes only — both say in
+     so many words that size, padding and tone stay the caller's. Setting them
+     here is using the primitives as intended, not inventing a look. */
+  .mod-meta-row .sc-kicker,
+  .excerpt-out {
+    font-size: var(--text-xs);
+    color: var(--muted);
   }
-</script>
+
+  .sc-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap-2);
+    margin-block: var(--space-3);
+  }
+
+  .sc-links .sc-pill {
+    gap: var(--gap-1);
+    padding: var(--gap-2) var(--gap-3);
+    text-decoration: none;
+  }
+
+  /* The one label the framework has no element for: the excerpt's output side. */
+  .excerpt-out {
+    margin-block: var(--space-5) var(--space-2);
+  }
+</style>

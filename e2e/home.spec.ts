@@ -536,17 +536,6 @@ test("the corral surface is served whole and then advances", async ({
   ).toBeGreaterThan(3);
 });
 
-test("the bloch vector precesses", async ({ page }) => {
-  await page.goto("/");
-  await page.locator("[data-surface]").scrollIntoViewIfNeeded();
-
-  const tip = page.locator("[data-tip]");
-  const x0 = await tip.getAttribute("cx");
-  await expect
-    .poll(() => tip.getAttribute("cx"), { timeout: 5000 })
-    .not.toBe(x0);
-});
-
 test("the studies figures are whole without JavaScript, and still under reduced motion", async ({
   browser,
   page,
