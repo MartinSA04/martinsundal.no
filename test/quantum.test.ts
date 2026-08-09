@@ -328,29 +328,95 @@ test("the arrowhead never flips, even pointing at the viewer", () => {
      from a 2D vector whose length goes to zero as the state turns towards the
      camera — so it spun through half a turn in one frame, every cycle. Drawn as
      a projected cone there is no direction to lose. Guarded as continuity: no
-     single step may move any vertex of the head more than a hair. */
+     single step may move the outline more than a hair.
+
+     The head is the convex hull of the apex and the projected base, so its
+     vertex count changes with the aspect — a disc facing the viewer keeps far
+     more of the rim than a triangle seen edge on. Continuity is therefore
+     measured between the two outlines rather than index by index: every vertex
+     of each must have a neighbour close by in the other. */
   const verts = (t: number) =>
     blochFrame(t)
       .head.split(" ")
       .map((p) => p.split(",").map(Number) as [number, number]);
+  const apart = (a: [number, number][], b: [number, number][]) =>
+    Math.max(
+      ...a.map((p) =>
+        Math.min(...b.map((q) => Math.hypot(p[0] - q[0], p[1] - q[1]))),
+      ),
+    );
   let worst = 0;
   const steps = 4000;
   let prev = verts(0);
   for (let k = 1; k <= steps; k++) {
     const now = verts((k / steps) * BLOCH_PERIOD);
-    assert.equal(now.length, prev.length);
-    for (let i = 0; i < now.length; i++) {
-      worst = Math.max(
-        worst,
-        Math.hypot(now[i]![0] - prev[i]![0], now[i]![1] - prev[i]![1]),
-      );
-    }
+    worst = Math.max(worst, apart(now, prev), apart(prev, now));
     prev = now;
   }
   assert.ok(
     worst < 1.5,
     `the arrowhead jumped ${worst.toFixed(2)} units in one step`,
   );
+});
+
+test("every arrowhead is a convex outline, so it fills", () => {
+  /* The heads used to be emitted apex-then-rim, which is a fan: the fill runs
+     out to the apex and back along an edge beside it, and the two windings
+     cancel. Edge on, where the base ellipse flattens, they cancel almost
+     exactly and the head disappeared — the arrows read as see-through.
+
+     A cone's silhouette is convex, so that is the invariant: every turn round
+     the emitted polygon goes the same way. The fan fails it at the apex. */
+  const heads = [
+    ...(["x", "y", "z"] as const).map((k) => BLOCH_GEOMETRY.axes[k].head),
+    ...Array.from(
+      { length: 400 },
+      (_, k) => blochFrame((k / 400) * BLOCH_PERIOD).head,
+    ),
+  ];
+  for (const head of heads) {
+    const pts = head
+      .split(" ")
+      .map((p) => p.split(",").map(Number) as [number, number]);
+    assert.ok(pts.length >= 3, `an arrowhead has only ${pts.length} vertices`);
+    /* Slack, because the coordinates are written to two decimals: three hull
+       vertices on a shallow arc can round to a turn a few hundredths the wrong
+       way. A fan turns back on itself by whole units — ten of them, in the
+       heads this replaced. */
+    const STRAIGHT = 0.5;
+    let cw = 0;
+    let ccw = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i]!;
+      const b = pts[(i + 1) % pts.length]!;
+      const c = pts[(i + 2) % pts.length]!;
+      const turn =
+        (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]);
+      if (turn > STRAIGHT) cw++;
+      else if (turn < -STRAIGHT) ccw++;
+    }
+    assert.ok(
+      cw === 0 || ccw === 0,
+      `an arrowhead turns both ways (${cw} one way, ${ccw} the other)`,
+    );
+
+    /* And it covers its own box. This is the symptom the fan actually showed:
+       edge on, the two windings cancelled and the ratio went to zero — ink on
+       screen, no ink in the shape. A convex outline cannot go under about a
+       third, which a triangle in its bounding box already is. */
+    const xs = pts.map((p) => p[0]);
+    const ys = pts.map((p) => p[1]);
+    let shoelace = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const [x1, y1] = pts[i]!;
+      const [x2, y2] = pts[(i + 1) % pts.length]!;
+      shoelace += x1 * y2 - x2 * y1;
+    }
+    const box =
+      (Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys));
+    const fill = Math.abs(shoelace) / 2 / box;
+    assert.ok(fill > 0.3, `an arrowhead fills ${fill.toFixed(3)} of its box`);
+  }
 });
 
 test("the state passes both behind and in front", () => {

@@ -410,6 +410,37 @@ export function blochState(seconds: number): readonly [number, number, number] {
 const polyline = (pts: readonly (readonly [number, number])[]) =>
   pts.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
 
+type Pt = readonly [number, number];
+
+/**
+ * Convex hull, monotone chain — the outline of a set of points.
+ *
+ * The arrowheads need this because a filled polyline that runs apex, round the
+ * rim, and closes back to the apex traces the rim in one sense and the return
+ * leg in the other. The two cancel, so the heads filled to nothing and read as
+ * see-through. The silhouette a cone actually presents is the hull.
+ */
+function hull(pts: readonly Pt[]): Pt[] {
+  const p = [...pts].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o: Pt, a: Pt, b: Pt) =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const chain = (src: readonly Pt[]) => {
+    const out: Pt[] = [];
+    for (const q of src) {
+      while (
+        out.length >= 2 &&
+        cross(out[out.length - 2], out[out.length - 1], q) <= 0
+      ) {
+        out.pop();
+      }
+      out.push(q);
+    }
+    out.pop();
+    return out;
+  };
+  return [...chain(p), ...chain([...p].reverse())];
+}
+
 /**
  * The arrowhead, as a cone in three dimensions rather than a triangle in two.
  *
@@ -422,11 +453,11 @@ const polyline = (pts: readonly (readonly [number, number])[]) =>
  *
  * A cone has no such degeneracy. Its apex sits at the tip and its base is a
  * circle of `radius` a distance `length` back along the true 3D direction; both
- * are projected, and the silhouette is the apex fanned to the projected base.
- * Pointing sideways that fan is a triangle; pointing at the viewer the base
- * ellipse opens out to a circle and the apex falls inside it, so the head reads
- * as a disc — which is what a cone aimed at you looks like. Nothing flips,
- * because nothing is ever inferred from a direction that has collapsed.
+ * are projected, and the silhouette is the hull of the apex and the projected
+ * base. Pointing sideways that hull is a triangle; pointing at the viewer the
+ * base ellipse opens out to a circle and the apex falls inside it, so the head
+ * reads as a disc — which is what a cone aimed at you looks like. Nothing
+ * flips, because nothing is ever inferred from a direction that has collapsed.
  *
  * `at` is how far out along `dir` the apex sits, in sphere radii.
  */
@@ -464,7 +495,7 @@ function cone(
     );
   });
 
-  return polyline([blochProject(dx * at, dy * at, dz * at), ...rim]);
+  return polyline(hull([blochProject(dx * at, dy * at, dz * at), ...rim]));
 }
 
 const axis = (

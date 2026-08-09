@@ -973,6 +973,15 @@ const fan = Array.from({ length: 15 }, (_, i) => {
       max-width: 38ch;
     }
   }
+
+  /* On a phone the plate no longer fills the column, and flush left it sits in
+     a band of its own margin. Centred it reads as a plate on the sheet — the
+     lettering under it stays where it is. */
+  @media (max-width: 46rem) {
+    .spec figure {
+      margin-inline: auto;
+    }
+  }
 </style>
 
 <script>

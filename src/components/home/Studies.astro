@@ -412,4 +412,18 @@ const { cx, cy, r, axes, poleTop, poleBottom, axisBottom, ket0, ket1 } =
       width: min(292px, 72vw);
     }
   }
+
+  /* The sphere carries three axis labels, two angles and three kets at 10px in
+     viewBox units. On a phone it is the one figure on the sheet that cannot be
+     read at the size the column gives it, so it goes rather than shrinks — the
+     same call the field map makes. The surface stays, centred in the column. */
+  @media (max-width: 46rem) {
+    .bloch-fig {
+      display: none;
+    }
+
+    .surf {
+      margin-inline: auto;
+    }
+  }
 </style>

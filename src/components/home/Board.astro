@@ -239,6 +239,26 @@ const gticks = Array.from({ length: GTICKS }, (_, n) => {
       gap: 32px;
     }
   }
+
+  /* On a phone the column is stacked, so the dial is a 212px square of scroll
+     that reports the same generation the readout below it already prints. The
+     dial goes, and the two counts it stood above pair up on one line — they
+     are one reading of the board, and stacked they read as two. */
+  @media (max-width: 46rem) {
+    .gauge {
+      display: none;
+    }
+
+    .board-read {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 16px;
+    }
+
+    .board-cap {
+      grid-column: 1 / -1;
+    }
+  }
 </style>
 
 <script>

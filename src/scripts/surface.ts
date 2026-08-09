@@ -35,6 +35,14 @@ if (band) {
 
   const still = window.matchMedia("(prefers-reduced-motion: reduce)");
 
+  /* The sphere is dropped from the sheet on a phone, where it cannot be read at
+     the size the column gives it. Driving a figure nobody can see is a dozen
+     attribute writes a frame for nothing, so the state half of the frame is
+     skipped when it is not on the page. Read once per run rather than per
+     frame — reading it is a layout. */
+  const sphere = band.querySelector<HTMLElement>(".bloch-fig");
+  let drawn = true;
+
   let frame = 0;
   let origin = 0;
   let visible = false;
@@ -47,6 +55,8 @@ if (band) {
     for (let i = 0; i < lines.length && i < points.length; i++) {
       lines[i]!.setAttribute("points", points[i]!);
     }
+
+    if (!drawn) return;
 
     const b = blochFrame(seconds);
     at(vec, "x2", b.tip[0]);
@@ -81,6 +91,7 @@ if (band) {
 
   const start = () => {
     if (frame || still.matches) return;
+    drawn = !sphere || sphere.offsetParent !== null;
     frame = requestAnimationFrame(tick);
   };
 

@@ -380,6 +380,14 @@ const year = new Date().getFullYear();
     }
   }
 
+  /* Stacked and narrower than the column, a drawing flush left sits in a band
+     of its own margin. Centred it reads as a plate on the sheet. */
+  @media (max-width: 46rem) {
+    .globe {
+      margin-inline: auto;
+    }
+  }
+
   /* Stacked, three rows per channel reads as three facts rather than one.
      The label and its note keep a line to themselves, justified against each
      other, and the handle gets the line under them. */
