@@ -47,6 +47,18 @@
   font-style: normal;
 }
 
+/* Only /work sets this, which is why it is not preloaded in Base: a face no
+   other page paints would be two more round trips on every one of them. The
+   file is fetched when the first rule using it matches, and nothing else
+   using it means nothing else fetches it. */
+@font-face {
+  font-family: "Big Shoulders Display";
+  src: url("/fonts/bigshoulders-var.woff2") format("woff2-variations");
+  font-weight: 400 800;
+  font-display: swap;
+  font-style: normal;
+}
+
 /* --- tokens --------------------------------------------------------------- */
 
 :root {
@@ -79,6 +91,9 @@
   --step-5: clamp(3.2rem, 2rem + 5.6vw, 7rem);
 
   --font-display: "Archivo", system-ui, -apple-system, sans-serif;
+  /* Signage, not text. Condensed enough to set a headline at placard size
+     without the measure running away. Claimed by the industrial world only. */
+  --font-placard: "Big Shoulders Display", "Archivo Narrow", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
   --font-serif: "Newsreader", Georgia, serif;
   --font-pixel: "Departure Mono", ui-monospace, monospace;

@@ -47,12 +47,22 @@ const {
   style={`--ratio:${width} / ${height}; --fit:${fit}`}
 >
   <button type="button" aria-label={label}>
+    {
+      /* decoding="sync", not async. The poster is the whole facade, and on
+         /work it sits inside a pendant whose play badge carries a
+         backdrop-filter — a composited layer with the poster as its backdrop.
+         Decoded asynchronously the image lands after that layer is painted and
+         nothing invalidates it, so the screen stays on the facade's black
+         background until some unrelated style change forces a repaint. Both
+         pages put this above the fold, so there is nothing to defer anyway. */
+    }
     <img
       src={poster}
       alt={posterAlt}
       width={width}
       height={height}
-      decoding="async"
+      decoding="sync"
+      fetchpriority="high"
     />
     <span class="play" aria-hidden="true">
       <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
@@ -110,6 +120,9 @@ const {
     backdrop-filter: blur(6px);
     border: var(--rule) solid var(--hair);
     color: var(--ink);
+    /* Seated in a device the badge can be wider than the screen it sits on,
+       and "Play · 1:09" broke across two lines inside the pendant on a phone. */
+    white-space: nowrap;
     transition:
       background 0.2s ease,
       border-color 0.2s ease;

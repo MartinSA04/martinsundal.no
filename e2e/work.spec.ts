@@ -102,3 +102,70 @@ test("the play button states the file's real duration", async ({ page }) => {
     expect(Math.abs(seconds - (m! * 60 + s!))).toBeLessThan(1.5);
   }
 });
+
+/**
+ * The cable is the page's structure, and it is measured from the section boxes
+ * rather than authored. These three pin the properties that measurement has to
+ * keep: it runs, it lands on the port, and neither the run nor the arms push
+ * the sheet sideways.
+ */
+test("the cable is routed from the sections and lands on the port", async ({
+  page,
+}) => {
+  await page.goto("/work/");
+  await page.waitForFunction(
+    () => !!document.querySelector(".cab-jacket")?.getAttribute("d"),
+  );
+
+  // One `d`, shared by the jacket, the core and all three signal dashes, which
+  // is what lets the pulse turn every corner the cable turns.
+  const ds = await page
+    .locator(".cab-jacket, .cab-core, .cab-glow, .cab-sig, .cab-tip")
+    .evaluateAll((els) => els.map((e) => e.getAttribute("d")));
+  expect(ds).toHaveLength(5);
+  expect(new Set(ds).size).toBe(1);
+
+  // Clamps are placed along the straights by the same pass.
+  expect(await page.locator(".cab-ties rect").count()).toBeGreaterThan(4);
+
+  // The run ends on the port rather than near it.
+  const { endX, portX } = await page.evaluate(() => {
+    const d = document.querySelector(".cab-jacket")!.getAttribute("d")!;
+    const last = d.slice(d.lastIndexOf("L") + 1).split(" ");
+    const port = document.querySelector("[data-cable-end]")!;
+    const page_ = document.querySelector("[data-cable-page]")!;
+    const pb = port.getBoundingClientRect();
+    const gb = page_.getBoundingClientRect();
+    return {
+      endX: Number(last[0]),
+      portX: pb.left - gb.left + pb.width / 2,
+    };
+  });
+  expect(Math.abs(endX - portX)).toBeLessThan(1);
+});
+
+test("renders without JavaScript, minus the cable", async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.goto("/work/");
+
+  await expect(page.locator("h1")).toHaveText(/welding planner/i);
+  await expect(page.locator("[data-bay]")).toHaveCount(3);
+  // The decoration is gone; nothing it was decorating went with it.
+  expect(await page.locator(".cab-jacket").getAttribute("d")).toBeNull();
+
+  await context.close();
+});
+
+test("has no horizontal overflow at 390px", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/work/");
+  await page.waitForFunction(
+    () => !!document.querySelector(".cab-jacket")?.getAttribute("d"),
+  );
+  const [scroll, client] = await page.evaluate(() => [
+    document.documentElement.scrollWidth,
+    document.documentElement.clientWidth,
+  ]);
+  expect(scroll).toBeLessThanOrEqual(client);
+});

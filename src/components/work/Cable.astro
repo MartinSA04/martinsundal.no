@@ -1,0 +1,170 @@
+---
+/**
+ * The pendant's cable, routed down the sheet as its structure.
+ *
+ * It leaves the gland on the pendant, jogs to the right rail, then serpentines:
+ * down one side, across the gap between sections, down the other. Every section
+ * ends up bracketed on two sides, so the run is what holds the page together
+ * rather than a line drawn beside it. It ends plugged into the port on the
+ * terminus.
+ *
+ * The path is measured, not authored. The script reads the box of every
+ * [data-bay], plus the gland and the port, builds the polyline and fillets the
+ * corners. That is what makes it survive editing: add a paragraph and the run
+ * lengthens, add a section and it grows another bracket, with nothing to keep
+ * in sync by hand.
+ *
+ * Layering, outermost first: a dark jacket, a lighter core inside it so the run
+ * has a rim, then the clamps, then three dashes that make the travelling pulse.
+ * All five share one `d`, so the signal turns every corner the cable turns.
+ *
+ * Without JavaScript the sections lay out and read exactly as they do now and
+ * the SVG stays empty — the page loses its cable, not its content. That is the
+ * right way round for something whose job is decoration and rhythm.
+ */
+---
+
+<svg class="cable" aria-hidden="true" preserveAspectRatio="none">
+  <path class="cab-jacket"></path>
+  <path class="cab-core"></path>
+  <g class="cab-ties"></g>
+  <path class="cab-glow" pathLength="100"></path>
+  <path class="cab-sig" pathLength="100"></path>
+  <path class="cab-tip" pathLength="100"></path>
+</svg>
+
+<style>
+  .cable {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: visible;
+  }
+
+  .cab-jacket {
+    fill: none;
+    stroke: #2a2e33;
+    stroke-width: 11;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .cab-core {
+    fill: none;
+    stroke: #3c4046;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .cab-ties rect {
+    fill: #4a5057;
+  }
+
+  /* Three dashes on one path. pathLength="100" puts the arithmetic in percent,
+     and the three share one head position, so the comet is assembled head
+     first: the white tip at the front, the body 5.5 behind it, the glow 13
+     behind that. Give them separate head positions and it is built backwards.
+
+     Every gap is 200 minus its own dash, so one period is twice the path. That
+     is the whole reason the loop is clean. A dash pattern that sums to exactly
+     pathLength tiles the run end to end, so the moment the pulse's tail passed
+     100 its head reappeared at 0 — a bright fragment blinking out of the
+     pendant on every cycle, at the one moment the eye was following something
+     else. At double the period there is only ever one dash anywhere near the
+     path and nothing to wrap.
+
+     The offsets are written out rather than derived from a custom property.
+     calc(var(--x) - 100) in a keyframe parses but will not interpolate, so the
+     dash sits at its 0% value forever and the pulse never leaves the pendant. */
+  .cab-glow,
+  .cab-sig,
+  .cab-tip {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0;
+  }
+
+  .cab-glow {
+    stroke: color-mix(in srgb, var(--sig) 26%, transparent);
+    stroke-width: 16;
+    stroke-dasharray: 13 187;
+    animation: run-glow 6.4s linear infinite;
+  }
+
+  .cab-sig {
+    stroke: var(--sig);
+    stroke-width: 6;
+    stroke-dasharray: 5.5 194.5;
+    animation: run-sig 6.4s linear infinite;
+  }
+
+  .cab-tip {
+    stroke: #fff6d6;
+    stroke-width: 6;
+    stroke-dasharray: 1.2 198.8;
+    filter: drop-shadow(
+      0 0 8px color-mix(in srgb, var(--sig) 95%, transparent)
+    );
+    animation: run-tip 6.4s linear infinite;
+  }
+
+  /* It travels in the first three quarters and then the line is idle. A pulse
+     with no gap reads as a barber pole; the gap is what makes it a
+     transmission.
+
+     Each run carries the shared head from 0 to 113 — 100 for the path and 13
+     for the longest of the three dashes — so every stroke starts with its dash
+     wholly before the run and ends with it wholly past. The pulse grows out of
+     the gland and shrinks into the port under its own geometry, which is why
+     there is no opacity ramp at either end any more: the fade was covering for
+     a dash that popped into existence mid-run, and covering it badly.
+
+     Held at the end value for the last quarter, where nothing is on the path to
+     draw. The resting state is transparent, so when kernel.css collapses the
+     duration for reduced motion the signal is simply absent. */
+  @keyframes run-glow {
+    0% {
+      stroke-dashoffset: 13;
+      opacity: 1;
+    }
+    72%,
+    100% {
+      stroke-dashoffset: -100;
+      opacity: 1;
+    }
+  }
+
+  @keyframes run-sig {
+    0% {
+      stroke-dashoffset: 5.5;
+      opacity: 1;
+    }
+    72%,
+    100% {
+      stroke-dashoffset: -107.5;
+      opacity: 1;
+    }
+  }
+
+  @keyframes run-tip {
+    0% {
+      stroke-dashoffset: 1.2;
+      opacity: 1;
+    }
+    72%,
+    100% {
+      stroke-dashoffset: -111.8;
+      opacity: 1;
+    }
+  }
+</style>
+
+<script>
+  import { routeCable } from "../../scripts/cable.ts";
+  routeCable();
+</script>

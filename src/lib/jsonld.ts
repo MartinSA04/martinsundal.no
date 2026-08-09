@@ -251,7 +251,7 @@ export function workGraph(video: VideoMeta | null) {
         url: abs("/work/"),
         name: "Work | Martin Sundal Aspås",
         description:
-          "Engineering work at Aker Solutions: robotics, welding automation, scanning, robot control, and industrial data — with the Verdal Production Line as the flagship.",
+          "Martin Sundal Aspås works on the welding planner for a robotised production line at Aker Solutions in Verdal, as part of the small tech team that owns the line's software.",
         inLanguage: "en",
         isPartOf: { "@id": WEBSITE_ID },
         about: { "@id": PERSON_ID },

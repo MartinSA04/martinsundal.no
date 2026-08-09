@@ -657,8 +657,13 @@ test("the globe is whole without JavaScript, and still under reduced motion", as
  * site footer under it. It used to say "Plate 001 · Martin Sundal Aspås ·
  * Trondheim" and then, eleven lines and a dead gap later, "© Martin Sundal
  * Aspås" and "Trondheim · NO".
+ *
+ * /work opted into the same mechanism when it was reworked: its cable has to
+ * plug into something, and a port sitting above a second copy of the colophon
+ * is the exact duplication this exists to prevent. A project page is the
+ * control now — it takes the site footer like everything else.
  */
-test("the plate ends once on home and still ends elsewhere", async ({
+test("a page that ends itself gets no site footer, and the rest still do", async ({
   page,
 }) => {
   await page.goto("/");
@@ -666,8 +671,14 @@ test("the plate ends once on home and still ends elsewhere", async ({
   await expect(page.locator("#contact .terminus")).toHaveCount(1);
   await expect(page.locator("#contact .terminus")).toContainText("WGS 84");
 
-  // Every other page still gets one, minus the barcode that encoded nothing.
+  // One ending, and the cable lands on it rather than beside it.
   await page.goto("/work/");
+  await expect(page.locator(".site-footer")).toHaveCount(0);
+  await expect(page.locator(".terminus")).toHaveCount(1);
+  await expect(page.locator(".terminus [data-cable-end]")).toHaveCount(1);
+
+  // Every other page still gets one, minus the barcode that encoded nothing.
+  await page.goto("/projects/black-hole/");
   await expect(page.locator(".site-footer")).toHaveCount(1);
   await expect(page.locator(".site-footer .micro-barcode")).toHaveCount(0);
 });

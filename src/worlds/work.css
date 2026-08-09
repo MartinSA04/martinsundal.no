@@ -1,49 +1,202 @@
-/* World: industrial. Graphite substrate, safety yellow signal.
+/* World: hazard placard.
+
+   Graphite substrate, safety yellow signal — the same four tokens the page has
+   always declared, spent this time instead of hinted at. The vocabulary is
+   machine guarding rather than draughtsmanship: chevron bands where the rest of
+   the site would rule a hairline, a stencil-cut index, and hardware drawn as
+   solid fills like the pictograms silkscreened on a cell fence. The home page
+   is a plotter sheet; this one has to be unmistakably not that.
 
    The four tokens are declared in work.astro and applied to <body>, so the
    header and footer sit on the same graphite the page does. This file inherits
    them and only carries the world's structure. */
+
+/* The pendant is drawn wider than the sheet, so the article is what stops it
+   at the viewport. clip rather than hidden: hidden on one axis makes the other
+   a scroll container, and the run is positioned against a box inside this one. */
 [data-world="work"] {
   background: var(--sub);
   color: var(--ink);
   display: block;
-  padding-block: var(--space-5) var(--space-7);
+  overflow-x: clip;
+  padding-block: var(--space-4) var(--space-5);
+}
+
+/* The cable is absolutely positioned against this box, and every section it is
+   routed from is measured relative to it. */
+[data-world="work"] .sheet {
+  position: relative;
 }
 
 [data-world="work"] .crumbs {
+  position: relative;
+  z-index: 1;
   margin-bottom: var(--space-3);
 }
 
-[data-world="work"] .facts + p {
-  margin-top: var(--space-4);
+/* --- the band ------------------------------------------------------------- */
+
+/* Full chevrons, not the site's quiet hazard rule. This world is the one place
+   the marking is doing its actual job, so it is not masked back. */
+[data-world="work"] .band {
+  height: 11px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--sig) 0 13px,
+    var(--sub) 13px 26px
+  );
+}
+
+/* --- bays ----------------------------------------------------------------- */
+
+/* Each section is bracketed by the cable on one side and underneath, so it
+   carries clearance on whichever side the run is coming down. The rails
+   themselves are placed by cable.ts from these same boxes. */
+[data-world="work"] .bay {
+  position: relative;
+  z-index: 1;
+  padding: var(--space-5) var(--space-3) var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+[data-world="work"] .bay--r {
+  padding-right: 4.5rem;
+}
+
+[data-world="work"] .bay--l {
+  padding-left: 4.5rem;
+}
+
+/* The masthead takes even padding instead of a rail's worth on one side. The
+   run only touches it for the last few pixels before it leaves the gland, so
+   there is nothing here to clear — and even padding is what puts this box's
+   centre on the viewport's, which is what the pendant breaks out against. */
+[data-world="work"] .bay--head {
+  padding-inline: 2.5rem;
+}
+
+/* --- masthead ------------------------------------------------------------- */
+
+[data-world="work"] .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sig);
+  margin: 0;
+  max-width: none;
+}
+
+/* Stencil by bridging, the way a cut plate is: two bars of the substrate laid
+   across the numeral. Three closed the counters and it stopped being a number.
+   The bars are painted in --sub, so this only works on the world's own ground —
+   which is the only place it is used. */
+[data-world="work"] .idx {
+  position: relative;
+  display: inline-block;
+  font-family: var(--font-placard);
+  font-size: 2.9rem;
+  font-weight: 800;
+  line-height: 0.86;
+  letter-spacing: 0.01em;
+  color: var(--sig);
+}
+
+[data-world="work"] .idx::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    0deg,
+    transparent 0 26%,
+    var(--sub) 26% 32%,
+    transparent 32% 62%,
+    var(--sub) 62% 68%,
+    transparent 68%
+  );
+}
+
+[data-world="work"] h1,
+[data-world="work"] h2 {
+  font-family: var(--font-placard);
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 0.95;
+  letter-spacing: 0.005em;
+  text-wrap: balance;
 }
 
 [data-world="work"] h1 {
-  font-size: var(--step-4);
-  letter-spacing: -0.03em;
-  margin-block: var(--space-3) var(--space-2);
-  max-width: 16ch;
+  font-size: clamp(2.8rem, 1.5rem + 5.4vw, 5.2rem);
+  margin: var(--space-2) 0 0;
+  max-width: 15ch;
 }
 
 [data-world="work"] h2 {
-  font-size: var(--step-2);
-  margin-block: var(--space-5) var(--space-2);
+  font-size: clamp(1.8rem, 1.3rem + 1.9vw, 2.6rem);
+  margin: 0 0 var(--space-2);
+}
+
+[data-world="work"] p {
+  max-width: 54ch;
+  color: color-mix(in oklab, var(--ink) 78%, var(--sub));
+  margin: var(--space-2) 0 0;
+  line-height: 1.55;
 }
 
 [data-world="work"] .lede {
   font-size: var(--step-1);
-  line-height: 1.45;
-  max-width: 52ch;
+  line-height: 1.5;
   color: var(--ink);
+  max-width: 46ch;
 }
 
-[data-world="work"] p {
-  max-width: 62ch;
-  color: var(--muted);
+/* --- the pendant and its credit ------------------------------------------- */
+
+/* minmax(0, 1fr), not the implicit auto track: the pendant is wider than this
+   column on purpose, and an auto track sizes to it — which drags the credit
+   line out to the drawing's width and off the side of a phone. */
+[data-world="work"] .kit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  justify-items: start;
+  max-width: none;
+  margin-top: var(--space-5);
 }
 
-[data-world="work"] .video-block {
-  margin-block: var(--space-5);
+/* The pendant is the picture, and it breaks the sheet to be it. Drawn to ABB's
+   own proportions the shell spends nearly half its width on the keypad and the
+   joystick, so at the reading column the screen inside it is no bigger than a
+   thumbnail; at the sheet's width it is barely bigger than that. It leaves the
+   column instead, and the article clips it at the viewport.
+
+   The credit line stays behind in the column: it is a sentence, and a sentence
+   set to the width of a 1400px drawing is not one. */
+/* Centred on negative margins rather than on justify-self: center, which a
+   grid item wider than its own track resolves to start instead of overflowing
+   both edges. 100% here is the track, so the two margins are equal and the
+   drawing lands on the viewport's centre line. */
+[data-world="work"] .rig {
+  /* A tighter margin than the page's gutter, and a higher ceiling: the drawing
+     spends a wide margin of its own on the left for the cable, so it has to run
+     further to put the same number of pixels in the screen. */
+  --rig: min(100vw - 3rem, 112rem);
+  width: var(--rig);
+  margin-inline: calc((100% - var(--rig)) / 2);
+}
+
+/* Aker burned their captions into the bottom left of the video, which is the
+   corner the facade parks its play control in, so the two sat on top of each
+   other. Centred it clears them — the same fix the Cipherbound console needs,
+   where the game draws its text box there. */
+[data-world="work"] .kit .play {
+  left: 50%;
+  bottom: 50%;
+  transform: translate(-50%, 50%);
 }
 
 [data-world="work"] .credit {
@@ -51,7 +204,8 @@
   flex-wrap: wrap;
   gap: 0.6rem var(--space-2);
   align-items: baseline;
-  margin-top: var(--space-2);
+  margin: 0;
+  max-width: none;
 }
 
 [data-world="work"] .credit a {
@@ -62,36 +216,193 @@
   text-decoration-color: color-mix(in oklab, var(--sig) 50%, transparent);
 }
 
-[data-world="work"] .facts {
+/* --- spec rows ------------------------------------------------------------ */
+
+[data-world="work"] .rows {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
-  gap: var(--space-4);
-  margin-top: var(--space-4);
+  gap: var(--space-3) var(--space-4);
+  margin: var(--space-4) 0 0;
+  max-width: 46rem;
 }
 
-[data-world="work"] .fact {
-  border-top: 2px solid var(--sig);
-  padding-top: var(--space-2);
+[data-world="work"] .row {
+  border-top: 3px solid var(--sig);
+  padding-top: var(--space-1);
 }
 
-[data-world="work"] .fact dt {
+[data-world="work"] .row dt {
   font-family: var(--font-mono);
   font-size: var(--step--1);
-  letter-spacing: 0.13em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.35rem;
 }
 
-[data-world="work"] .fact dd {
+[data-world="work"] .row dd {
   margin: 0;
-  font-size: var(--step-1);
-  line-height: 1.25;
+  font-size: var(--step-0);
+  font-weight: 500;
+  line-height: 1.3;
 }
 
-[data-world="work"] .role {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
-  gap: var(--space-4);
-  margin-top: var(--space-3);
+/* --- the floor ------------------------------------------------------------ */
+
+[data-world="work"] .floor {
+  position: relative;
+  padding-bottom: 9px;
+}
+
+/* The band carries nothing but the arms, so it gets no section padding of its
+   own above them. */
+[data-world="work"] .bay--floor {
+  padding-top: 0;
+}
+
+[data-world="work"] .floor::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 9px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--sig) 0 11px,
+    var(--sub) 11px 22px
+  );
+  opacity: 0.85;
+}
+
+/* Spread, not clustered. With the note gone from this band the arms sat in the
+   right third and left two thirds of hazard strip carrying nothing; spaced out
+   they read as cells along a line, which is what the strip is marking. */
+[data-world="work"] .arms {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* --- terminus ------------------------------------------------------------- */
+
+/* The page draws its own ending, so Base's footer is suppressed and this row
+   carries the colophon the site footer would have. The port is where the cable
+   lands: it is the reason the run has somewhere to finish. */
+[data-world="work"] .terminus {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: 0 var(--space-3);
+}
+
+[data-world="work"] .term-rule {
+  flex: 1 1 60px;
+  min-width: 40px;
+  width: auto;
+}
+
+[data-world="work"] .port {
+  display: block;
+  width: 3.25rem;
+}
+
+[data-world="work"] .port svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+[data-world="work"] .pg-body {
+  fill: #33383d;
+  stroke: #4a5057;
+  stroke-width: 1.5;
+}
+
+[data-world="work"] .pg-pin {
+  fill: var(--sig);
+}
+
+/* --- narrow --------------------------------------------------------------- */
+
+@media (max-width: 62rem) {
+  [data-world="work"] .kit {
+    justify-items: stretch;
+    margin-top: var(--space-4);
+  }
+}
+
+/* Below this the drawing fits the device rather than breaking past it. It used
+   to scale until the display's right edge landed on the column's, anchored
+   left, so only the spine ran off the side — the largest the video could be
+   with none of it cropped.
+
+   Which is true, and it still looked wrong, because the pendant is not
+   symmetrical about its screen. There are 116 units of cable margin, lug and
+   left bezel to the left of the display and effectively none to the right of
+   it, so cropping at the display's right edge is the most lopsided cut
+   available: every part that balances the screen is on the side being kept.
+   The video ended up sitting a quarter of the way in from the left with a grey
+   slab bleeding off the right, which reads as a drawing that missed the page.
+
+   Showing the whole thing is what centres it, and it is cheaper than it looks:
+   the 38 units of dead margin the cable lives in fall in the phone's own
+   gutter, so fitting the drawing to the viewport rather than to the reading
+   column gets most of the size back. */
+@media (max-width: 38rem) {
+  [data-world="work"] .rig {
+    --rig: min(100vw - 2rem, 34rem);
+  }
+}
+
+/* Three arms are wider than a bay this narrow can hold, and the smallest walks
+   off its own section. Two at a reduced size keep the floor populated without
+   the row overrunning. */
+@media (max-width: 44rem) {
+  [data-world="work"] .bay {
+    padding: var(--space-4) var(--space-2) var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+
+  [data-world="work"] .bay--r {
+    padding-right: 3.4rem;
+  }
+
+  [data-world="work"] .bay--l {
+    padding-left: 3.4rem;
+  }
+
+  /* The masthead is a left-rail bay like any other, and at this width the base
+     padding puts the credit line right on top of the run leaving the gland. It
+     only needs the clearance on that side, because only that side has a rail
+     against it. */
+  [data-world="work"] .bay--head {
+    --rail-clear: 2.2rem;
+    padding-left: var(--rail-clear);
+    padding-right: var(--space-2);
+  }
+
+  /* Which leaves the reading column off-centre in the viewport by half the
+     difference between those two paddings, and .rig centres on the column. So
+     the drawing inherits the offset and lands right of the middle of the phone
+     — the clearance the credit line needs is not clearance the picture needs.
+     Centred on the bay's own box instead, which is symmetrical: undo the left
+     padding, then halve what is left over across the padded width. */
+  [data-world="work"] .rig {
+    margin-inline: calc(
+      (100% + var(--rail-clear) + var(--space-2) - var(--rig)) / 2 -
+        var(--rail-clear)
+    );
+  }
+
+  [data-world="work"] .arms .arm:nth-child(2) {
+    display: none;
+  }
+
+  [data-world="work"] .arms .arm {
+    width: 6.5rem;
+  }
 }
