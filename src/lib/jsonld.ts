@@ -6,6 +6,7 @@
  * personNode()["@id"] instead of inlining a second copy of the person — a
  * duplicated Person is the usual way a @graph ends up self-contradicting.
  */
+import { isoDateTime } from "./datetime.ts";
 import type { Project } from "./schema.ts";
 
 export const SITE = "https://martinsundal.no";
@@ -21,6 +22,7 @@ export interface VideoMeta {
   name: string;
   description: string;
   thumbnailUrl: string;
+  /** A calendar day, YYYY-MM-DD; isoDateTime() gives it the timezone. */
   uploadDate: string;
   duration: string;
   contentUrl: string;
@@ -163,14 +165,23 @@ function softwareNode(p: Project, slug: string) {
     programmingLanguage: p.languages,
     ...(p.award ? { award: p.award } : {}),
     ...(p.image ? { image: abs(p.image.src) } : {}),
-    dateCreated: p.datePublished,
-    dateModified: p.dateModified,
+    dateCreated: isoDateTime(p.datePublished),
+    dateModified: isoDateTime(p.dateModified),
     author: { "@id": PERSON_ID },
     isPartOf: { "@id": WEBSITE_ID },
   };
 }
 
 export function homeGraph(projects: ProjectEntry[]) {
+  /* The home page indexes the projects and has no date of its own, so its
+     freshness is the freshest thing it lists — the same rule /sitemap.xml
+     applies to the same URL, so the two cannot disagree. Notably not
+     build-time "today": that would restate itself on every deploy. */
+  const newest = projects.reduce<string | undefined>(
+    (max, p) => (!max || p.data.dateModified > max ? p.data.dateModified : max),
+    undefined,
+  );
+
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -184,8 +195,8 @@ export function homeGraph(projects: ProjectEntry[]) {
         description:
           "Software engineer in Trondheim. Robotics and simulation at Aker Solutions; Applied Physics and Mathematics at NTNU, specializing in quantum technology.",
         inLanguage: "en",
-        dateCreated: "2025-02-15",
-        dateModified: new Date().toISOString().slice(0, 10),
+        dateCreated: isoDateTime("2025-02-15"),
+        ...(newest ? { dateModified: isoDateTime(newest) } : {}),
         isPartOf: { "@id": WEBSITE_ID },
         mainEntity: { "@id": PERSON_ID },
         about: { "@id": PERSON_ID },
@@ -218,8 +229,8 @@ export function projectGraph(p: Project, slug: string) {
         name: `${p.name} | Martin Sundal Aspås`,
         description: p.tagline,
         inLanguage: "en",
-        datePublished: p.datePublished,
-        dateModified: p.dateModified,
+        datePublished: isoDateTime(p.datePublished),
+        dateModified: isoDateTime(p.dateModified),
         isPartOf: { "@id": WEBSITE_ID },
         about: { "@id": `${SITE}/projects/${slug}/#software` },
         author: { "@id": PERSON_ID },
@@ -266,7 +277,7 @@ export function workGraph(video: VideoMeta | null) {
               name: video.name,
               description: video.description,
               thumbnailUrl: video.thumbnailUrl,
-              uploadDate: video.uploadDate,
+              uploadDate: isoDateTime(video.uploadDate),
               duration: video.duration,
               contentUrl: video.contentUrl,
               // The footage is Aker's, not mine. Say so in the structured data

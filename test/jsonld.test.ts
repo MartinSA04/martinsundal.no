@@ -135,5 +135,42 @@ test("work graph includes VideoObject with duration and copyright holder", () =>
   const v = graph.find((n) => n["@type"] === "VideoObject");
   assert.equal(v.duration, "PT1M9S");
   assert.equal(v.copyrightHolder.name, "Aker Solutions");
-  assert.equal(v.uploadDate, "2025-08-18");
+  assert.equal(v.uploadDate, "2025-08-18T12:00:00+02:00");
+});
+
+/**
+ * Google reports a bare `YYYY-MM-DD` in a date-valued field as a datetime with
+ * no timezone, and then reads it in whichever zone Googlebot crawled from.
+ * Every graph the site emits is swept rather than the two or three fields that
+ * exist today, so a date added later without isoDateTime() fails here.
+ */
+test("no date-valued field in any graph is emitted without a timezone", () => {
+  const graphs = [
+    homeGraph([{ data: p, id: "cipherbound" }] as any),
+    projectGraph(p, slugOf()),
+    workGraph({
+      name: "Verdal Production Line highlights",
+      description:
+        "Aker Solutions' highlights from the Verdal Production Line.",
+      thumbnailUrl: "https://martinsundal.no/vpl/poster.avif",
+      uploadDate: "2025-08-18",
+      duration: "PT1M9S",
+      contentUrl: "https://martinsundal.no/vpl/highlights.mp4",
+    }),
+  ];
+
+  let seen = 0;
+  for (const graph of graphs) {
+    for (const m of JSON.stringify(graph).matchAll(
+      /"(date[A-Z]\w*|uploadDate|startDate|endDate)":"([^"]*)"/g,
+    )) {
+      seen++;
+      assert.match(
+        m[2]!,
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?([+-]\d{2}:\d{2}|Z)$/,
+        `${m[1]} carries no timezone: ${m[2]}`,
+      );
+    }
+  }
+  assert.ok(seen >= 7, `expected the sweep to find dates, saw ${seen}`);
 });
