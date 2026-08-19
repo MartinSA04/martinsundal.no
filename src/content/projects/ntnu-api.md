@@ -1,8 +1,8 @@
 ---
 index: 2
-name: NTNU Course Data API & MCP Server
-tagline: Built to be able to ask Claude when the exams are. A typed client over NTNU's three course-data systems, and an MCP server in front of it.
-summary: A zero-dependency TypeScript client wrapping three public NTNU data sources, and a remote MCP server on Cloudflare Workers exposing twelve read-only tools.
+name: NTNU Course Data API, MCP Server & Timetable
+tagline: Built to be able to ask Claude when the exams are. A typed client over NTNU's three course-data systems, with an MCP server and a timetable on top.
+summary: A zero-dependency TypeScript client wrapping three public NTNU data sources, a remote MCP server on Cloudflare Workers exposing twelve read-only tools, and a timetable site for NTNU students built on the same client.
 world:
   sub: "#0d1014"
   ink: "#dde3ea"
@@ -19,6 +19,8 @@ spec:
     value: 12, all read-only
   - label: Registry
     value: io.github.MartinSA04/ntnu-mcp
+  - label: Timetable
+    value: ntnu.martinsundal.no
 tags:
   - TypeScript
   - MCP
@@ -32,12 +34,16 @@ links:
     href: https://github.com/MartinSA04/ntnu-api
   - label: ntnu-mcp on GitHub
     href: https://github.com/MartinSA04/ntnu-mcp
+  - label: Semesterplan
+    href: https://ntnu.martinsundal.no
+  - label: ntnu-page on GitHub
+    href: https://github.com/MartinSA04/ntnu-page
 repo: https://github.com/MartinSA04/ntnu-api
 live: https://www.npmjs.com/package/ntnu-api
 languages:
   - TypeScript
 datePublished: "2026-04-20"
-dateModified: "2026-08-09"
+dateModified: "2026-08-19"
 ---
 
 ## Why it exists
@@ -82,3 +88,16 @@ A real MCP client in eighty lines of `fetch`, with no model behind it. That is
 why it asks in fill-in-the-blank sentences: the sentence chooses the tool and
 the blanks are the arguments. Put your own codes in and the call is the one
 Claude would make.
+
+## The timetable
+
+Semesterplan, at `ntnu.martinsundal.no`, is the other thing built on the
+client. Pick a study programme and a cohort and the week comes back, rooms and
+exam dates included. NTNU auto-enrolls programme students in their courses, so
+the programme is the plan rather than a suggestion to confirm; a course comes
+off it in one press.
+
+An Astro build and a Cloudflare Worker ship as one unit. The Worker serves the
+site and caches `/api/*` in front of NTNU per data type — six hours for course
+details, one hour for timetables. There is no account, and nothing about a
+student leaves the browser it was typed into.
