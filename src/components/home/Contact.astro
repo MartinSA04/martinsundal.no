@@ -6,7 +6,7 @@
  * asserts a datum — "Norway · 63.4°N" — and never draws it; this draws it, as
  * an orthographic globe turning once a day at 120 seconds to the day, with the
  * origin marked and the graticule solid where it passes in front and broken
- * where it runs behind. That is the construction Fig. 05b already uses for the
+ * where it runs behind. That is the construction Fig. 04b already uses for the
  * Bloch sphere, which is what makes the two read as a pair.
  *
  * The geometry is all in src/lib/globe.ts and evaluated here, on the server, so
@@ -82,7 +82,7 @@ const year = new Date().getFullYear();
 
 <footer id="contact" class="zone contact" aria-labelledby="con-h">
   <div class="sec-head">
-    <h2 id="con-h" class="p-u p-u--lg p-u--ink zh">Fig. 06 — Contact</h2>
+    <h2 id="con-h" class="p-u p-u--lg p-u--ink zh">Fig. 05 — Contact</h2>
     <span class="p-u p-tag"
       >{ORIGIN.lat.toFixed(4)}°N {ORIGIN.lon.toFixed(4)}°E</span
     >
@@ -246,7 +246,7 @@ const year = new Date().getFullYear();
   }
 
   /* Globe · readout. The globe holds the size it was drawn for and the readout
-     takes the slack, the same way Fig. 05's band is arranged. */
+     takes the slack, the same way Fig. 04's band is arranged. */
   .band {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);

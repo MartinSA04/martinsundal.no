@@ -1,32 +1,39 @@
 ---
 /**
- * FIG. 03 / 04 — Provenance and day job, sharing a band.
+ * FIG. 03 — Day job: the prose and the card, sharing a band.
  *
- * Fig. 03 is provenance in the catalogue sense: where each specimen came from.
- * The projects have no thesis in common — see docs/source-material.md — so the
- * block lists origins and claims nothing beyond them.
+ * The wording comes from my own LinkedIn summary, so everything said about
+ * Aker here is already public under my name. No internal figures, no process
+ * detail, no Aker mark. See the confidentiality constraint in the site-rewrite
+ * spec, and docs/source-material.md.
  *
- * Everything Aker-related here traces to material they have already published.
- * No internal figures, no process detail, no Aker mark. See the confidentiality
- * constraint in the site-rewrite spec.
+ * The welding planner is the team's, not mine: "one of the lead developers" is
+ * the accurate claim and the sentence does not get to shed it.
  */
 import Icon from "../micro/Icon.astro";
 ---
 
 <div class="lower">
-  <section class="zone" aria-labelledby="app-h">
-    <h2 id="app-h" class="p-u p-u--lg p-u--ink zh">Fig. 03 — Provenance</h2>
+  <section class="zone" aria-labelledby="job-h">
+    <h2 id="job-h" class="p-u p-u--lg p-u--ink zh">Fig. 03 — Day job</h2>
     <p class="lead">
-      The projects above are things I wanted to exist: a Game of Life that
-      spells my name, a black hole for my phone background, a Pokémon-like for a
-      C++ course, a way to ask Claude when my lectures are.
+      Our team builds the software for the Verdal Production Line, the world's
+      first fully automated production line of its kind. I am one of the lead
+      developers on the welding planner, where most of my work is the planning
+      code itself, and I work on the production line GUI as well. A lot of the
+      job is industrial robotics and robotic welding.
+    </p>
+    <p class="lead lead--n">
+      Alongside that I have held introductory robotics courses for apprentices
+      and built a few 3D printing projects. Right now I am pushing our machine
+      learning work forward, starting with collecting and storing the data.
     </p>
   </section>
 
-  <section class="zone" aria-labelledby="job-h">
+  <section class="zone card" aria-labelledby="emp-h">
     <div class="job-head">
-      <h2 id="job-h" class="p-u p-u--lg p-u--ink zh">Fig. 04 — Day job</h2>
-      <span class="p-u p-tag">Current</span>
+      <h2 id="emp-h" class="p-u p-u--lg p-u--ink">Employer</h2>
+      <span class="p-u p-tag">Since 2022</span>
     </div>
     <div class="p-rule" style="margin-top:9px"></div>
     <p class="job-name">Aker Solutions</p>
@@ -36,8 +43,9 @@ import Icon from "../micro/Icon.astro";
       <Icon name="arrow-right" size={16} />
     </a>
     <div class="p-chain" style="margin-top:22px" aria-hidden="true">
-      <span class="p-u p-pill">Engineering</span>
-      <span class="p-u p-pill">Fabrication</span>
+      <span class="p-u p-pill">Robotics</span>
+      <span class="p-u p-pill">Welding</span>
+      <span class="p-u p-pill">Automation</span>
     </div>
   </section>
 </div>
@@ -57,6 +65,21 @@ import Icon from "../micro/Icon.astro";
     max-width: 36em;
     margin-top: 20px;
     letter-spacing: -0.006em;
+  }
+
+  /* The second paragraph is the aside, not the claim: it steps down a size and
+     off the ink so the band still has one thing to read first. */
+  .lead--n {
+    font-size: clamp(15px, 1.15vw, 17px);
+    line-height: 1.52;
+    color: var(--muted);
+    margin-top: 16px;
+  }
+
+  /* The card is the right-hand column's whole content, so it hangs off the top
+     of the band rather than off a heading it no longer shares. */
+  .card {
+    padding-top: 4px;
   }
 
   .job-head {

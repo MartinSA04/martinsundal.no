@@ -299,11 +299,13 @@ test("the board is shown whole, at the board's own aspect", async ({
 });
 
 /**
- * The organising idea: projects are placed on a real field, and every point is
- * named by a marker so the plot is readable on its own. If either the point or
- * its legend row goes missing the field stops being a diagram.
+ * The specimen field is now the whole of Fig. 02, so it carries every project
+ * and every route into one. If a specimen or its link goes missing the page
+ * stops linking to a project at all.
  */
-test("every project is plotted and its point is named", async ({ page }) => {
+test("every project has a specimen that links to its page", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
@@ -314,38 +316,19 @@ test("every project is plotted and its point is named", async ({ page }) => {
     "black-hole",
     "game-of-life",
   ]) {
-    await expect(page.locator(`[data-point="${slug}"]`)).toHaveCount(1);
-    await expect(page.locator(`[data-leader="${slug}"]`)).toHaveCount(1);
-    await expect(page.locator(`[data-callout="${slug}"]`)).toHaveCount(1);
-    await expect(page.locator(`[data-spec="${slug}"]`)).toHaveCount(1);
+    const spec = page.locator(`[data-spec="${slug}"]`);
+    await expect(spec).toHaveCount(1);
+    await expect(spec.locator(`a[href="/projects/${slug}/"]`)).toHaveCount(1);
   }
 
-  // Points must be distinct positions, or the field encodes nothing.
-  const places = await page.evaluate(() =>
-    [...document.querySelectorAll("[data-point]")].map(
-      (p) => p.getAttribute("transform") ?? "",
-    ),
+  // Every specimen takes its own cell, or the field encodes nothing.
+  const cells = await page.evaluate(() =>
+    [...document.querySelectorAll("[data-spec]")].map((s) => {
+      const r = s.getBoundingClientRect();
+      return `${Math.round(r.x)}:${Math.round(r.y)}`;
+    }),
   );
-  expect(new Set(places).size).toBe(5);
-});
-
-test("hovering a specimen lights its point, leader and callout", async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/");
-
-  const spec = page.locator('[data-spec="black-hole"]');
-  await spec.scrollIntoViewIfNeeded();
-  await spec.hover();
-
-  for (const sel of [
-    '[data-point="black-hole"]',
-    '[data-leader="black-hole"]',
-    '[data-callout="black-hole"]',
-  ]) {
-    await expect(page.locator(sel)).toHaveClass(/\bon\b/);
-  }
+  expect(new Set(cells).size).toBe(5);
 });
 
 /**
@@ -477,7 +460,7 @@ test("the contact channels are all reachable", async ({ page }) => {
 });
 
 /**
- * Fig. 05. The surface is rendered on the server from src/lib/quantum.ts and
+ * Fig. 04. The surface is rendered on the server from src/lib/quantum.ts and
  * then advanced by src/scripts/surface.ts, so there are two separate things to
  * hold: that the served frame is a real surface, and that it moves.
  */
@@ -486,16 +469,16 @@ test("the studies band states the specialization", async ({ page }) => {
   const band = page.locator("[data-surface]");
 
   await expect(
-    page.getByRole("heading", { name: /Fig\. 05 — Studies/ }),
+    page.getByRole("heading", { name: /Fig\. 04 — Studies/ }),
   ).toHaveCount(1);
   await expect(band).toContainText("Quantum Technology");
   await expect(band).toContainText("Fysikk og matematikk");
   await expect(band).toContainText("2024");
   await expect(band).toContainText("2029");
 
-  // Contact moved down to make room for it.
+  // Contact closes the plate.
   await expect(
-    page.getByRole("heading", { name: /Fig\. 06 — Contact/ }),
+    page.getByRole("heading", { name: /Fig\. 05 — Contact/ }),
   ).toHaveCount(1);
 });
 
@@ -564,7 +547,7 @@ test("the studies figures are whole without JavaScript, and still under reduced 
 });
 
 /**
- * Fig. 06. The globe is rendered on the server from src/lib/globe.ts and then
+ * Fig. 05. The globe is rendered on the server from src/lib/globe.ts and then
  * turned by src/scripts/globe.ts, so the same two things hold as for the
  * corral: the served frame is a whole globe, and it moves. The third is
  * particular to this figure — only the meridians are allowed to move, because

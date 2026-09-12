@@ -31,31 +31,9 @@
   padding-inline: clamp(16px, 3.2vw, 54px) clamp(16px, 3.2vw, 54px);
 }
 
-/* The spine: a graduated ruler every figure hangs off. */
-.plate-spine {
-  position: absolute;
-  left: clamp(2px, 1vw, 18px);
-  top: 0;
-  bottom: 0;
-  width: 13px;
-  border-left: var(--rule) solid var(--hair);
-  background:
-    repeating-linear-gradient(
-      to bottom,
-      var(--hair) 0 1px,
-      transparent 1px 96px
-    ),
-    linear-gradient(to right, var(--faint) 0 6px, transparent 6px);
-  background-repeat: repeat, no-repeat;
-  pointer-events: none;
-}
-
 @media (min-width: 57rem) {
   .plate {
     padding-inline: clamp(70px, 7vw, 112px) clamp(16px, 3.2vw, 54px);
-  }
-  .plate-spine {
-    left: clamp(30px, 3.6vw, 64px);
   }
 }
 
