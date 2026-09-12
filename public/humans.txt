@@ -1,24 +1,5 @@
-/* TEAM */
-    Martin Sundal Aspås — everything
-    Trondheim, Norway
-    Contact: martin.s.aspas [at] gmail.com
-    GitHub: MartinSA04
+Space is big. You just won't believe how vastly, hugely, mind-bogglingly
+big it is. I mean, you may think it's a long way down the road to the
+chemist's, but that's just peanuts to space.
 
-/* SITE */
-    Plate 001 — martinsundal.no
-    Drawn in SVG and CSS. Every figure computes.
-    Standards: HTML5, ES modules, JSON-LD, prefers-reduced-motion
-    Components: Astro, Zod, Playwright
-    Typefaces: Archivo, IBM Plex Mono, Newsreader, Departure Mono
-    Software: a text editor
-
-/* STANDING ON */
-    Conway's Game of Life — John Horton Conway, 1970
-    Big Ear — Ohio State, 15 August 1977
-    Douglas Adams
-    Whoever decided a signed 32-bit second was enough
-
-/* THE PLATE */
-    There are six of them on the plate. They are all the same number.
-    No location is given here on purpose — knowing what you are looking
-    for is the good half of looking.
+    — Douglas Adams, The Hitchhiker's Guide to the Galaxy
